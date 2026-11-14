@@ -4,6 +4,7 @@ import { indexFoods, recipePortion, type FoodIndex, type PortionInfo } from './d
 import { validatePlan, type PlanWarning } from './domain/plan';
 import { computeStock, forecast, priorities, type FoodStock, type Forecast, type Priority } from './domain/stock';
 import type { Data, ISODate, Recipe } from './domain/types';
+import { targetsOf, type Targets } from './domain/targets';
 import type { Store } from './store';
 
 export interface Derived {
@@ -16,6 +17,8 @@ export interface Derived {
   portions: Map<string, PortionInfo>;
   recipe: (id: string | undefined) => Recipe | undefined;
   planEnd: ISODate;
+  /** Objectifs nutritionnels en vigueur. */
+  targets: Targets;
 }
 
 export function derive(data: Data, today: ISODate): Derived {
@@ -34,6 +37,7 @@ export function derive(data: Data, today: ISODate): Derived {
     portions: new Map(data.recipes.map((r) => [r.id, recipePortion(foods, r)])),
     recipe: (id) => (id ? recipesById.get(id) : undefined),
     planEnd: lastEntry < addDays(today, 6) ? addDays(today, 6) : lastEntry,
+    targets: targetsOf(data.settings),
   };
 }
 

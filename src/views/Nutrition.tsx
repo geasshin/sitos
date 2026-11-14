@@ -3,7 +3,10 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useApp } from '../context';
 import { addDays, formatDayMonth, formatShort, range, startOfWeek } from '../domain/dates';
 import { average, dayNutrition, mealOf, type DayNutrition } from '../domain/nutrition';
-import { NutrientRows, Section } from '../components/ui';
+import { assessDay } from '../domain/balance';
+import { Section } from '../components/ui';
+import { BalanceRows, SplitBar } from '../components/Balance';
+import { GoalsCard } from '../components/Goals';
 import { capitalize } from './Today';
 
 export function NutritionView() {
@@ -19,7 +22,7 @@ export function NutritionView() {
       <header className="page-head page-head-row">
         <div>
           <h1 className="display-title">Nutrition</h1>
-          <p className="page-subtitle">Estimations par jour : le repas et le soir. Les jours à venir suivent le plan.</p>
+          <p className="page-subtitle">Chaque jour compte le repas et ce que tu notes le soir. Les jours à venir suivent le calendrier.</p>
         </div>
         <div className="week-nav" role="group" aria-label="Semaine">
           <button type="button" className="icon-button" onClick={() => setWeekStart(addDays(weekStart, -7))} aria-label="Semaine précédente"><ChevronLeft size={18} aria-hidden /></button>
@@ -30,13 +33,22 @@ export function NutritionView() {
         </div>
       </header>
 
+      <GoalsCard />
+
       <Section title="Énergie par jour" aside={<Legend />}>
-        <WeekChart days={days} target={data.settings.kcalTarget} today={today} />
+        <WeekChart days={days} target={app.targets.kcal} today={today} />
       </Section>
 
       <div className="two-col">
         <Section title={`Moyenne de la semaine`} aside={<span className="muted small">{avg.count} jour{avg.count > 1 ? 's' : ''} comptés{planned ? `, dont ${planned} prévus` : ''}</span>}>
-          {avg.count === 0 ? <p className="muted">Aucun repas compté cette semaine.</p> : <NutrientRows n={avg.nutrients} plantG={avg.plantG} settings={data.settings} />}
+          {avg.count === 0 ? (
+            <p className="muted">Aucun repas compté cette semaine.</p>
+          ) : (
+            <>
+              <BalanceRows rows={assessDay(avg.nutrients, avg.plantG, app.targets).rows} />
+              <SplitBar balance={assessDay(avg.nutrients, avg.plantG, app.targets)} targets={app.targets} />
+            </>
+          )}
         </Section>
         <Section title="Ce que ça dit">
           <Insights days={days} avg={avg} />
@@ -54,6 +66,8 @@ export function NutritionView() {
                 <th scope="col" className="r">Protéines</th>
                 <th scope="col" className="r">Fibres</th>
                 <th scope="col" className="r">Légumes & fruits</th>
+                <th scope="col" className="r">Gr. saturées</th>
+                <th scope="col" className="r">Sel</th>
               </tr>
             </thead>
             <tbody>
@@ -72,13 +86,15 @@ export function NutritionView() {
                     <td className="r num">{d.meal || snacks.length ? `${Math.round(d.total.protein)} g` : '—'}</td>
                     <td className="r num">{d.meal || snacks.length ? `${Math.round(d.total.fiber)} g` : '—'}</td>
                     <td className="r num">{d.meal || snacks.length ? `${Math.round(d.plantG)} g` : '—'}</td>
+                    <td className="r num">{d.meal || snacks.length ? `${Math.round(d.total.satFat)} g` : '—'}</td>
+                    <td className="r num">{d.meal || snacks.length ? `${(Math.round(d.total.salt * 10) / 10).toLocaleString('fr-FR')} g` : '—'}</td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
         </div>
-        <p className="hint">Valeurs moyennes type Ciqual ; épices, bouillon et sauces non comptés. Cibles : {data.settings.kcalTarget} kcal, {data.settings.proteinTarget} g de protéines, {data.settings.fiberTarget} g de fibres, {data.settings.plantTargetG} g de légumes et fruits.</p>
+        <p className="hint">Valeurs de la table Ciqual 2020 (ANSES) ou d’étiquettes types. Le sel ajouté, les épices et le bouillon ne sont pas comptés, et les fruits mangés nature seulement s’ils sont notés le soir.</p>
       </Section>
     </div>
   );
@@ -112,7 +128,7 @@ function WeekChart({ days, target, today }: { days: DayNutrition[]; target: numb
           return (
             <g key={d.date} className={future ? 'is-planned' : ''}>
               {d.out || (!d.meal && d.snacks.nutrients.kcal === 0) ? (
-                <text x={x + w / 2} y={H - 8} textAnchor="middle" className="chart-label">{d.out ? 'dehors' : 'hors plan'}</text>
+                <text x={x + w / 2} y={H - 8} textAnchor="middle" className="chart-label">{d.out ? 'dehors' : 'rien de prévu'}</text>
               ) : (
                 <>
                   <rect x={x} y={y(meal)} width={w} height={H - y(meal)} rx="5" className="bar-meal" />
@@ -134,27 +150,29 @@ function WeekChart({ days, target, today }: { days: DayNutrition[]; target: numb
 }
 
 function Insights({ days, avg }: { days: DayNutrition[]; avg: ReturnType<typeof average> }) {
-  const { data } = useApp();
-  const s = data.settings;
+  const { targets: t } = useApp();
   if (avg.count === 0) return <p className="muted">Rien à analyser cette semaine.</p>;
   const counted = days.filter((d) => d.meal);
-  const lowProtein = counted.filter((d) => d.total.protein < s.proteinTarget * 0.7).length;
-  const lowPlant = counted.filter((d) => d.plantG < s.plantTargetG * 0.6).length;
+  const lowProtein = counted.filter((d) => d.total.protein < t.protein * 0.7).length;
+  const lowPlant = counted.filter((d) => d.plantG < t.plantG * 0.6).length;
+  const highSat = counted.filter((d) => d.total.satFat > t.satFatMaxG).length;
   const mealAvg = counted.reduce((a, d) => a + (d.meal?.nutrients.kcal ?? 0), 0) / counted.length;
-  const gap = s.kcalTarget - avg.nutrients.kcal;
+  const mealGoal = t.kcal * t.mealShare;
+  const gap = t.kcal - avg.nutrients.kcal;
   const lines: string[] = [];
-  if (gap > 500) {
+  if (mealAvg < mealGoal * 0.75) {
     lines.push(
-      `Le repas fait en moyenne ${Math.round(mealAvg)} kcal. Pour approcher ${s.kcalTarget} kcal, il faudrait ${Math.round(gap)} kcal de plus le soir, ce qui est beaucoup. Si tes vraies portions sont plus grosses que prévu, corrige le nombre de repas par recette.`,
+      `Le repas fait en moyenne ${Math.round(mealAvg)} kcal, pour un repas principal visé autour de ${(Math.round(mealGoal / 25) * 25).toLocaleString('fr-FR')}. Si une cuisson te fait en réalité moins de repas que prévu (2 au lieu de 3, par exemple), change son nombre de repas dans le calendrier : les chiffres suivront.`,
     );
   } else if (gap < -200) {
-    lines.push(`Au-dessus de la cible d’environ ${Math.round(-gap)} kcal par jour : regarde les grignotages du soir en premier.`);
-  } else {
-    lines.push('L’énergie est proche de la cible, avec un léger déficit : c’est le rythme visé.');
+    lines.push(`Au-dessus de l’objectif d’environ ${Math.round(-gap)} kcal par jour : regarde les grignotages du soir en premier.`);
+  } else if (gap <= 300) {
+    lines.push('L’énergie est proche de l’objectif : c’est le rythme visé.');
   }
-  if (lowProtein > 0) lines.push(`${lowProtein} jour${lowProtein > 1 ? 's' : ''} sous ${Math.round(s.proteinTarget * 0.7)} g de protéines. Le soir, un skyr ou deux œufs comblent une bonne partie de l’écart.`);
-  if (lowPlant > 0) lines.push(`${lowPlant} jour${lowPlant > 1 ? 's' : ''} avec peu de légumes et fruits : un fruit de plus ou une salade en entrée suffit.`);
-  if (avg.nutrients.fiber >= s.fiberTarget * 0.9) lines.push('Les fibres sont bien couvertes, merci les légumineuses.');
+  if (lowProtein > 0) lines.push(`${lowProtein} jour${lowProtein > 1 ? 's' : ''} sous ${Math.round(t.protein * 0.7)} g de protéines. Le soir, un skyr (11 g) comble une bonne partie de l’écart.`);
+  if (lowPlant > 0) lines.push(`${lowPlant} jour${lowPlant > 1 ? 's' : ''} avec peu de légumes et fruits : un fruit de plus ou des crudités suffisent.`);
+  if (highSat > 0) lines.push(`${highSat} jour${highSat > 1 ? 's' : ''} au-dessus de ${t.satFatMaxG} g de graisses saturées : fromage, beurre et lait de coco en sont la source.`);
+  if (avg.nutrients.fiber >= t.fiber * 0.9) lines.push('Les fibres sont bien couvertes, merci les légumineuses.');
   return (
     <ul className="insights">
       {lines.map((l) => (

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, RotateCcw, X } from 'lucide-react';
 import { useApp } from '../context';
-import { mealOfCook, mealPortion } from '../domain/nutrition';
+import { mealOfCook, mealPortion, ZERO } from '../domain/nutrition';
 import { newId, renameCook, setIngredients, setPortions } from '../domain/plan';
 import { amount, fraction, splitAmount } from '../domain/stock';
 import type { Food, Ingredient, PlanEntry, Unit } from '../domain/types';
@@ -166,7 +166,7 @@ function AddIngredient({ onAdd }: { onAdd: (ing: Ingredient) => void }) {
             name: name.trim().charAt(0).toUpperCase() + name.trim().slice(1),
             category: 'épicerie',
             unit,
-            per100: { kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 },
+            per100: { ...ZERO },
             storage: 'placard',
             shelfLifeDays: 30,
             custom: true,

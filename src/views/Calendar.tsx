@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AlertTriangle, ArrowLeft, ArrowRight, BookOpen, Check, ChevronLeft, ChevronRight, CookingPot, GripVertical, Refrigerator, Repeat, Rows3, Trash2, Utensils, X } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ArrowRight, BookOpen, Check, ChevronDown, ChevronLeft, ChevronRight, CookingPot, GripVertical, Refrigerator, Repeat, Rows3, Trash2, Utensils, X } from 'lucide-react';
 import { useApp } from '../context';
 import { addDays, diffDays, formatDayMonth, formatLong, formatShort, range, startOfWeek } from '../domain/dates';
 import { mealOf, mealPortion } from '../domain/nutrition';
@@ -8,6 +8,7 @@ import { amount } from '../domain/stock';
 import type { ISODate, PlanEntry } from '../domain/types';
 import { MealPlanner } from '../components/MealPlanner';
 import { MealEditor } from '../components/MealEditor';
+import { DayBalanceCard } from '../components/Balance';
 import { capitalize } from './Today';
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
@@ -175,6 +176,7 @@ function DayPanel({
   const app = useApp();
   const { data, today } = app;
   const [replacing, setReplacing] = useState(false);
+  const [showIngredients, setShowIngredients] = useState(false);
   const entry = data.plan.entries.find((e) => e.date === date);
   const meal = mealOf(data, entry);
   const editable = date >= today;
@@ -240,6 +242,12 @@ function DayPanel({
             <button type="button" className={entry.done ? 'done-button' : 'primary-button'} aria-pressed={!!entry.done} onClick={() => setEntries((e) => toggleDone(e, entry.id))} disabled={date > today}>
               <Check size={15} aria-hidden /> {entry.done ? 'Fait' : entry.kind === 'cook' ? 'C’est fait' : 'Mangé'}
             </button>
+            {entry.kind === 'cook' && (
+              <button type="button" className="secondary-button" onClick={() => setShowIngredients((v) => !v)} aria-expanded={showIngredients}>
+                Ingrédients <span className="num muted">{meal.ingredients.length}</span>
+                <ChevronDown size={15} className={`chev ${showIngredients ? 'up' : ''}`} aria-hidden />
+              </button>
+            )}
             {meal.recipe && (
               <button type="button" className="secondary-button" onClick={() => app.openRecipe(meal.recipe!.id)}>
                 <BookOpen size={15} aria-hidden /> Recette
@@ -248,12 +256,17 @@ function DayPanel({
           </div>
 
           {entry.kind === 'cook' ? (
-            <MealEditor cook={entry} editable={!entry.done} />
+            showIngredients && <MealEditor cook={entry} editable={!entry.done} />
           ) : (
             <button type="button" className="text-button" onClick={() => onSelect(meal.cook.date)}>
               Voir la cuisson du {formatShort(meal.cook.date)} <ArrowRight size={14} aria-hidden />
             </button>
           )}
+
+          <section className="panel-balance" aria-label="Bilan de la journée">
+            <p className="balance-title">Bilan de la journée</p>
+            <DayBalanceCard date={date} />
+          </section>
 
           {editable && !entry.done && (
             <div className="panel-tools" role="group" aria-label="Organiser">

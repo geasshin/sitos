@@ -334,3 +334,23 @@ export function rescueSuggestions(prio: Priority[], limit = 3): Rescue[] {
     .sort((a, b) => b.foods.length - a.foods.length || Number(b.recipe.dish === 'Plat') - Number(a.recipe.dish === 'Plat'))
     .slice(0, limit);
 }
+
+/**
+ * Ce qu'on peut prendre d'un aliment pour un à-côté, un jour donné : les lots encore bons ce
+ * jour-là, moins tout ce que les plats prévus vont utiliser. Un à-côté ne prive jamais un plat.
+ */
+export function availableOn(data: Data, stock: Map<string, FoodStock>, today: ISODate, date: ISODate): (foodId: string) => number {
+  const planned = new Map<string, number>();
+  {
+    for (const e of data.plan.entries) {
+      if (e.kind !== 'cook' || e.done || e.date < today) continue;
+      for (const ing of mealOfCook(data.recipes, e).ingredients) planned.set(ing.foodId, (planned.get(ing.foodId) ?? 0) + ing.qty);
+    }
+  }
+  return (foodId) => {
+    const fs = stock.get(foodId);
+    if (!fs) return 0;
+    const good = fs.lots.filter((l) => l.expiry >= date).reduce((sum, l) => sum + l.qty, 0);
+    return Math.max(0, good - (planned.get(foodId) ?? 0));
+  };
+}

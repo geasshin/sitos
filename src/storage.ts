@@ -1,5 +1,6 @@
 import type { Data } from './domain/types';
 import { starterData } from './starter';
+import { completeNutrients } from './domain/nutrition';
 
 /**
  * Où vivent les données.
@@ -38,7 +39,12 @@ export async function loadData(today: string): Promise<Loaded> {
   const missing = KEYS.filter((k) => raw[k] === undefined || raw[k] === null);
   const data = { ...start, ...raw } as Data;
   return {
-    data: { ...data, recipes: data.recipes.map((r) => ({ ...r, steps: r.steps ?? [], favorite: !!r.favorite })) },
+    data: {
+      ...data,
+      // Valeurs d'avant la version 0.2 : seulement 5 nutriments. Les champs absents valent 0.
+      foods: data.foods.map((f) => ({ ...f, per100: completeNutrients(f.per100) })),
+      recipes: data.recipes.map((r) => ({ ...r, steps: r.steps ?? [], favorite: !!r.favorite })),
+    },
     missing,
   };
 }

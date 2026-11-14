@@ -24,7 +24,13 @@ s'annoncent dans l'app (carte en bas à droite) et s'installent d'un clic.
   ses propres ingrédients : changer le nombre de repas, une quantité, retirer ou ajouter un ingrédient ne touche que
   ce repas, jamais la fiche (« Revenir à la fiche » annule l'ajustement).
 - **Stock** : ce qui reste, jusqu'à quand ça se garde, ce qui risque de se perdre avec le plan actuel.
-- **Nutrition** : énergie, protéines, fibres, légumes et fruits, par jour et par semaine (estimations type Ciqual).
+- **Nutrition** : « Mes objectifs », un questionnaire en quatre étapes (profil, activité, rythme des repas, objectif,
+  façon de manger) qui calcule les cibles du jour selon les repères officiels, toutes retouchables. Puis la semaine :
+  énergie par jour, moyenne face aux objectifs, répartition protéines / lipides / glucides, détail jour par jour.
+- **Bilan de la journée** (calendrier et Aujourd'hui) : repas + soir face aux objectifs (énergie, protéines, fibres,
+  légumes et fruits ; graisses saturées, sucres hors lactose, sel à limiter), et « Pour compléter » : les à-côtés qui
+  comblent le mieux les manques avec ce qui restera en stock ce jour-là, sans jamais prendre un ingrédient réservé à
+  un plat prévu.
 - **Recettes** : la bibliothèque. Statut (À tester, Testée, Maîtrisée), type de plat, coups de cœur, note.
   Une fiche avec des quantités chiffrées a aussi des valeurs nutritionnelles.
 - **Poids** : pesées et tendance lissée.
@@ -37,12 +43,12 @@ Un fichier JSON lisible par collection, dans `~/Library/Application Support/com.
 
 | Fichier | Contenu |
 |---|---|
-| `foods.json` | aliments : unité, valeurs pour 100 g, conservation après réception |
+| `foods.json` | aliments : unité, valeurs pour 100 g (table Ciqual 2020 de l'ANSES, ou étiquette type : voir `source`), conservation après réception |
 | `stock.json` | achats : quantité, date de réception, date limite si connue, origine |
 | `recipes.json` | bibliothèque ; si la fiche est chiffrée : `ingredients`, `portions` (repas), `fridgeDays` |
 | `plan.json` | le plan : cuisson (`cook`, avec `ingredients` et `title` propres à ce repas si ajustés), reste (`leftover`), dehors (`out`) |
 | `journal.json` | grignotages du soir, ajustements de stock, pesées |
-| `settings.json` | cibles nutritionnelles, fruits nature par jour |
+| `settings.json` | profil et objectifs nutritionnels validés, fruits nature par jour |
 | `snackIdeas.json` | idées pour le soir |
 
 Le stock affiché n'est jamais enregistré : il est recalculé (achats moins plats cochés, grignotages et ajustements).
@@ -63,3 +69,22 @@ cargo test --manifest-path src-tauri/Cargo.toml
 persistance dans `src/storage.ts` (navigateur ou natif) et `src-tauri/src/data.rs`.
 
 Publier une version : [docs/RELEASE.md](docs/RELEASE.md).
+
+## Repères nutritionnels
+
+Calcul dans `src/domain/targets.ts`, bilan et à-côtés dans `src/domain/balance.ts` (purs, testés).
+
+| Objectif | Valeur | Source |
+|---|---|---|
+| Métabolisme de base | équations de Henry (2005), poids et taille | EFSA, SACN |
+| Dépense | métabolisme × niveau d'activité 1,4 / 1,6 / 1,8 | EFSA |
+| Perte de poids | 0,25 ou 0,5 kg/semaine (7 700 kcal/kg), déficit plafonné à 20 % et jamais sous le métabolisme de base | |
+| Protéines | référence 0,83 g/kg ; 1 g/kg en perte de poids ; 10 à 20 % de l'énergie | ANSES |
+| Lipides, glucides | 35 à 40 %, 40 à 55 % de l'énergie | ANSES 2016 |
+| Graisses saturées | au plus 12 % de l'énergie | ANSES 2016 |
+| Sucres hors lactose | au plus 100 g/j | ANSES 2016 |
+| Fibres | 30 g/j | ANSES |
+| Sel | moins de 5 g/j (sel ajouté non compté) | OMS |
+| Légumes et fruits | au moins 400 g/j | OMS, PNNS |
+
+Ce sont des repères pour une personne adulte en bonne santé, pas un avis médical.

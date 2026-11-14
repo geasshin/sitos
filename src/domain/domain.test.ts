@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { addDays, diffDays, startOfWeek, weekday } from './dates';
-import { dayNutrition, indexFoods, mealOf, recipePortion } from './nutrition';
+import { dayNutrition, indexFoods, mealOf, recipePortion, ZERO } from './nutrition';
 import { closeGaps, markOut, moveBlock, planCustom, planRecipe, removeEntry, setIngredients, setPortions, swapBlock, validatePlan } from './plan';
-import { computeStock, forecast, priorities } from './stock';
+import { availableOn, computeStock, forecast, priorities } from './stock';
 import type { Data, Food, PlanEntry, Recipe } from './types';
 import { weeklyRate, weightTrend } from './weight';
 
-const n = (kcal: number, protein = 0) => ({ kcal, protein, carbs: 0, fat: 0, fiber: 0 });
+const n = (kcal: number, protein = 0) => ({ ...ZERO, kcal, protein });
 
 const foods: Food[] = [
   { id: 'riz', name: 'Riz', category: 'féculents', unit: 'g', per100: n(350, 8), storage: 'placard', shelfLifeDays: 365 },
@@ -98,6 +98,20 @@ describe('stock', () => {
     expect(prio[0].food.id).toBe('courgette');
     expect(prio[0].atRisk).toBe(2);
     expect(prio[0].recipes[0].id).toBe('riz-courgette');
+  });
+});
+
+describe('disponible à une date', () => {
+  it('réserve ce que les plats prévus vont utiliser, et écarte les lots qui auront passé leur date', () => {
+    const data = makeData([cook('c1', '2026-11-16', 'riz-courgette', 1), cook('c2', '2026-11-25', 'riz-seul', 1)]);
+    const stock = computeStock(data, indexFoods(foods), '2026-11-14');
+    const at = (d: string) => availableOn(data, stock, '2026-11-14', d);
+    // 4 courgettes, 1 réservée au plat du 16
+    expect(at('2026-11-14')('courgette')).toBe(3);
+    // 1000 g de riz, 100 g pour le 16 et 100 g pour le 25, même vu d'avant
+    expect(at('2026-11-15')('riz')).toBe(800);
+    // courgettes reçues le 14, gardées 5 jours : plus rien le 20
+    expect(at('2026-11-20')('courgette')).toBe(0);
   });
 });
 

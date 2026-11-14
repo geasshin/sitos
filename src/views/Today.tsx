@@ -2,14 +2,15 @@ import { useState } from 'react';
 import { AlertTriangle, ArrowRight, BookOpen, Check, ChevronDown, CookingPot, Plus, Refrigerator, Utensils, X } from 'lucide-react';
 import { useApp } from '../context';
 import { addDays, diffDays, formatDayMonth, formatLong, formatShort } from '../domain/dates';
-import { add, dayNutrition, itemsNutrients, mealOf, mealPortion, plantGrams, ZERO } from '../domain/nutrition';
+import { itemsNutrients, mealOf, mealPortion } from '../domain/nutrition';
 import { leftoversInFridge, markOut, newId, nextSlot, planCustom, planRecipe, toggleDone, unmarkOut } from '../domain/plan';
 import { amount, rescueSuggestions } from '../domain/stock';
 import type { PlanEntry, Recipe } from '../domain/types';
 import { MealPlanner } from '../components/MealPlanner';
+import { DayBalanceCard } from '../components/Balance';
 import { MealEditor } from '../components/MealEditor';
 import { Cover } from '../components/recipe';
-import { NutrientRows, Section, kcal } from '../components/ui';
+import { Section, kcal } from '../components/ui';
 
 export const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -52,7 +53,7 @@ export function TodayView() {
         </div>
         <div className="today-side">
           <Section title="Bilan du jour" aside={entry && entry.kind !== 'out' ? <span className="muted small">{entry.done ? 'mangé' : 'prévu'}</span> : undefined}>
-            <DayBalance />
+            <DayBalanceCard date={today} compact />
           </Section>
           <Priorities setEntries={setEntries} />
           <Fridge />
@@ -194,17 +195,6 @@ function NextDays() {
       </ul>
     </Section>
   );
-}
-
-function DayBalance() {
-  const app = useApp();
-  const { data, today } = app;
-  const d = dayNutrition(data, app.foods, today);
-  if (d.out) return <p className="muted">Repas dehors.</p>;
-  const snackItems = data.journal.snacks.filter((s) => s.date === today).flatMap((s) => s.items);
-  const total = add(d.meal?.nutrients ?? ZERO, itemsNutrients(app.foods, snackItems));
-  const plant = (d.meal?.plantG ?? 0) + plantGrams(app.foods, snackItems);
-  return <NutrientRows n={total} plantG={plant} settings={data.settings} compact />;
 }
 
 function Priorities({ setEntries }: { setEntries: (fn: (e: PlanEntry[]) => PlanEntry[]) => void }) {

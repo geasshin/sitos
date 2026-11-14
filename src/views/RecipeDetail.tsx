@@ -6,7 +6,10 @@ import { nextSlot, planRecipe } from '../domain/plan';
 import { amount, splitAmount } from '../domain/stock';
 import { isPlannable, portionsOf, type Recipe } from '../domain/types';
 import { Cover, HeartToggle, STATUS_LABEL, STATUSES, Stars, isUrl, sourceLabel } from '../components/recipe';
-import { Empty, NutrientRows } from '../components/ui';
+import { Empty } from '../components/ui';
+import { BalanceRows } from '../components/Balance';
+import { assessDay } from '../domain/balance';
+import { mealTargets } from '../domain/targets';
 
 export function RecipeDetail({ id }: { id: string }) {
   const app = useApp();
@@ -210,8 +213,8 @@ function MenuBlock({ r, planned, today }: { r: Recipe; planned: string[]; today:
       <h2 className="section-label">Dans tes menus</h2>
       <div className="menu-grid">
         <div>
-          <h3 className="mini-title">Par repas</h3>
-          <NutrientRows n={p.nutrients} plantG={p.plantG} settings={data.settings} compact />
+          <h3 className="mini-title">Par repas, face à un repas principal</h3>
+          <BalanceRows rows={assessDay(p.nutrients, p.plantG, mealTargets(app.targets)).rows} compact />
         </div>
         <div>
           <h3 className="mini-title">Ce qui sort du stock, pour {portionsOf(r)} repas</h3>

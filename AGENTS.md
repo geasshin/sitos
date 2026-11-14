@@ -9,6 +9,9 @@
   `ingredients` (et `title` pour un plat maison), voir `mealOf`/`mealOfCook` (src/domain/nutrition.ts) et
   `setIngredients`/`setPortions` (src/domain/plan.ts).
 - Le stock n'est jamais écrit : il est recalculé (achats − plats cochés − grignotages − ajustements).
+- Nutrition : valeurs des aliments tirées de Ciqual 2020 (code dans `source`) ; objectifs calculés par `targets.ts`
+  (Henry 2005, repères ANSES/OMS, sources dans le README) ; bilan et à-côtés par `balance.ts`. Toute règle chiffrée
+  nouvelle cite sa source et a son test.
 
 ## Données et sécurité
 

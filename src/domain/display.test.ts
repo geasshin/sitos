@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { indexFoods } from './nutrition';
+import { indexFoods, ZERO } from './nutrition';
 import { amount, computeStock, forecast, fraction, priorities, rescueSuggestions, splitAmount } from './stock';
 import type { Data, Food } from './types';
 
-const n = (kcal: number) => ({ kcal, protein: 0, carbs: 0, fat: 0, fiber: 0 });
+const n = (kcal: number) => ({ ...ZERO, kcal });
 const ail: Food = { id: 'ail', name: 'Ail (gousses)', piece: ["gousse d'ail", "gousses d'ail"], category: 'légumes', unit: 'pièce', gramsPerUnit: 5, per100: n(130), storage: 'placard', shelfLifeDays: 60 };
 const huile: Food = { id: 'huile', name: "Huile d'olive", category: 'matières grasses', unit: 'g', per100: n(900), storage: 'placard', shelfLifeDays: 365 };
 const banane: Food = { id: 'banane', name: 'Bananes', piece: ['banane', 'bananes'], category: 'fruits', unit: 'pièce', gramsPerUnit: 120, per100: n(90), storage: 'fruitier', shelfLifeDays: 6, dailyFruit: true };

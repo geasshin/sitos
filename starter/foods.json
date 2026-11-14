@@ -9,14 +9,19 @@
       "label": "barquette de 250 g"
     },
     "per100": {
-      "kcal": 37,
-      "protein": 0.8,
-      "carbs": 7,
-      "fat": 0.3,
-      "fiber": 2.7
+      "kcal": 40.2,
+      "protein": 0.63,
+      "carbs": 7.59,
+      "sugars": 6.0,
+      "lactose": 0.0,
+      "fat": 0.0,
+      "satFat": 0.0,
+      "fiber": 2.7,
+      "salt": 0.11
     },
     "storage": "frigo",
-    "shelfLifeDays": 5
+    "shelfLifeDays": 5,
+    "source": "Ciqual 2020 20009"
   },
   {
     "id": "tomates-cerises",
@@ -28,14 +33,19 @@
       "label": "barquette de 250 g"
     },
     "per100": {
-      "kcal": 22,
-      "protein": 0.9,
-      "carbs": 3,
-      "fat": 0.3,
-      "fiber": 1.4
+      "kcal": 33.7,
+      "protein": 1.31,
+      "carbs": 5.62,
+      "sugars": 4.8,
+      "lactose": 0.0,
+      "fat": 0.0,
+      "satFat": 0.0,
+      "fiber": 1.2,
+      "salt": 0.0
     },
     "storage": "fruitier",
-    "shelfLifeDays": 7
+    "shelfLifeDays": 7,
+    "source": "Ciqual 2020 20172"
   },
   {
     "id": "concombre",
@@ -48,14 +58,19 @@
     ],
     "gramsPerUnit": 300,
     "per100": {
-      "kcal": 13,
-      "protein": 0.6,
-      "carbs": 2,
-      "fat": 0.1,
-      "fiber": 0.6
+      "kcal": 15.6,
+      "protein": 0.64,
+      "carbs": 2.54,
+      "sugars": 1.67,
+      "lactose": 0.0,
+      "fat": 0.11,
+      "satFat": 0.04,
+      "fiber": 0.6,
+      "salt": 0.01
     },
     "storage": "frigo",
-    "shelfLifeDays": 7
+    "shelfLifeDays": 7,
+    "source": "Ciqual 2020 20019"
   },
   {
     "id": "courgette",
@@ -72,14 +87,19 @@
       "label": "filet de 1 kg, environ 4"
     },
     "per100": {
-      "kcal": 17,
-      "protein": 1.2,
-      "carbs": 2,
-      "fat": 0.3,
-      "fiber": 1.2
+      "kcal": 16.5,
+      "protein": 1.23,
+      "carbs": 1.8,
+      "sugars": 1.79,
+      "lactose": 0.0,
+      "fat": 0.26,
+      "satFat": 0.06,
+      "fiber": 1.05,
+      "salt": 0.02
     },
     "storage": "frigo",
-    "shelfLifeDays": 7
+    "shelfLifeDays": 7,
+    "source": "Ciqual 2020 20020"
   },
   {
     "id": "poireau",
@@ -91,14 +111,19 @@
       "label": "sachet de 500 g"
     },
     "per100": {
-      "kcal": 30,
-      "protein": 1.5,
-      "carbs": 4.5,
-      "fat": 0.3,
-      "fiber": 2.7
+      "kcal": 32.3,
+      "protein": 1.49,
+      "carbs": 4.9,
+      "sugars": 3.15,
+      "lactose": 0.0,
+      "fat": 0.25,
+      "satFat": 0.05,
+      "fiber": 2.27,
+      "salt": 0.04
     },
     "storage": "frigo",
-    "shelfLifeDays": 8
+    "shelfLifeDays": 8,
+    "source": "Ciqual 2020 20039"
   },
   {
     "id": "betteraves",
@@ -110,14 +135,19 @@
       "label": "sachet sous vide de 500 g"
     },
     "per100": {
-      "kcal": 45,
-      "protein": 1.6,
-      "carbs": 8,
-      "fat": 0.1,
-      "fiber": 2.3
+      "kcal": 42.8,
+      "protein": 1.44,
+      "carbs": 7.13,
+      "sugars": 6.7,
+      "lactose": 0.0,
+      "fat": 0.4,
+      "satFat": 0.15,
+      "fiber": 2.5,
+      "salt": 0.23
     },
     "storage": "frigo",
-    "shelfLifeDays": 18
+    "shelfLifeDays": 18,
+    "source": "Ciqual 2020 20003"
   },
   {
     "id": "butternut",
@@ -130,14 +160,19 @@
     ],
     "gramsPerUnit": 1000,
     "per100": {
-      "kcal": 45,
-      "protein": 1,
-      "carbs": 9,
+      "kcal": 30.5,
+      "protein": 1.0,
+      "carbs": 5.4,
+      "sugars": 2.2,
+      "lactose": 0.0,
       "fat": 0.1,
-      "fiber": 2
+      "satFat": 0.02,
+      "fiber": 2.0,
+      "salt": 0.01
     },
     "storage": "placard",
-    "shelfLifeDays": 45
+    "shelfLifeDays": 45,
+    "source": "Ciqual 2020 20138"
   },
   {
     "id": "oignon",
@@ -150,14 +185,19 @@
     ],
     "gramsPerUnit": 110,
     "per100": {
-      "kcal": 40,
-      "protein": 1.2,
-      "carbs": 7.5,
-      "fat": 0.2,
-      "fiber": 1.7
+      "kcal": 38.4,
+      "protein": 1.1,
+      "carbs": 6.25,
+      "sugars": 4.8,
+      "lactose": 0.0,
+      "fat": 0.62,
+      "satFat": 0.2,
+      "fiber": 1.7,
+      "salt": 0.1
     },
     "storage": "placard",
-    "shelfLifeDays": 30
+    "shelfLifeDays": 30,
+    "source": "Ciqual 2020 20034"
   },
   {
     "id": "pommes-de-terre",
@@ -169,14 +209,19 @@
       "label": "filet de 1 kg"
     },
     "per100": {
-      "kcal": 80,
-      "protein": 2,
-      "carbs": 17,
-      "fat": 0.1,
-      "fiber": 2
+      "kcal": 80.5,
+      "protein": 2.16,
+      "carbs": 16.2,
+      "sugars": 0.78,
+      "lactose": 0.0,
+      "fat": 0.18,
+      "satFat": 0.04,
+      "fiber": 1.8,
+      "salt": 0.02
     },
     "storage": "placard",
-    "shelfLifeDays": 30
+    "shelfLifeDays": 30,
+    "source": "Ciqual 2020 4008"
   },
   {
     "id": "banane",
@@ -189,15 +234,20 @@
     ],
     "gramsPerUnit": 120,
     "per100": {
-      "kcal": 90,
-      "protein": 1.1,
-      "carbs": 20,
-      "fat": 0.3,
-      "fiber": 2.6
+      "kcal": 90.5,
+      "protein": 1.06,
+      "carbs": 19.7,
+      "sugars": 15.6,
+      "lactose": 0.0,
+      "fat": 0.0,
+      "satFat": 0.0,
+      "fiber": 2.7,
+      "salt": 0.0
     },
     "storage": "fruitier",
     "shelfLifeDays": 6,
-    "dailyFruit": true
+    "dailyFruit": true,
+    "source": "Ciqual 2020 13005"
   },
   {
     "id": "clementine",
@@ -214,15 +264,20 @@
       "label": "filet de 500 g, environ 8"
     },
     "per100": {
-      "kcal": 47,
-      "protein": 0.8,
-      "carbs": 10,
-      "fat": 0.2,
-      "fiber": 1.6
+      "kcal": 47.3,
+      "protein": 0.81,
+      "carbs": 9.17,
+      "sugars": 8.6,
+      "lactose": 0.0,
+      "fat": 0.0,
+      "satFat": 0.0,
+      "fiber": 1.7,
+      "salt": 0.0
     },
     "storage": "fruitier",
     "shelfLifeDays": 14,
-    "dailyFruit": true
+    "dailyFruit": true,
+    "source": "Ciqual 2020 13024"
   },
   {
     "id": "kiwi",
@@ -235,15 +290,20 @@
     ],
     "gramsPerUnit": 75,
     "per100": {
-      "kcal": 60,
-      "protein": 1,
-      "carbs": 11,
+      "kcal": 60.5,
+      "protein": 0.88,
+      "carbs": 11.0,
+      "sugars": 8.9,
+      "lactose": 0.0,
       "fat": 0.6,
-      "fiber": 2.5
+      "satFat": 0.13,
+      "fiber": 2.4,
+      "salt": 0.0
     },
     "storage": "fruitier",
     "shelfLifeDays": 21,
-    "dailyFruit": true
+    "dailyFruit": true,
+    "source": "Ciqual 2020 13021"
   },
   {
     "id": "pomme",
@@ -260,15 +320,20 @@
       "label": "sachet de 6"
     },
     "per100": {
-      "kcal": 54,
-      "protein": 0.3,
+      "kcal": 52.4,
+      "protein": 0.25,
       "carbs": 11.6,
-      "fat": 0.2,
-      "fiber": 1.4
+      "sugars": 9.35,
+      "lactose": 0.0,
+      "fat": 0.25,
+      "satFat": 0.05,
+      "fiber": 1.4,
+      "salt": 0.0
     },
     "storage": "fruitier",
     "shelfLifeDays": 30,
-    "dailyFruit": true
+    "dailyFruit": true,
+    "source": "Ciqual 2020 13039"
   },
   {
     "id": "oeuf",
@@ -285,14 +350,19 @@
       "label": "boîte de 12"
     },
     "per100": {
-      "kcal": 140,
-      "protein": 12.5,
-      "carbs": 0.7,
-      "fat": 9.5,
-      "fiber": 0
+      "kcal": 140.0,
+      "protein": 12.7,
+      "carbs": 0.27,
+      "sugars": 0.27,
+      "lactose": 0.0,
+      "fat": 9.83,
+      "satFat": 2.64,
+      "fiber": 0.0,
+      "salt": 0.31
     },
     "storage": "frigo",
-    "shelfLifeDays": 28
+    "shelfLifeDays": 28,
+    "source": "Ciqual 2020 22000"
   },
   {
     "id": "skyr",
@@ -309,14 +379,19 @@
       "label": "pack de 8 × 100 g"
     },
     "per100": {
-      "kcal": 60,
-      "protein": 10,
+      "kcal": 63,
+      "protein": 11,
       "carbs": 4,
+      "sugars": 4,
+      "lactose": 3.5,
       "fat": 0.2,
-      "fiber": 0
+      "satFat": 0.1,
+      "fiber": 0,
+      "salt": 0.1
     },
     "storage": "frigo",
-    "shelfLifeDays": 24
+    "shelfLifeDays": 24,
+    "source": "étiquette type"
   },
   {
     "id": "feta",
@@ -328,14 +403,19 @@
       "label": "bloc de 200 g"
     },
     "per100": {
-      "kcal": 265,
-      "protein": 15,
-      "carbs": 1,
-      "fat": 22,
-      "fiber": 0
+      "kcal": 285.0,
+      "protein": 15.1,
+      "carbs": 0.65,
+      "sugars": 0.0,
+      "lactose": 0.0,
+      "fat": 24.3,
+      "satFat": 16.8,
+      "fiber": 0.0,
+      "salt": 2.27
     },
     "storage": "frigo",
-    "shelfLifeDays": 30
+    "shelfLifeDays": 30,
+    "source": "Ciqual 2020 12066"
   },
   {
     "id": "emmental",
@@ -347,14 +427,19 @@
       "label": "sachet de 350 g"
     },
     "per100": {
-      "kcal": 380,
-      "protein": 28,
-      "carbs": 0.5,
-      "fat": 29,
-      "fiber": 0
+      "kcal": 367.0,
+      "protein": 28.1,
+      "carbs": 0.0,
+      "sugars": 0.0,
+      "lactose": 0.0,
+      "fat": 28.6,
+      "satFat": 18.1,
+      "fiber": 0.0,
+      "salt": 0.75
     },
     "storage": "frigo",
-    "shelfLifeDays": 28
+    "shelfLifeDays": 28,
+    "source": "Ciqual 2020 12118"
   },
   {
     "id": "cheddar",
@@ -371,14 +456,19 @@
       "label": "paquet de 10 tranches"
     },
     "per100": {
-      "kcal": 400,
-      "protein": 25,
-      "carbs": 0.5,
-      "fat": 33,
-      "fiber": 0
+      "kcal": 399.0,
+      "protein": 24.0,
+      "carbs": 0.0,
+      "sugars": 0.0,
+      "lactose": 0.0,
+      "fat": 33.8,
+      "satFat": 19.5,
+      "fiber": 0.0,
+      "salt": 1.61
     },
     "storage": "frigo",
-    "shelfLifeDays": 28
+    "shelfLifeDays": 28,
+    "source": "Ciqual 2020 12726"
   },
   {
     "id": "fromage-tartiner",
@@ -390,14 +480,19 @@
       "label": "pot de 300 g"
     },
     "per100": {
-      "kcal": 235,
-      "protein": 7,
-      "carbs": 3.5,
-      "fat": 22,
-      "fiber": 0
+      "kcal": 255.0,
+      "protein": 5.36,
+      "carbs": 4.24,
+      "sugars": 2.82,
+      "lactose": 2.82,
+      "fat": 23.9,
+      "satFat": 16.4,
+      "fiber": 0.0,
+      "salt": 1.1
     },
     "storage": "frigo",
-    "shelfLifeDays": 28
+    "shelfLifeDays": 28,
+    "source": "Ciqual 2020 12315"
   },
   {
     "id": "beurre",
@@ -409,14 +504,19 @@
       "label": "plaquette de 250 g"
     },
     "per100": {
-      "kcal": 745,
+      "kcal": 753.0,
       "protein": 0.7,
-      "carbs": 0.6,
-      "fat": 82,
-      "fiber": 0
+      "carbs": 0.9,
+      "sugars": 0.83,
+      "lactose": 0.83,
+      "fat": 82.9,
+      "satFat": 55.4,
+      "fiber": 0.0,
+      "salt": 0.06
     },
     "storage": "frigo",
-    "shelfLifeDays": 45
+    "shelfLifeDays": 45,
+    "source": "Ciqual 2020 16400"
   },
   {
     "id": "lait",
@@ -428,14 +528,19 @@
       "label": "brique de 1 L"
     },
     "per100": {
-      "kcal": 46,
-      "protein": 3.3,
-      "carbs": 4.8,
-      "fat": 1.6,
-      "fiber": 0
+      "kcal": 47.0,
+      "protein": 3.38,
+      "carbs": 4.83,
+      "sugars": 4.66,
+      "lactose": 4.66,
+      "fat": 1.55,
+      "satFat": 1.04,
+      "fiber": 0.0,
+      "salt": 0.09
     },
     "storage": "placard",
-    "shelfLifeDays": 120
+    "shelfLifeDays": 120,
+    "source": "Ciqual 2020 19041"
   },
   {
     "id": "riz",
@@ -447,14 +552,19 @@
       "label": "paquet de 1 kg"
     },
     "per100": {
-      "kcal": 355,
-      "protein": 7,
-      "carbs": 79,
-      "fat": 0.6,
-      "fiber": 1.3
+      "kcal": 353.0,
+      "protein": 7.67,
+      "carbs": 77.8,
+      "sugars": 0.17,
+      "lactose": 0.0,
+      "fat": 0.84,
+      "satFat": 0.19,
+      "fiber": 0.92,
+      "salt": 0.01
     },
     "storage": "placard",
-    "shelfLifeDays": 365
+    "shelfLifeDays": 365,
+    "source": "Ciqual 2020 9119"
   },
   {
     "id": "pates",
@@ -466,14 +576,19 @@
       "label": "paquet de 500 g"
     },
     "per100": {
-      "kcal": 355,
-      "protein": 12.5,
-      "carbs": 71,
-      "fat": 1.5,
-      "fiber": 3
+      "kcal": 336.0,
+      "protein": 11.5,
+      "carbs": 65.8,
+      "sugars": 2.12,
+      "lactose": 0.0,
+      "fat": 1.79,
+      "satFat": 0.37,
+      "fiber": 3.0,
+      "salt": 0.03
     },
     "storage": "placard",
-    "shelfLifeDays": 365
+    "shelfLifeDays": 365,
+    "source": "Ciqual 2020 9810"
   },
   {
     "id": "farine",
@@ -485,14 +600,19 @@
       "label": "paquet de 1 kg"
     },
     "per100": {
-      "kcal": 340,
-      "protein": 10,
-      "carbs": 72,
-      "fat": 1.2,
-      "fiber": 3
+      "kcal": 350.0,
+      "protein": 9.03,
+      "carbs": 73.7,
+      "sugars": 1.5,
+      "lactose": 0.0,
+      "fat": 1.0,
+      "satFat": 0.19,
+      "fiber": 3.2,
+      "salt": 0.0
     },
     "storage": "placard",
-    "shelfLifeDays": 300
+    "shelfLifeDays": 300,
+    "source": "Ciqual 2020 9436"
   },
   {
     "id": "semoule",
@@ -500,14 +620,19 @@
     "category": "féculents",
     "unit": "g",
     "per100": {
-      "kcal": 360,
-      "protein": 12,
-      "carbs": 72,
-      "fat": 1.5,
-      "fiber": 3.5
+      "kcal": 352.0,
+      "protein": 10.9,
+      "carbs": 71.6,
+      "sugars": 1.0,
+      "lactose": 0.0,
+      "fat": 1.25,
+      "satFat": 0.21,
+      "fiber": 3.37,
+      "salt": 0.0
     },
     "storage": "placard",
-    "shelfLifeDays": 300
+    "shelfLifeDays": 300,
+    "source": "Ciqual 2020 9610"
   },
   {
     "id": "chapelure",
@@ -515,14 +640,19 @@
     "category": "féculents",
     "unit": "g",
     "per100": {
-      "kcal": 380,
-      "protein": 12,
-      "carbs": 75,
-      "fat": 3,
-      "fiber": 4
+      "kcal": 374.0,
+      "protein": 11.6,
+      "carbs": 70.0,
+      "sugars": 6.9,
+      "lactose": 0.0,
+      "fat": 3.77,
+      "satFat": 0.94,
+      "fiber": 4.5,
+      "salt": 1.82
     },
     "storage": "placard",
-    "shelfLifeDays": 300
+    "shelfLifeDays": 300,
+    "source": "Ciqual 2020 7500"
   },
   {
     "id": "lentilles-vertes",
@@ -534,14 +664,19 @@
       "label": "paquet de 500 g"
     },
     "per100": {
-      "kcal": 330,
-      "protein": 24,
-      "carbs": 48,
-      "fat": 1.5,
-      "fiber": 15
+      "kcal": 327.4,
+      "protein": 25.1,
+      "carbs": 44.5,
+      "sugars": 1.1,
+      "lactose": 0.0,
+      "fat": 1.8,
+      "satFat": 0.24,
+      "fiber": 16.4,
+      "salt": 0.0
     },
     "storage": "placard",
-    "shelfLifeDays": 365
+    "shelfLifeDays": 365,
+    "source": "Ciqual 2020 20585"
   },
   {
     "id": "lentilles-corail",
@@ -549,14 +684,19 @@
     "category": "légumineuses",
     "unit": "g",
     "per100": {
-      "kcal": 340,
-      "protein": 24,
-      "carbs": 50,
-      "fat": 1.5,
-      "fiber": 11
+      "kcal": 328.4,
+      "protein": 27.7,
+      "carbs": 44.9,
+      "sugars": 1.29,
+      "lactose": 0.0,
+      "fat": 0.8,
+      "satFat": 0.14,
+      "fiber": 15.4,
+      "salt": 0.0
     },
     "storage": "placard",
-    "shelfLifeDays": 365
+    "shelfLifeDays": 365,
+    "source": "Ciqual 2020 20535"
   },
   {
     "id": "pois-chiches",
@@ -573,14 +713,19 @@
       "label": "lot de 3 × 125 g égouttés"
     },
     "per100": {
-      "kcal": 125,
-      "protein": 7.5,
-      "carbs": 15,
-      "fat": 2.5,
-      "fiber": 5.5
+      "kcal": 122.0,
+      "protein": 6.74,
+      "carbs": 15.0,
+      "sugars": 0.5,
+      "lactose": 0.0,
+      "fat": 2.68,
+      "satFat": 0.3,
+      "fiber": 5.45,
+      "salt": 0.54
     },
     "storage": "placard",
-    "shelfLifeDays": 730
+    "shelfLifeDays": 730,
+    "source": "Ciqual 2020 20532"
   },
   {
     "id": "haricots-rouges",
@@ -597,14 +742,19 @@
       "label": "boîte de 500 g"
     },
     "per100": {
-      "kcal": 115,
-      "protein": 8,
-      "carbs": 15,
-      "fat": 0.5,
-      "fiber": 7
+      "kcal": 108.0,
+      "protein": 8.31,
+      "carbs": 13.0,
+      "sugars": 1.0,
+      "lactose": 0.0,
+      "fat": 0.97,
+      "satFat": 0.41,
+      "fiber": 7.0,
+      "salt": 0.68
     },
     "storage": "placard",
-    "shelfLifeDays": 730
+    "shelfLifeDays": 730,
+    "source": "Ciqual 2020 20524"
   },
   {
     "id": "puree-tomate",
@@ -616,14 +766,19 @@
       "label": "brique de 200 g"
     },
     "per100": {
-      "kcal": 30,
+      "kcal": 47.1,
       "protein": 1.4,
-      "carbs": 5,
-      "fat": 0.2,
-      "fiber": 1.2
+      "carbs": 7.54,
+      "sugars": 3.64,
+      "lactose": 0.0,
+      "fat": 0.4,
+      "satFat": 0.09,
+      "fiber": 2.38,
+      "salt": 0.51
     },
     "storage": "placard",
-    "shelfLifeDays": 365
+    "shelfLifeDays": 365,
+    "source": "Ciqual 2020 20170"
   },
   {
     "id": "concentre-tomate",
@@ -635,14 +790,19 @@
       "label": "tube de 150 g"
     },
     "per100": {
-      "kcal": 90,
-      "protein": 4.5,
-      "carbs": 15,
-      "fat": 0.5,
-      "fiber": 4
+      "kcal": 92.8,
+      "protein": 3.73,
+      "carbs": 17.0,
+      "sugars": 16.5,
+      "lactose": 0.0,
+      "fat": 0.29,
+      "satFat": 0.0,
+      "fiber": 3.62,
+      "salt": 0.93
     },
     "storage": "placard",
-    "shelfLifeDays": 365
+    "shelfLifeDays": 365,
+    "source": "Ciqual 2020 20268"
   },
   {
     "id": "pesto",
@@ -654,14 +814,19 @@
       "label": "pot de 200 g"
     },
     "per100": {
-      "kcal": 450,
-      "protein": 5,
-      "carbs": 6,
-      "fat": 45,
-      "fiber": 2
+      "kcal": 370.0,
+      "protein": 3.94,
+      "carbs": 6.6,
+      "sugars": 3.2,
+      "lactose": 1.0,
+      "fat": 35.4,
+      "satFat": 4.39,
+      "fiber": 2.5,
+      "salt": 2.64
     },
     "storage": "placard",
-    "shelfLifeDays": 180
+    "shelfLifeDays": 180,
+    "source": "Ciqual 2020 11179"
   },
   {
     "id": "olives",
@@ -673,14 +838,19 @@
       "label": "boîte de 160 g"
     },
     "per100": {
-      "kcal": 145,
-      "protein": 1,
-      "carbs": 0.5,
-      "fat": 15,
-      "fiber": 3
+      "kcal": 155.0,
+      "protein": 1.31,
+      "carbs": 0.0,
+      "sugars": 0.0,
+      "lactose": 0.0,
+      "fat": 15.7,
+      "satFat": 2.33,
+      "fiber": 3.6,
+      "salt": 3.15
     },
     "storage": "placard",
-    "shelfLifeDays": 365
+    "shelfLifeDays": 365,
+    "source": "Ciqual 2020 13033"
   },
   {
     "id": "oignons-frits",
@@ -692,14 +862,19 @@
       "label": "boîte de 100 g"
     },
     "per100": {
-      "kcal": 600,
+      "kcal": 590,
       "protein": 6,
       "carbs": 40,
-      "fat": 45,
-      "fiber": 5
+      "sugars": 9,
+      "lactose": 0,
+      "fat": 44,
+      "satFat": 21,
+      "fiber": 5,
+      "salt": 1.3
     },
     "storage": "placard",
-    "shelfLifeDays": 240
+    "shelfLifeDays": 240,
+    "source": "étiquette type"
   },
   {
     "id": "veloute",
@@ -712,14 +887,19 @@
     ],
     "gramsPerUnit": 1000,
     "per100": {
-      "kcal": 40,
-      "protein": 1,
-      "carbs": 5,
-      "fat": 1.8,
-      "fiber": 1
+      "kcal": 39.4,
+      "protein": 0.76,
+      "carbs": 5.05,
+      "sugars": 1.72,
+      "lactose": 0.0,
+      "fat": 1.56,
+      "satFat": 0.55,
+      "fiber": 1.1,
+      "salt": 0.69
     },
     "storage": "placard",
-    "shelfLifeDays": 180
+    "shelfLifeDays": 180,
+    "source": "Ciqual 2020 25903"
   },
   {
     "id": "lait-coco",
@@ -731,14 +911,19 @@
       "label": "brique de 20 cl"
     },
     "per100": {
-      "kcal": 190,
-      "protein": 2,
-      "carbs": 3,
-      "fat": 19,
-      "fiber": 0.5
+      "kcal": 188.0,
+      "protein": 1.77,
+      "carbs": 3.4,
+      "sugars": 2.1,
+      "lactose": 0.0,
+      "fat": 18.4,
+      "satFat": 16.5,
+      "fiber": 0.57,
+      "salt": 0.07
     },
     "storage": "placard",
-    "shelfLifeDays": 365
+    "shelfLifeDays": 365,
+    "source": "Ciqual 2020 18041"
   },
   {
     "id": "huile-olive",
@@ -750,14 +935,19 @@
       "label": "bouteille de 75 cl"
     },
     "per100": {
-      "kcal": 900,
-      "protein": 0,
-      "carbs": 0,
-      "fat": 100,
-      "fiber": 0
+      "kcal": 900.0,
+      "protein": 0.0,
+      "carbs": 0.0,
+      "sugars": 0.0,
+      "lactose": 0.0,
+      "fat": 99.9,
+      "satFat": 15.2,
+      "fiber": 0.0,
+      "salt": 0.0
     },
     "storage": "placard",
-    "shelfLifeDays": 365
+    "shelfLifeDays": 365,
+    "source": "Ciqual 2020 17270"
   },
   {
     "id": "moutarde",
@@ -769,14 +959,19 @@
       "label": "pot de 355 g"
     },
     "per100": {
-      "kcal": 150,
-      "protein": 7,
-      "carbs": 5,
-      "fat": 11,
-      "fiber": 3
+      "kcal": 152.0,
+      "protein": 6.92,
+      "carbs": 4.33,
+      "sugars": 1.66,
+      "lactose": 0.0,
+      "fat": 11.2,
+      "satFat": 0.76,
+      "fiber": 0.0,
+      "salt": 6.3
     },
     "storage": "placard",
-    "shelfLifeDays": 365
+    "shelfLifeDays": 365,
+    "source": "Ciqual 2020 11013"
   },
   {
     "id": "soja-sale",
@@ -788,14 +983,19 @@
       "label": "flacon de 15 cl"
     },
     "per100": {
-      "kcal": 60,
-      "protein": 8,
-      "carbs": 6,
-      "fat": 0,
-      "fiber": 0
+      "kcal": 45.5,
+      "protein": 7.08,
+      "carbs": 3.64,
+      "sugars": 1.32,
+      "lactose": 0.0,
+      "fat": 0.1,
+      "satFat": 0.01,
+      "fiber": 0.86,
+      "salt": 18.6
     },
     "storage": "placard",
-    "shelfLifeDays": 365
+    "shelfLifeDays": 365,
+    "source": "Ciqual 2020 11104"
   },
   {
     "id": "soja-sucre",
@@ -807,14 +1007,19 @@
       "label": "flacon de 15 cl"
     },
     "per100": {
-      "kcal": 250,
-      "protein": 3,
-      "carbs": 58,
-      "fat": 0,
-      "fiber": 0
+      "kcal": 169.5,
+      "protein": 2.88,
+      "carbs": 39.5,
+      "sugars": 39.5,
+      "lactose": 0.0,
+      "fat": 0.0,
+      "satFat": 0.0,
+      "fiber": 0.0,
+      "salt": 6.9
     },
     "storage": "placard",
-    "shelfLifeDays": 365
+    "shelfLifeDays": 365,
+    "source": "Ciqual 2020 11216"
   },
   {
     "id": "sel",
@@ -826,14 +1031,19 @@
       "label": "boîte de 550 g"
     },
     "per100": {
-      "kcal": 0,
-      "protein": 0,
-      "carbs": 0,
-      "fat": 0,
-      "fiber": 0
+      "kcal": 0.0,
+      "protein": 0.0,
+      "carbs": 0.0,
+      "sugars": 0.0,
+      "lactose": 0.0,
+      "fat": 0.0,
+      "satFat": 0.0,
+      "fiber": 0.0,
+      "salt": 97.8
     },
     "storage": "placard",
-    "shelfLifeDays": 3650
+    "shelfLifeDays": 3650,
+    "source": "Ciqual 2020 11017"
   },
   {
     "id": "levure",
@@ -845,14 +1055,19 @@
       "label": "sachet de 5 g"
     },
     "per100": {
-      "kcal": 300,
-      "protein": 40,
-      "carbs": 10,
-      "fat": 5,
-      "fiber": 25
+      "kcal": 353.5,
+      "protein": 44.5,
+      "carbs": 17.9,
+      "sugars": 0.0,
+      "lactose": 0.0,
+      "fat": 6.37,
+      "satFat": 1.5,
+      "fiber": 23.3,
+      "salt": 0.56
     },
     "storage": "placard",
-    "shelfLifeDays": 365
+    "shelfLifeDays": 365,
+    "source": "Ciqual 2020 11045"
   },
   {
     "id": "sucre",
@@ -860,14 +1075,19 @@
     "category": "sucré",
     "unit": "g",
     "per100": {
-      "kcal": 400,
-      "protein": 0,
-      "carbs": 100,
-      "fat": 0,
-      "fiber": 0
+      "kcal": 399.2,
+      "protein": 0.0,
+      "carbs": 99.8,
+      "sugars": 99.8,
+      "lactose": 0.0,
+      "fat": 0.0,
+      "satFat": 0.0,
+      "fiber": 0.0,
+      "salt": 0.01
     },
     "storage": "placard",
-    "shelfLifeDays": 730
+    "shelfLifeDays": 730,
+    "source": "Ciqual 2020 31016"
   },
   {
     "id": "cassonade",
@@ -879,14 +1099,19 @@
       "label": "paquet de 750 g"
     },
     "per100": {
-      "kcal": 395,
-      "protein": 0,
-      "carbs": 99,
-      "fat": 0,
-      "fiber": 0
+      "kcal": 389.7,
+      "protein": 0.12,
+      "carbs": 97.3,
+      "sugars": 95.5,
+      "lactose": 0.0,
+      "fat": 0.0,
+      "satFat": 0.0,
+      "fiber": 0.0,
+      "salt": 0.1
     },
     "storage": "placard",
-    "shelfLifeDays": 730
+    "shelfLifeDays": 730,
+    "source": "Ciqual 2020 31017"
   },
   {
     "id": "chocolat-poudre",
@@ -898,14 +1123,19 @@
       "label": "boîte de 500 g"
     },
     "per100": {
-      "kcal": 390,
-      "protein": 6,
-      "carbs": 75,
-      "fat": 4.5,
-      "fiber": 8
+      "kcal": 379.0,
+      "protein": 6.65,
+      "carbs": 75.6,
+      "sugars": 67.9,
+      "lactose": 0.0,
+      "fat": 3.29,
+      "satFat": 2.16,
+      "fiber": 10.5,
+      "salt": 0.21
     },
     "storage": "placard",
-    "shelfLifeDays": 365
+    "shelfLifeDays": 365,
+    "source": "Ciqual 2020 18101"
   },
   {
     "id": "compote",
@@ -922,14 +1152,19 @@
       "label": "pack de 16 × 100 g"
     },
     "per100": {
-      "kcal": 50,
-      "protein": 0.3,
-      "carbs": 11,
-      "fat": 0.1,
-      "fiber": 1.5
+      "kcal": 65.1,
+      "protein": 0.0,
+      "carbs": 15.1,
+      "sugars": 14.3,
+      "lactose": 0.0,
+      "fat": 0.08,
+      "satFat": 0.06,
+      "fiber": 1.3,
+      "salt": 0.0
     },
     "storage": "placard",
-    "shelfLifeDays": 240
+    "shelfLifeDays": 240,
+    "source": "Ciqual 2020 13151"
   },
   {
     "id": "twix",
@@ -946,14 +1181,19 @@
       "label": "paquet de 5 × 2 barres"
     },
     "per100": {
-      "kcal": 495,
-      "protein": 4.5,
-      "carbs": 64,
-      "fat": 24,
-      "fiber": 1.5
+      "kcal": 523.0,
+      "protein": 6.14,
+      "carbs": 60.5,
+      "sugars": 46.9,
+      "lactose": 8.85,
+      "fat": 28.1,
+      "satFat": 16.0,
+      "fiber": 1.93,
+      "salt": 0.39
     },
     "storage": "placard",
-    "shelfLifeDays": 240
+    "shelfLifeDays": 240,
+    "source": "Ciqual 2020 31000"
   },
   {
     "id": "mms",
@@ -965,14 +1205,19 @@
       "label": "sachet de 330 g"
     },
     "per100": {
-      "kcal": 515,
+      "kcal": 499.0,
       "protein": 9.5,
-      "carbs": 59,
-      "fat": 26,
-      "fiber": 3
+      "carbs": 55.9,
+      "sugars": 50.5,
+      "lactose": 6.2,
+      "fat": 25.0,
+      "satFat": 9.87,
+      "fiber": 5.9,
+      "salt": 0.12
     },
     "storage": "placard",
-    "shelfLifeDays": 240
+    "shelfLifeDays": 240,
+    "source": "Ciqual 2020 31042"
   },
   {
     "id": "espresso",
@@ -987,11 +1232,16 @@
       "kcal": 35,
       "protein": 0.5,
       "carbs": 8,
+      "sugars": 8,
+      "lactose": 0,
       "fat": 0,
-      "fiber": 0
+      "satFat": 0,
+      "fiber": 0,
+      "salt": 0.05
     },
     "storage": "placard",
-    "shelfLifeDays": 180
+    "shelfLifeDays": 180,
+    "source": "étiquette type"
   },
   {
     "id": "poulet",
@@ -1004,14 +1254,19 @@
     ],
     "gramsPerUnit": 140,
     "per100": {
-      "kcal": 115,
-      "protein": 23,
-      "carbs": 0,
-      "fat": 2,
-      "fiber": 0
+      "kcal": 110.0,
+      "protein": 23.4,
+      "carbs": 0.0,
+      "sugars": 0.0,
+      "lactose": 0.0,
+      "fat": 1.5,
+      "satFat": 0.44,
+      "fiber": 0.0,
+      "salt": 0.11
     },
     "storage": "frigo",
-    "shelfLifeDays": 4
+    "shelfLifeDays": 4,
+    "source": "Ciqual 2020 36017"
   },
   {
     "id": "creme",
@@ -1023,14 +1278,19 @@
       "label": "brique de 20 cl"
     },
     "per100": {
-      "kcal": 290,
-      "protein": 2.3,
-      "carbs": 3,
-      "fat": 30,
-      "fiber": 0
+      "kcal": 297.0,
+      "protein": 2.49,
+      "carbs": 1.94,
+      "sugars": 1.94,
+      "lactose": 1.94,
+      "fat": 30.7,
+      "satFat": 21.4,
+      "fiber": 0.0,
+      "salt": 0.07
     },
     "storage": "placard",
-    "shelfLifeDays": 120
+    "shelfLifeDays": 120,
+    "source": "Ciqual 2020 19415"
   },
   {
     "id": "echalote",
@@ -1043,14 +1303,19 @@
     ],
     "gramsPerUnit": 25,
     "per100": {
-      "kcal": 72,
-      "protein": 2.5,
-      "carbs": 15,
-      "fat": 0.1,
-      "fiber": 3
+      "kcal": 63.6,
+      "protein": 1.81,
+      "carbs": 12.2,
+      "sugars": 3.3,
+      "lactose": 0.0,
+      "fat": 0.0,
+      "satFat": 0.0,
+      "fiber": 2.6,
+      "salt": 0.01
     },
     "storage": "placard",
-    "shelfLifeDays": 30
+    "shelfLifeDays": 30,
+    "source": "Ciqual 2020 20097"
   },
   {
     "id": "citron",
@@ -1063,14 +1328,19 @@
     ],
     "gramsPerUnit": 30,
     "per100": {
-      "kcal": 30,
-      "protein": 0.4,
-      "carbs": 7,
-      "fat": 0.2,
-      "fiber": 0.3
+      "kcal": 27.6,
+      "protein": 0.0,
+      "carbs": 1.56,
+      "sugars": 0.8,
+      "lactose": 0.0,
+      "fat": 0.0,
+      "satFat": 0.0,
+      "fiber": 0.0,
+      "salt": 0.0
     },
     "storage": "fruitier",
-    "shelfLifeDays": 21
+    "shelfLifeDays": 21,
+    "source": "Ciqual 2020 13009"
   },
   {
     "id": "poivron",
@@ -1083,14 +1353,19 @@
     ],
     "gramsPerUnit": 170,
     "per100": {
-      "kcal": 30,
-      "protein": 1,
-      "carbs": 5,
-      "fat": 0.3,
-      "fiber": 2
+      "kcal": 36.6,
+      "protein": 1.06,
+      "carbs": 5.98,
+      "sugars": 4.8,
+      "lactose": 0.0,
+      "fat": 0.0,
+      "satFat": 0.0,
+      "fiber": 3.2,
+      "salt": 0.0
     },
     "storage": "frigo",
-    "shelfLifeDays": 10
+    "shelfLifeDays": 10,
+    "source": "Ciqual 2020 20087"
   },
   {
     "id": "mozzarella",
@@ -1103,14 +1378,19 @@
     ],
     "gramsPerUnit": 125,
     "per100": {
-      "kcal": 250,
-      "protein": 18,
-      "carbs": 1,
-      "fat": 19,
-      "fiber": 0
+      "kcal": 227.0,
+      "protein": 16.5,
+      "carbs": 0.75,
+      "sugars": 0.7,
+      "lactose": 0.7,
+      "fat": 17.7,
+      "satFat": 11.7,
+      "fiber": 0.0,
+      "salt": 0.6
     },
     "storage": "frigo",
-    "shelfLifeDays": 12
+    "shelfLifeDays": 12,
+    "source": "Ciqual 2020 19590"
   },
   {
     "id": "udon",
@@ -1118,14 +1398,19 @@
     "category": "féculents",
     "unit": "g",
     "per100": {
-      "kcal": 130,
+      "kcal": 135,
       "protein": 3.5,
       "carbs": 27,
-      "fat": 0.5,
-      "fiber": 1.2
+      "sugars": 0.5,
+      "lactose": 0,
+      "fat": 0.6,
+      "satFat": 0.1,
+      "fiber": 1.2,
+      "salt": 0.6
     },
     "storage": "placard",
-    "shelfLifeDays": 180
+    "shelfLifeDays": 180,
+    "source": "étiquette type"
   },
   {
     "id": "gnocchis",
@@ -1133,14 +1418,19 @@
     "category": "féculents",
     "unit": "g",
     "per100": {
-      "kcal": 150,
-      "protein": 3.5,
-      "carbs": 32,
-      "fat": 0.3,
-      "fiber": 2
+      "kcal": 176.0,
+      "protein": 4.66,
+      "carbs": 35.0,
+      "sugars": 3.18,
+      "lactose": 0.0,
+      "fat": 1.42,
+      "satFat": 0.3,
+      "fiber": 2.2,
+      "salt": 1.18
     },
     "storage": "placard",
-    "shelfLifeDays": 60
+    "shelfLifeDays": 60,
+    "source": "Ciqual 2020 26264"
   },
   {
     "id": "beurre-cacahuete",
@@ -1148,14 +1438,19 @@
     "category": "matières grasses",
     "unit": "g",
     "per100": {
-      "kcal": 600,
-      "protein": 25,
-      "carbs": 15,
-      "fat": 50,
-      "fiber": 7
+      "kcal": 635.7,
+      "protein": 22.2,
+      "carbs": 16.1,
+      "sugars": 10.5,
+      "lactose": 0.0,
+      "fat": 52.5,
+      "satFat": 10.4,
+      "fiber": 5.0,
+      "salt": 0.97
     },
     "storage": "placard",
-    "shelfLifeDays": 270
+    "shelfLifeDays": 270,
+    "source": "Ciqual 2020 15202"
   },
   {
     "id": "soja-texture",
@@ -1166,11 +1461,16 @@
       "kcal": 340,
       "protein": 50,
       "carbs": 30,
-      "fat": 1,
-      "fiber": 15
+      "sugars": 7,
+      "lactose": 0,
+      "fat": 1.5,
+      "satFat": 0.2,
+      "fiber": 15,
+      "salt": 0.03
     },
     "storage": "placard",
-    "shelfLifeDays": 365
+    "shelfLifeDays": 365,
+    "source": "étiquette type"
   },
   {
     "id": "chou-rouge",
@@ -1183,14 +1483,19 @@
     ],
     "gramsPerUnit": 1000,
     "per100": {
-      "kcal": 30,
-      "protein": 1.4,
-      "carbs": 4,
-      "fat": 0.2,
-      "fiber": 2.5
+      "kcal": 30.0,
+      "protein": 1.13,
+      "carbs": 4.33,
+      "sugars": 3.9,
+      "lactose": 0.0,
+      "fat": 0.0,
+      "satFat": 0.0,
+      "fiber": 2.8,
+      "salt": 0.04
     },
     "storage": "frigo",
-    "shelfLifeDays": 28
+    "shelfLifeDays": 28,
+    "source": "Ciqual 2020 20014"
   },
   {
     "id": "potimarron",
@@ -1203,14 +1508,19 @@
     ],
     "gramsPerUnit": 1200,
     "per100": {
-      "kcal": 40,
-      "protein": 1,
-      "carbs": 8,
-      "fat": 0.2,
-      "fiber": 2
+      "kcal": 18.0,
+      "protein": 0.63,
+      "carbs": 3.1,
+      "sugars": 0.0,
+      "lactose": 0.0,
+      "fat": 0.1,
+      "satFat": 0.03,
+      "fiber": 1.1,
+      "salt": 0.07
     },
     "storage": "placard",
-    "shelfLifeDays": 45
+    "shelfLifeDays": 45,
+    "source": "Ciqual 2020 20132"
   },
   {
     "id": "carotte",
@@ -1218,14 +1528,19 @@
     "category": "légumes",
     "unit": "g",
     "per100": {
-      "kcal": 37,
-      "protein": 0.8,
-      "carbs": 7,
-      "fat": 0.3,
-      "fiber": 2.7
+      "kcal": 40.2,
+      "protein": 0.63,
+      "carbs": 7.59,
+      "sugars": 6.0,
+      "lactose": 0.0,
+      "fat": 0.0,
+      "satFat": 0.0,
+      "fiber": 2.7,
+      "salt": 0.11
     },
     "storage": "frigo",
-    "shelfLifeDays": 21
+    "shelfLifeDays": 21,
+    "source": "Ciqual 2020 20009"
   },
   {
     "id": "cacao",
@@ -1233,13 +1548,18 @@
     "category": "sucré",
     "unit": "g",
     "per100": {
-      "kcal": 380,
-      "protein": 20,
-      "carbs": 15,
-      "fat": 22,
-      "fiber": 30
+      "kcal": 387.0,
+      "protein": 22.4,
+      "carbs": 11.6,
+      "sugars": 0.9,
+      "lactose": 0.0,
+      "fat": 20.6,
+      "satFat": 12.4,
+      "fiber": 29.5,
+      "salt": 0.11
     },
     "storage": "placard",
-    "shelfLifeDays": 365
+    "shelfLifeDays": 365,
+    "source": "Ciqual 2020 18100"
   }
 ]

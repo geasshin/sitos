@@ -18,9 +18,19 @@ export interface Nutrients {
   kcal: number;
   protein: number;
   carbs: number;
+  /** Sucres totaux (mono- et disaccharides), lactose compris. */
+  sugars: number;
+  /** Lactose, pour calculer les sucres « hors lactose » de l'ANSES. */
+  lactose: number;
   fat: number;
+  /** Acides gras saturés. */
+  satFat: number;
   fiber: number;
+  /** Sel (chlorure de sodium). */
+  salt: number;
 }
+
+export const NUTRIENT_KEYS = ['kcal', 'protein', 'carbs', 'sugars', 'lactose', 'fat', 'satFat', 'fiber', 'salt'] as const;
 
 export interface Food {
   id: string;
@@ -33,8 +43,10 @@ export interface Food {
   gramsPerUnit?: number;
   /** Conditionnement, pour l'affichage : « 1 boîte = 400 ml ». */
   pack?: { size: number; label: string };
-  /** Valeurs pour 100 g (ou 100 ml). Estimations type Ciqual. */
+  /** Valeurs pour 100 g (ou 100 ml) : table Ciqual 2020 de l'ANSES, ou étiquette type. */
   per100: Nutrients;
+  /** D'où viennent les valeurs : « Ciqual 2020 20172 », « étiquette type ». */
+  source?: string;
   storage: Storage;
   /** Durée de conservation typique après réception, en jours. */
   shelfLifeDays: number;
@@ -160,15 +172,42 @@ export interface Journal {
   weights: WeightEntry[];
 }
 
+export type Sex = 'homme' | 'femme';
+export type Activity = 'faible' | 'moderee' | 'elevee';
+export type Goal = 'maintenir' | 'doucement' | 'perdre';
+export type Diet = 'omnivore' | 'flexitarien' | 'vegetarien';
+export type Rhythm = 'un-repas' | 'deux-repas' | 'trois-repas';
+
+/** Ce que la personne a dit d'elle dans « Mes objectifs ». */
+export interface Profile {
+  sex: Sex;
+  age: number;
+  heightCm: number;
+  weightKg: number;
+  activity: Activity;
+  goal: Goal;
+  diet: Diet;
+  rhythm: Rhythm;
+  /** Date de la dernière validation des objectifs. */
+  updatedAt: ISODate;
+}
+
 export interface Settings {
   kcalTarget: number;
   proteinTarget: number;
   fiberTarget: number;
   /** Grammes de légumes et fruits visés par jour. */
   plantTargetG: number;
+  /** Plafonds (absents : repères ANSES/OMS calculés, voir targets.ts). */
+  satFatMaxG?: number;
+  sugarsMaxG?: number;
+  saltMaxG?: number;
+  /** Part de l'énergie de la journée apportée par le repas principal. */
+  mealShare?: number;
   /** Fruits mangés nature par jour, pour projeter le stock de fruits. */
   fruitsPerDay: number;
   demo: boolean;
+  profile?: Profile;
 }
 
 export interface SnackIdea {

@@ -1,26 +1,28 @@
-import { portionsOf, type Data, type Food, type Ingredient, type ISODate, type Nutrients, type PlanEntry, type Recipe } from './types';
+import { NUTRIENT_KEYS, portionsOf, type Data, type Food, type Ingredient, type ISODate, type Nutrients, type PlanEntry, type Recipe } from './types';
 
-export const ZERO: Nutrients = { kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
+export const ZERO: Nutrients = { kcal: 0, protein: 0, carbs: 0, sugars: 0, lactose: 0, fat: 0, satFat: 0, fiber: 0, salt: 0 };
 
 export function add(a: Nutrients, b: Nutrients): Nutrients {
-  return {
-    kcal: a.kcal + b.kcal,
-    protein: a.protein + b.protein,
-    carbs: a.carbs + b.carbs,
-    fat: a.fat + b.fat,
-    fiber: a.fiber + b.fiber,
-  };
+  const out = { ...ZERO };
+  for (const k of NUTRIENT_KEYS) out[k] = (a[k] ?? 0) + (b[k] ?? 0);
+  return out;
 }
 
 export function scale(a: Nutrients, k: number): Nutrients {
-  return {
-    kcal: a.kcal * k,
-    protein: a.protein * k,
-    carbs: a.carbs * k,
-    fat: a.fat * k,
-    fiber: a.fiber * k,
-  };
+  const out = { ...ZERO };
+  for (const key of NUTRIENT_KEYS) out[key] = (a[key] ?? 0) * k;
+  return out;
 }
+
+/** Complète des valeurs anciennes ou partielles (champs absents = 0). */
+export function completeNutrients(n: Partial<Nutrients> | undefined): Nutrients {
+  const out = { ...ZERO };
+  for (const k of NUTRIENT_KEYS) out[k] = Number(n?.[k]) || 0;
+  return out;
+}
+
+/** Sucres au sens de l'ANSES : sucres totaux hors lactose (et galactose, négligeable). */
+export const sugarsExLactose = (n: Nutrients) => Math.max(0, n.sugars - n.lactose);
 
 /** Quantité exprimée en grammes (ou ml, assimilés à des grammes). */
 export function toGrams(food: Food, qty: number): number {
