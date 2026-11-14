@@ -1,0 +1,302 @@
+name: Release
+
+# Même principe que Sylloge : une seule release, lancée à la main.
+#
+# - mode « release » : vérifie, construit l'app macOS universelle, assemble latest.json
+#   et publie. La release reste un brouillon tant que le manifeste publié n'est pas complet.
+# - mode « build » : vérifie et construit, ne publie rien.
+# - un push sur main ne déclenche rien : la release est toujours un geste explicite.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "release : construire et publier. build : construire et vérifier seulement."
+        type: choice
+        options: [release, build]
+        default: release
+
+concurrency:
+  group: sitos-release
+  cancel-in-progress: false
+
+permissions:
+  # Les jobs de construction lisent seulement. Le job de publication reçoit l'écriture, plus bas.
+  contents: read
+
+jobs:
+  prepare:
+    name: Calculer la version
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          # Les tags sont nécessaires au calcul : un clone superficiel n'en voit aucun.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+
+      - name: Calculer la prochaine version
+        id: version
+        run: node scripts/prepare-tauri-release-version.mjs
+
+  verify:
+    name: Vérifier le code
+    runs-on: macos-15-intel
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Installer Rust, rustfmt et clippy
+        uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+
+      - name: Cache Cargo
+        uses: swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
+        with:
+          workspaces: ./src-tauri -> target
+
+      - name: Installer les dépendances npm
+        run: npm ci
+
+      - name: TypeScript, tests du domaine et des scripts de release
+        run: npm run verify
+
+      # generate_context! embarque dist/ à la compilation : il doit exister avant cargo test.
+      - name: Construire le frontend pour les tests Rust
+        run: npm run build
+
+      - name: Format, lint et tests Rust
+        run: |
+          cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
+          cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
+          cargo test --manifest-path src-tauri/Cargo.toml
+
+      - name: Auditer les dépendances npm de production
+        run: npm audit --omit=dev --audit-level=high
+
+  macos:
+    name: Construire macOS (universel)
+    needs: [prepare, verify]
+    # Intel : les runners macOS arm64 hébergés manquent souvent de capacité.
+    runs-on: macos-15-intel
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Installer Rust et les cibles macOS
+        uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          toolchain: stable
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - name: Cache Cargo
+        uses: swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
+        with:
+          workspaces: ./src-tauri -> target
+
+      - name: Installer les dépendances npm
+        run: npm ci
+
+      - name: Aligner la version sur celle de la release
+        env:
+          SITOS_RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+        run: node scripts/prepare-tauri-release-version.mjs
+
+      # Le cache restaure target/ : sans ce nettoyage, le dmg d'une version précédente partirait.
+      - name: Nettoyer les bundles mis en cache
+        run: rm -rf src-tauri/target/universal-apple-darwin/release/bundle
+
+      - name: Construire le bundle universel et signer l'archive updater
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${TAURI_SIGNING_PRIVATE_KEY:?Le secret TAURI_SIGNING_PRIVATE_KEY doit être configuré.}"
+          npm run tauri:build -- --target universal-apple-darwin
+
+      - name: Vérifier les artefacts
+        shell: bash
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          set -euo pipefail
+          bundle="src-tauri/target/universal-apple-darwin/release/bundle"
+          shopt -s nullglob
+          dmg_files=("$bundle"/dmg/*.dmg)
+          if [[ ! -s "$bundle/macos/Sitos.app.tar.gz" || ! -s "$bundle/macos/Sitos.app.tar.gz.sig" || ${#dmg_files[@]} -ne 1 ]]; then
+            echo "Les artefacts macOS attendus sont absents ou ambigus." >&2
+            exit 1
+          fi
+          if [[ "${dmg_files[0]}" != *"_${VERSION}_"* ]]; then
+            echo "Le dmg ne porte pas la version $VERSION : ${dmg_files[0]}" >&2
+            exit 1
+          fi
+          bundled="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$bundle/macos/Sitos.app/Contents/Info.plist")"
+          if [[ "$bundled" != "$VERSION" ]]; then
+            echo "Le bundle annonce $bundled au lieu de $VERSION." >&2
+            exit 1
+          fi
+          ls -l "$bundle/macos" "$bundle/dmg"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: macos-bundle
+          if-no-files-found: error
+          retention-days: 1
+          path: |
+            src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
+            src-tauri/target/universal-apple-darwin/release/bundle/macos/Sitos.app.tar.gz
+            src-tauri/target/universal-apple-darwin/release/bundle/macos/Sitos.app.tar.gz.sig
+
+  publish:
+    name: Assembler le manifeste et publier
+    needs: [prepare, verify, macos]
+    if: inputs.mode != 'build'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      # L'écriture n'est accordée qu'ici, au job qui crée la release.
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      VERSION: ${{ needs.prepare.outputs.version }}
+      TAG: ${{ needs.prepare.outputs.tag }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: macos-bundle
+          path: artifacts/macos
+
+      # Cherchés par nom : la structure produite par upload-artifact ne fait pas partie du contrat.
+      - name: Localiser les artefacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          dmg="$(find artifacts/macos -name '*.dmg' -type f | head -n 2)"
+          archive="$(find artifacts/macos -name 'Sitos.app.tar.gz' -type f)"
+          archive_sig="$(find artifacts/macos -name 'Sitos.app.tar.gz.sig' -type f)"
+          for name in dmg archive archive_sig; do
+            value="${!name}"
+            if [[ -z "$value" || "$(wc -l <<< "$value")" -ne 1 ]]; then
+              echo "Artefact $name absent ou ambigu : $value" >&2
+              exit 1
+            fi
+            echo "${name^^}=$value" >> "$GITHUB_ENV"
+          done
+
+      - name: Préparer les notes de version
+        shell: bash
+        run: |
+          set -euo pipefail
+          notes="$RUNNER_TEMP/release-notes.md"
+          gh api "repos/$GITHUB_REPOSITORY/releases/generate-notes" \
+            -f tag_name="$TAG" -f target_commitish="$GITHUB_SHA" --jq .body > "$notes" || true
+          if ! grep -q '[^[:space:]]' "$notes" || grep -qx 'null' "$notes"; then
+            printf '%s\n' "Mise à jour de Sitos." > "$notes"
+          fi
+          echo "NOTES=$notes" >> "$GITHUB_ENV"
+
+      # Une release déjà publiée n'est jamais réécrite : un nouveau passage échoue bruyamment.
+      - name: Créer ou reprendre le brouillon de release
+        shell: bash
+        run: |
+          set -euo pipefail
+          find_release() {
+            gh api --paginate "repos/$GITHUB_REPOSITORY/releases?per_page=100" \
+              --jq ".[] | select(.tag_name == \"$TAG\") | \"\(.id) \(.draft)\""
+          }
+          existing="$(find_release)"
+          if [[ -z "$existing" ]]; then
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+              --title "Sitos $VERSION" --notes-file "$NOTES" --draft
+            for attempt in $(seq 1 10); do
+              existing="$(find_release)"
+              [[ -n "$existing" ]] && break
+              sleep 3
+            done
+          fi
+          read -r release_id draft <<< "$existing"
+          if [[ ! "$release_id" =~ ^[1-9][0-9]*$ ]]; then
+            echo "Impossible de retrouver la release $TAG." >&2
+            exit 1
+          fi
+          if [[ "$draft" != "true" ]]; then
+            echo "La release $TAG est déjà publiée : refus de la réécrire." >&2
+            exit 1
+          fi
+          echo "RELEASE_ID=$release_id" >> "$GITHUB_ENV"
+
+      # Une copie à nom fixe : releases/latest/download/Sitos-macOS.dmg suit toujours la dernière version.
+      - name: Attacher les artefacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          stable="$RUNNER_TEMP/stable"
+          mkdir -p "$stable"
+          cp "$DMG" "$stable/Sitos-macOS.dmg"
+          gh release upload "$TAG" "$DMG" "$ARCHIVE" "$ARCHIVE_SIG" "$stable/Sitos-macOS.dmg" \
+            --repo "$GITHUB_REPOSITORY" --clobber
+
+      # L'archive est universelle : une seule signature sert les deux cibles darwin.
+      - name: Assembler latest.json
+        shell: bash
+        run: |
+          set -euo pipefail
+          manifest="$RUNNER_TEMP/latest.json"
+          base="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG"
+          node scripts/merge-tauri-latest-json.mjs \
+            --manifest none --version "$VERSION" --notes-file "$NOTES" \
+            --platform darwin-aarch64 --url "$base/Sitos.app.tar.gz" \
+            --signature-file "$ARCHIVE_SIG" --output "$manifest"
+          node scripts/merge-tauri-latest-json.mjs \
+            --manifest "$manifest" --version "$VERSION" \
+            --alias darwin-aarch64:darwin-x86_64 --output "$manifest"
+          node scripts/merge-tauri-latest-json.mjs --check "$manifest" --version "$VERSION" \
+            --require darwin-aarch64 --require darwin-x86_64
+          gh release upload "$TAG" "$manifest" --repo "$GITHUB_REPOSITORY" --clobber
+
+      - name: Vérifier le manifeste publié puis ouvrir la release
+        shell: bash
+        run: |
+          set -euo pipefail
+          verify="$RUNNER_TEMP/verify"
+          mkdir -p "$verify"
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" \
+            --pattern latest.json --dir "$verify" --clobber
+          node scripts/merge-tauri-latest-json.mjs --check "$verify/latest.json" --version "$VERSION" \
+            --require darwin-aarch64 --require darwin-x86_64
+          assets="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name')"
+          if ! grep -qx "Sitos-macOS.dmg" <<< "$assets"; then
+            echo "Le fichier à nom fixe Sitos-macOS.dmg manque." >&2
+            exit 1
+          fi
+          gh api --method PATCH "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID" \
+            -F draft=false -F target_commitish="$GITHUB_SHA" >/dev/null
+          echo "Sitos $VERSION publiée."

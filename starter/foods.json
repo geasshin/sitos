@@ -1,0 +1,1245 @@
+[
+  {
+    "id": "carottes-rapees",
+    "name": "Carottes râpées",
+    "category": "légumes",
+    "unit": "g",
+    "pack": {
+      "size": 250,
+      "label": "barquette de 250 g"
+    },
+    "per100": {
+      "kcal": 37,
+      "protein": 0.8,
+      "carbs": 7,
+      "fat": 0.3,
+      "fiber": 2.7
+    },
+    "storage": "frigo",
+    "shelfLifeDays": 5
+  },
+  {
+    "id": "tomates-cerises",
+    "name": "Tomates cerises",
+    "category": "légumes",
+    "unit": "g",
+    "pack": {
+      "size": 250,
+      "label": "barquette de 250 g"
+    },
+    "per100": {
+      "kcal": 22,
+      "protein": 0.9,
+      "carbs": 3,
+      "fat": 0.3,
+      "fiber": 1.4
+    },
+    "storage": "fruitier",
+    "shelfLifeDays": 7
+  },
+  {
+    "id": "concombre",
+    "name": "Concombre",
+    "category": "légumes",
+    "unit": "pièce",
+    "piece": [
+      "concombre",
+      "concombres"
+    ],
+    "gramsPerUnit": 300,
+    "per100": {
+      "kcal": 13,
+      "protein": 0.6,
+      "carbs": 2,
+      "fat": 0.1,
+      "fiber": 0.6
+    },
+    "storage": "frigo",
+    "shelfLifeDays": 7
+  },
+  {
+    "id": "courgette",
+    "name": "Courgettes",
+    "category": "légumes",
+    "unit": "pièce",
+    "piece": [
+      "courgette",
+      "courgettes"
+    ],
+    "gramsPerUnit": 250,
+    "pack": {
+      "size": 4,
+      "label": "filet de 1 kg, environ 4"
+    },
+    "per100": {
+      "kcal": 17,
+      "protein": 1.2,
+      "carbs": 2,
+      "fat": 0.3,
+      "fiber": 1.2
+    },
+    "storage": "frigo",
+    "shelfLifeDays": 7
+  },
+  {
+    "id": "poireau",
+    "name": "Blancs de poireaux",
+    "category": "légumes",
+    "unit": "g",
+    "pack": {
+      "size": 500,
+      "label": "sachet de 500 g"
+    },
+    "per100": {
+      "kcal": 30,
+      "protein": 1.5,
+      "carbs": 4.5,
+      "fat": 0.3,
+      "fiber": 2.7
+    },
+    "storage": "frigo",
+    "shelfLifeDays": 8
+  },
+  {
+    "id": "betteraves",
+    "name": "Betteraves rouges cuites",
+    "category": "légumes",
+    "unit": "g",
+    "pack": {
+      "size": 500,
+      "label": "sachet sous vide de 500 g"
+    },
+    "per100": {
+      "kcal": 45,
+      "protein": 1.6,
+      "carbs": 8,
+      "fat": 0.1,
+      "fiber": 2.3
+    },
+    "storage": "frigo",
+    "shelfLifeDays": 18
+  },
+  {
+    "id": "butternut",
+    "name": "Butternut",
+    "category": "légumes",
+    "unit": "pièce",
+    "piece": [
+      "butternut",
+      "butternuts"
+    ],
+    "gramsPerUnit": 1000,
+    "per100": {
+      "kcal": 45,
+      "protein": 1,
+      "carbs": 9,
+      "fat": 0.1,
+      "fiber": 2
+    },
+    "storage": "placard",
+    "shelfLifeDays": 45
+  },
+  {
+    "id": "oignon",
+    "name": "Oignons jaunes",
+    "category": "légumes",
+    "unit": "pièce",
+    "piece": [
+      "oignon",
+      "oignons"
+    ],
+    "gramsPerUnit": 110,
+    "per100": {
+      "kcal": 40,
+      "protein": 1.2,
+      "carbs": 7.5,
+      "fat": 0.2,
+      "fiber": 1.7
+    },
+    "storage": "placard",
+    "shelfLifeDays": 30
+  },
+  {
+    "id": "pommes-de-terre",
+    "name": "Pommes de terre",
+    "category": "féculents",
+    "unit": "g",
+    "pack": {
+      "size": 1000,
+      "label": "filet de 1 kg"
+    },
+    "per100": {
+      "kcal": 80,
+      "protein": 2,
+      "carbs": 17,
+      "fat": 0.1,
+      "fiber": 2
+    },
+    "storage": "placard",
+    "shelfLifeDays": 30
+  },
+  {
+    "id": "banane",
+    "name": "Bananes",
+    "category": "fruits",
+    "unit": "pièce",
+    "piece": [
+      "banane",
+      "bananes"
+    ],
+    "gramsPerUnit": 120,
+    "per100": {
+      "kcal": 90,
+      "protein": 1.1,
+      "carbs": 20,
+      "fat": 0.3,
+      "fiber": 2.6
+    },
+    "storage": "fruitier",
+    "shelfLifeDays": 6,
+    "dailyFruit": true
+  },
+  {
+    "id": "clementine",
+    "name": "Clémentines",
+    "category": "fruits",
+    "unit": "pièce",
+    "piece": [
+      "clémentine",
+      "clémentines"
+    ],
+    "gramsPerUnit": 62,
+    "pack": {
+      "size": 8,
+      "label": "filet de 500 g, environ 8"
+    },
+    "per100": {
+      "kcal": 47,
+      "protein": 0.8,
+      "carbs": 10,
+      "fat": 0.2,
+      "fiber": 1.6
+    },
+    "storage": "fruitier",
+    "shelfLifeDays": 14,
+    "dailyFruit": true
+  },
+  {
+    "id": "kiwi",
+    "name": "Kiwis",
+    "category": "fruits",
+    "unit": "pièce",
+    "piece": [
+      "kiwi",
+      "kiwis"
+    ],
+    "gramsPerUnit": 75,
+    "per100": {
+      "kcal": 60,
+      "protein": 1,
+      "carbs": 11,
+      "fat": 0.6,
+      "fiber": 2.5
+    },
+    "storage": "fruitier",
+    "shelfLifeDays": 21,
+    "dailyFruit": true
+  },
+  {
+    "id": "pomme",
+    "name": "Pommes Jazz",
+    "category": "fruits",
+    "unit": "pièce",
+    "piece": [
+      "pomme",
+      "pommes"
+    ],
+    "gramsPerUnit": 160,
+    "pack": {
+      "size": 6,
+      "label": "sachet de 6"
+    },
+    "per100": {
+      "kcal": 54,
+      "protein": 0.3,
+      "carbs": 11.6,
+      "fat": 0.2,
+      "fiber": 1.4
+    },
+    "storage": "fruitier",
+    "shelfLifeDays": 30,
+    "dailyFruit": true
+  },
+  {
+    "id": "oeuf",
+    "name": "Œufs plein air",
+    "category": "viandes & œufs",
+    "unit": "pièce",
+    "piece": [
+      "œuf",
+      "œufs"
+    ],
+    "gramsPerUnit": 55,
+    "pack": {
+      "size": 12,
+      "label": "boîte de 12"
+    },
+    "per100": {
+      "kcal": 140,
+      "protein": 12.5,
+      "carbs": 0.7,
+      "fat": 9.5,
+      "fiber": 0
+    },
+    "storage": "frigo",
+    "shelfLifeDays": 28
+  },
+  {
+    "id": "skyr",
+    "name": "Skyr nature",
+    "category": "laitiers",
+    "unit": "pièce",
+    "piece": [
+      "pot de skyr",
+      "pots de skyr"
+    ],
+    "gramsPerUnit": 100,
+    "pack": {
+      "size": 8,
+      "label": "pack de 8 × 100 g"
+    },
+    "per100": {
+      "kcal": 60,
+      "protein": 10,
+      "carbs": 4,
+      "fat": 0.2,
+      "fiber": 0
+    },
+    "storage": "frigo",
+    "shelfLifeDays": 24
+  },
+  {
+    "id": "feta",
+    "name": "Feta AOP",
+    "category": "laitiers",
+    "unit": "g",
+    "pack": {
+      "size": 200,
+      "label": "bloc de 200 g"
+    },
+    "per100": {
+      "kcal": 265,
+      "protein": 15,
+      "carbs": 1,
+      "fat": 22,
+      "fiber": 0
+    },
+    "storage": "frigo",
+    "shelfLifeDays": 30
+  },
+  {
+    "id": "emmental",
+    "name": "Emmental râpé",
+    "category": "laitiers",
+    "unit": "g",
+    "pack": {
+      "size": 350,
+      "label": "sachet de 350 g"
+    },
+    "per100": {
+      "kcal": 380,
+      "protein": 28,
+      "carbs": 0.5,
+      "fat": 29,
+      "fiber": 0
+    },
+    "storage": "frigo",
+    "shelfLifeDays": 28
+  },
+  {
+    "id": "cheddar",
+    "name": "Cheddar en tranches",
+    "category": "laitiers",
+    "unit": "pièce",
+    "piece": [
+      "tranche de cheddar",
+      "tranches de cheddar"
+    ],
+    "gramsPerUnit": 20,
+    "pack": {
+      "size": 10,
+      "label": "paquet de 10 tranches"
+    },
+    "per100": {
+      "kcal": 400,
+      "protein": 25,
+      "carbs": 0.5,
+      "fat": 33,
+      "fiber": 0
+    },
+    "storage": "frigo",
+    "shelfLifeDays": 28
+  },
+  {
+    "id": "fromage-tartiner",
+    "name": "Fromage à tartiner nature",
+    "category": "laitiers",
+    "unit": "g",
+    "pack": {
+      "size": 300,
+      "label": "pot de 300 g"
+    },
+    "per100": {
+      "kcal": 235,
+      "protein": 7,
+      "carbs": 3.5,
+      "fat": 22,
+      "fiber": 0
+    },
+    "storage": "frigo",
+    "shelfLifeDays": 28
+  },
+  {
+    "id": "beurre",
+    "name": "Beurre doux",
+    "category": "matières grasses",
+    "unit": "g",
+    "pack": {
+      "size": 250,
+      "label": "plaquette de 250 g"
+    },
+    "per100": {
+      "kcal": 745,
+      "protein": 0.7,
+      "carbs": 0.6,
+      "fat": 82,
+      "fiber": 0
+    },
+    "storage": "frigo",
+    "shelfLifeDays": 45
+  },
+  {
+    "id": "lait",
+    "name": "Lait demi-écrémé",
+    "category": "laitiers",
+    "unit": "ml",
+    "pack": {
+      "size": 1000,
+      "label": "brique de 1 L"
+    },
+    "per100": {
+      "kcal": 46,
+      "protein": 3.3,
+      "carbs": 4.8,
+      "fat": 1.6,
+      "fiber": 0
+    },
+    "storage": "placard",
+    "shelfLifeDays": 120
+  },
+  {
+    "id": "riz",
+    "name": "Riz (thaï ou reste)",
+    "category": "féculents",
+    "unit": "g",
+    "pack": {
+      "size": 1000,
+      "label": "paquet de 1 kg"
+    },
+    "per100": {
+      "kcal": 355,
+      "protein": 7,
+      "carbs": 79,
+      "fat": 0.6,
+      "fiber": 1.3
+    },
+    "storage": "placard",
+    "shelfLifeDays": 365
+  },
+  {
+    "id": "pates",
+    "name": "Pâtes (penne, torti)",
+    "category": "féculents",
+    "unit": "g",
+    "pack": {
+      "size": 500,
+      "label": "paquet de 500 g"
+    },
+    "per100": {
+      "kcal": 355,
+      "protein": 12.5,
+      "carbs": 71,
+      "fat": 1.5,
+      "fiber": 3
+    },
+    "storage": "placard",
+    "shelfLifeDays": 365
+  },
+  {
+    "id": "farine",
+    "name": "Farine T55",
+    "category": "féculents",
+    "unit": "g",
+    "pack": {
+      "size": 1000,
+      "label": "paquet de 1 kg"
+    },
+    "per100": {
+      "kcal": 340,
+      "protein": 10,
+      "carbs": 72,
+      "fat": 1.2,
+      "fiber": 3
+    },
+    "storage": "placard",
+    "shelfLifeDays": 300
+  },
+  {
+    "id": "semoule",
+    "name": "Semoule",
+    "category": "féculents",
+    "unit": "g",
+    "per100": {
+      "kcal": 360,
+      "protein": 12,
+      "carbs": 72,
+      "fat": 1.5,
+      "fiber": 3.5
+    },
+    "storage": "placard",
+    "shelfLifeDays": 300
+  },
+  {
+    "id": "chapelure",
+    "name": "Chapelure",
+    "category": "féculents",
+    "unit": "g",
+    "per100": {
+      "kcal": 380,
+      "protein": 12,
+      "carbs": 75,
+      "fat": 3,
+      "fiber": 4
+    },
+    "storage": "placard",
+    "shelfLifeDays": 300
+  },
+  {
+    "id": "lentilles-vertes",
+    "name": "Lentilles vertes",
+    "category": "légumineuses",
+    "unit": "g",
+    "pack": {
+      "size": 500,
+      "label": "paquet de 500 g"
+    },
+    "per100": {
+      "kcal": 330,
+      "protein": 24,
+      "carbs": 48,
+      "fat": 1.5,
+      "fiber": 15
+    },
+    "storage": "placard",
+    "shelfLifeDays": 365
+  },
+  {
+    "id": "lentilles-corail",
+    "name": "Lentilles corail",
+    "category": "légumineuses",
+    "unit": "g",
+    "per100": {
+      "kcal": 340,
+      "protein": 24,
+      "carbs": 50,
+      "fat": 1.5,
+      "fiber": 11
+    },
+    "storage": "placard",
+    "shelfLifeDays": 365
+  },
+  {
+    "id": "pois-chiches",
+    "name": "Pois chiches",
+    "category": "légumineuses",
+    "unit": "pièce",
+    "piece": [
+      "petite boîte de pois chiches",
+      "petites boîtes de pois chiches"
+    ],
+    "gramsPerUnit": 125,
+    "pack": {
+      "size": 3,
+      "label": "lot de 3 × 125 g égouttés"
+    },
+    "per100": {
+      "kcal": 125,
+      "protein": 7.5,
+      "carbs": 15,
+      "fat": 2.5,
+      "fiber": 5.5
+    },
+    "storage": "placard",
+    "shelfLifeDays": 730
+  },
+  {
+    "id": "haricots-rouges",
+    "name": "Haricots rouges",
+    "category": "légumineuses",
+    "unit": "pièce",
+    "piece": [
+      "boîte de haricots rouges",
+      "boîtes de haricots rouges"
+    ],
+    "gramsPerUnit": 500,
+    "pack": {
+      "size": 1,
+      "label": "boîte de 500 g"
+    },
+    "per100": {
+      "kcal": 115,
+      "protein": 8,
+      "carbs": 15,
+      "fat": 0.5,
+      "fiber": 7
+    },
+    "storage": "placard",
+    "shelfLifeDays": 730
+  },
+  {
+    "id": "puree-tomate",
+    "name": "Purée de tomates",
+    "category": "épicerie",
+    "unit": "g",
+    "pack": {
+      "size": 200,
+      "label": "brique de 200 g"
+    },
+    "per100": {
+      "kcal": 30,
+      "protein": 1.4,
+      "carbs": 5,
+      "fat": 0.2,
+      "fiber": 1.2
+    },
+    "storage": "placard",
+    "shelfLifeDays": 365
+  },
+  {
+    "id": "concentre-tomate",
+    "name": "Double concentré de tomates",
+    "category": "épicerie",
+    "unit": "g",
+    "pack": {
+      "size": 150,
+      "label": "tube de 150 g"
+    },
+    "per100": {
+      "kcal": 90,
+      "protein": 4.5,
+      "carbs": 15,
+      "fat": 0.5,
+      "fiber": 4
+    },
+    "storage": "placard",
+    "shelfLifeDays": 365
+  },
+  {
+    "id": "pesto",
+    "name": "Pesto au basilic",
+    "category": "épicerie",
+    "unit": "g",
+    "pack": {
+      "size": 200,
+      "label": "pot de 200 g"
+    },
+    "per100": {
+      "kcal": 450,
+      "protein": 5,
+      "carbs": 6,
+      "fat": 45,
+      "fiber": 2
+    },
+    "storage": "placard",
+    "shelfLifeDays": 180
+  },
+  {
+    "id": "olives",
+    "name": "Olives vertes dénoyautées",
+    "category": "épicerie",
+    "unit": "g",
+    "pack": {
+      "size": 160,
+      "label": "boîte de 160 g"
+    },
+    "per100": {
+      "kcal": 145,
+      "protein": 1,
+      "carbs": 0.5,
+      "fat": 15,
+      "fiber": 3
+    },
+    "storage": "placard",
+    "shelfLifeDays": 365
+  },
+  {
+    "id": "oignons-frits",
+    "name": "Oignons frits",
+    "category": "épicerie",
+    "unit": "g",
+    "pack": {
+      "size": 100,
+      "label": "boîte de 100 g"
+    },
+    "per100": {
+      "kcal": 600,
+      "protein": 6,
+      "carbs": 40,
+      "fat": 45,
+      "fiber": 5
+    },
+    "storage": "placard",
+    "shelfLifeDays": 240
+  },
+  {
+    "id": "veloute",
+    "name": "Veloutés (courgette, pomme de terre)",
+    "category": "légumes",
+    "unit": "pièce",
+    "piece": [
+      "brique de velouté",
+      "briques de velouté"
+    ],
+    "gramsPerUnit": 1000,
+    "per100": {
+      "kcal": 40,
+      "protein": 1,
+      "carbs": 5,
+      "fat": 1.8,
+      "fiber": 1
+    },
+    "storage": "placard",
+    "shelfLifeDays": 180
+  },
+  {
+    "id": "lait-coco",
+    "name": "Lait de coco",
+    "category": "matières grasses",
+    "unit": "ml",
+    "pack": {
+      "size": 200,
+      "label": "brique de 20 cl"
+    },
+    "per100": {
+      "kcal": 190,
+      "protein": 2,
+      "carbs": 3,
+      "fat": 19,
+      "fiber": 0.5
+    },
+    "storage": "placard",
+    "shelfLifeDays": 365
+  },
+  {
+    "id": "huile-olive",
+    "name": "Huile d'olive",
+    "category": "matières grasses",
+    "unit": "g",
+    "pack": {
+      "size": 690,
+      "label": "bouteille de 75 cl"
+    },
+    "per100": {
+      "kcal": 900,
+      "protein": 0,
+      "carbs": 0,
+      "fat": 100,
+      "fiber": 0
+    },
+    "storage": "placard",
+    "shelfLifeDays": 365
+  },
+  {
+    "id": "moutarde",
+    "name": "Moutarde douce",
+    "category": "épicerie",
+    "unit": "g",
+    "pack": {
+      "size": 355,
+      "label": "pot de 355 g"
+    },
+    "per100": {
+      "kcal": 150,
+      "protein": 7,
+      "carbs": 5,
+      "fat": 11,
+      "fiber": 3
+    },
+    "storage": "placard",
+    "shelfLifeDays": 365
+  },
+  {
+    "id": "soja-sale",
+    "name": "Sauce soja salée",
+    "category": "épicerie",
+    "unit": "ml",
+    "pack": {
+      "size": 150,
+      "label": "flacon de 15 cl"
+    },
+    "per100": {
+      "kcal": 60,
+      "protein": 8,
+      "carbs": 6,
+      "fat": 0,
+      "fiber": 0
+    },
+    "storage": "placard",
+    "shelfLifeDays": 365
+  },
+  {
+    "id": "soja-sucre",
+    "name": "Sauce soja sucrée",
+    "category": "épicerie",
+    "unit": "ml",
+    "pack": {
+      "size": 150,
+      "label": "flacon de 15 cl"
+    },
+    "per100": {
+      "kcal": 250,
+      "protein": 3,
+      "carbs": 58,
+      "fat": 0,
+      "fiber": 0
+    },
+    "storage": "placard",
+    "shelfLifeDays": 365
+  },
+  {
+    "id": "sel",
+    "name": "Sel fin",
+    "category": "épicerie",
+    "unit": "g",
+    "pack": {
+      "size": 550,
+      "label": "boîte de 550 g"
+    },
+    "per100": {
+      "kcal": 0,
+      "protein": 0,
+      "carbs": 0,
+      "fat": 0,
+      "fiber": 0
+    },
+    "storage": "placard",
+    "shelfLifeDays": 3650
+  },
+  {
+    "id": "levure",
+    "name": "Levure de boulangerie",
+    "category": "épicerie",
+    "unit": "g",
+    "pack": {
+      "size": 5,
+      "label": "sachet de 5 g"
+    },
+    "per100": {
+      "kcal": 300,
+      "protein": 40,
+      "carbs": 10,
+      "fat": 5,
+      "fiber": 25
+    },
+    "storage": "placard",
+    "shelfLifeDays": 365
+  },
+  {
+    "id": "sucre",
+    "name": "Sucre",
+    "category": "sucré",
+    "unit": "g",
+    "per100": {
+      "kcal": 400,
+      "protein": 0,
+      "carbs": 100,
+      "fat": 0,
+      "fiber": 0
+    },
+    "storage": "placard",
+    "shelfLifeDays": 730
+  },
+  {
+    "id": "cassonade",
+    "name": "Cassonade",
+    "category": "sucré",
+    "unit": "g",
+    "pack": {
+      "size": 750,
+      "label": "paquet de 750 g"
+    },
+    "per100": {
+      "kcal": 395,
+      "protein": 0,
+      "carbs": 99,
+      "fat": 0,
+      "fiber": 0
+    },
+    "storage": "placard",
+    "shelfLifeDays": 730
+  },
+  {
+    "id": "chocolat-poudre",
+    "name": "Chocolat en poudre 32 %",
+    "category": "sucré",
+    "unit": "g",
+    "pack": {
+      "size": 500,
+      "label": "boîte de 500 g"
+    },
+    "per100": {
+      "kcal": 390,
+      "protein": 6,
+      "carbs": 75,
+      "fat": 4.5,
+      "fiber": 8
+    },
+    "storage": "placard",
+    "shelfLifeDays": 365
+  },
+  {
+    "id": "compote",
+    "name": "Compote de pomme sans sucres ajoutés",
+    "category": "fruits",
+    "unit": "pièce",
+    "piece": [
+      "coupelle de compote",
+      "coupelles de compote"
+    ],
+    "gramsPerUnit": 100,
+    "pack": {
+      "size": 16,
+      "label": "pack de 16 × 100 g"
+    },
+    "per100": {
+      "kcal": 50,
+      "protein": 0.3,
+      "carbs": 11,
+      "fat": 0.1,
+      "fiber": 1.5
+    },
+    "storage": "placard",
+    "shelfLifeDays": 240
+  },
+  {
+    "id": "twix",
+    "name": "Twix",
+    "category": "sucré",
+    "unit": "pièce",
+    "piece": [
+      "barre de Twix",
+      "barres de Twix"
+    ],
+    "gramsPerUnit": 25,
+    "pack": {
+      "size": 10,
+      "label": "paquet de 5 × 2 barres"
+    },
+    "per100": {
+      "kcal": 495,
+      "protein": 4.5,
+      "carbs": 64,
+      "fat": 24,
+      "fiber": 1.5
+    },
+    "storage": "placard",
+    "shelfLifeDays": 240
+  },
+  {
+    "id": "mms",
+    "name": "M&M's Peanut",
+    "category": "sucré",
+    "unit": "g",
+    "pack": {
+      "size": 330,
+      "label": "sachet de 330 g"
+    },
+    "per100": {
+      "kcal": 515,
+      "protein": 9.5,
+      "carbs": 59,
+      "fat": 26,
+      "fiber": 3
+    },
+    "storage": "placard",
+    "shelfLifeDays": 240
+  },
+  {
+    "id": "espresso",
+    "name": "Espresso concentré caramel",
+    "category": "boissons",
+    "unit": "ml",
+    "pack": {
+      "size": 485,
+      "label": "bouteille de 485 ml (16 portions)"
+    },
+    "per100": {
+      "kcal": 35,
+      "protein": 0.5,
+      "carbs": 8,
+      "fat": 0,
+      "fiber": 0
+    },
+    "storage": "placard",
+    "shelfLifeDays": 180
+  },
+  {
+    "id": "poulet",
+    "name": "Filets de poulet",
+    "category": "viandes & œufs",
+    "unit": "pièce",
+    "piece": [
+      "filet de poulet",
+      "filets de poulet"
+    ],
+    "gramsPerUnit": 140,
+    "per100": {
+      "kcal": 115,
+      "protein": 23,
+      "carbs": 0,
+      "fat": 2,
+      "fiber": 0
+    },
+    "storage": "frigo",
+    "shelfLifeDays": 4
+  },
+  {
+    "id": "creme",
+    "name": "Crème liquide 30 %",
+    "category": "laitiers",
+    "unit": "ml",
+    "pack": {
+      "size": 200,
+      "label": "brique de 20 cl"
+    },
+    "per100": {
+      "kcal": 290,
+      "protein": 2.3,
+      "carbs": 3,
+      "fat": 30,
+      "fiber": 0
+    },
+    "storage": "placard",
+    "shelfLifeDays": 120
+  },
+  {
+    "id": "echalote",
+    "name": "Échalotes",
+    "category": "légumes",
+    "unit": "pièce",
+    "piece": [
+      "échalote",
+      "échalotes"
+    ],
+    "gramsPerUnit": 25,
+    "per100": {
+      "kcal": 72,
+      "protein": 2.5,
+      "carbs": 15,
+      "fat": 0.1,
+      "fiber": 3
+    },
+    "storage": "placard",
+    "shelfLifeDays": 30
+  },
+  {
+    "id": "citron",
+    "name": "Citrons",
+    "category": "fruits",
+    "unit": "pièce",
+    "piece": [
+      "citron",
+      "citrons"
+    ],
+    "gramsPerUnit": 30,
+    "per100": {
+      "kcal": 30,
+      "protein": 0.4,
+      "carbs": 7,
+      "fat": 0.2,
+      "fiber": 0.3
+    },
+    "storage": "fruitier",
+    "shelfLifeDays": 21
+  },
+  {
+    "id": "poivron",
+    "name": "Poivron rouge",
+    "category": "légumes",
+    "unit": "pièce",
+    "piece": [
+      "poivron rouge",
+      "poivrons rouges"
+    ],
+    "gramsPerUnit": 170,
+    "per100": {
+      "kcal": 30,
+      "protein": 1,
+      "carbs": 5,
+      "fat": 0.3,
+      "fiber": 2
+    },
+    "storage": "frigo",
+    "shelfLifeDays": 10
+  },
+  {
+    "id": "mozzarella",
+    "name": "Mozzarella",
+    "category": "laitiers",
+    "unit": "pièce",
+    "piece": [
+      "boule de mozzarella",
+      "boules de mozzarella"
+    ],
+    "gramsPerUnit": 125,
+    "per100": {
+      "kcal": 250,
+      "protein": 18,
+      "carbs": 1,
+      "fat": 19,
+      "fiber": 0
+    },
+    "storage": "frigo",
+    "shelfLifeDays": 12
+  },
+  {
+    "id": "udon",
+    "name": "Nouilles udon précuites",
+    "category": "féculents",
+    "unit": "g",
+    "per100": {
+      "kcal": 130,
+      "protein": 3.5,
+      "carbs": 27,
+      "fat": 0.5,
+      "fiber": 1.2
+    },
+    "storage": "placard",
+    "shelfLifeDays": 180
+  },
+  {
+    "id": "gnocchis",
+    "name": "Gnocchis",
+    "category": "féculents",
+    "unit": "g",
+    "per100": {
+      "kcal": 150,
+      "protein": 3.5,
+      "carbs": 32,
+      "fat": 0.3,
+      "fiber": 2
+    },
+    "storage": "placard",
+    "shelfLifeDays": 60
+  },
+  {
+    "id": "beurre-cacahuete",
+    "name": "Beurre de cacahuète",
+    "category": "matières grasses",
+    "unit": "g",
+    "per100": {
+      "kcal": 600,
+      "protein": 25,
+      "carbs": 15,
+      "fat": 50,
+      "fiber": 7
+    },
+    "storage": "placard",
+    "shelfLifeDays": 270
+  },
+  {
+    "id": "soja-texture",
+    "name": "Protéines de soja texturées",
+    "category": "légumineuses",
+    "unit": "g",
+    "per100": {
+      "kcal": 340,
+      "protein": 50,
+      "carbs": 30,
+      "fat": 1,
+      "fiber": 15
+    },
+    "storage": "placard",
+    "shelfLifeDays": 365
+  },
+  {
+    "id": "chou-rouge",
+    "name": "Chou rouge",
+    "category": "légumes",
+    "unit": "pièce",
+    "piece": [
+      "chou rouge",
+      "choux rouges"
+    ],
+    "gramsPerUnit": 1000,
+    "per100": {
+      "kcal": 30,
+      "protein": 1.4,
+      "carbs": 4,
+      "fat": 0.2,
+      "fiber": 2.5
+    },
+    "storage": "frigo",
+    "shelfLifeDays": 28
+  },
+  {
+    "id": "potimarron",
+    "name": "Potimarron",
+    "category": "légumes",
+    "unit": "pièce",
+    "piece": [
+      "potimarron",
+      "potimarrons"
+    ],
+    "gramsPerUnit": 1200,
+    "per100": {
+      "kcal": 40,
+      "protein": 1,
+      "carbs": 8,
+      "fat": 0.2,
+      "fiber": 2
+    },
+    "storage": "placard",
+    "shelfLifeDays": 45
+  },
+  {
+    "id": "carotte",
+    "name": "Carottes",
+    "category": "légumes",
+    "unit": "g",
+    "per100": {
+      "kcal": 37,
+      "protein": 0.8,
+      "carbs": 7,
+      "fat": 0.3,
+      "fiber": 2.7
+    },
+    "storage": "frigo",
+    "shelfLifeDays": 21
+  },
+  {
+    "id": "cacao",
+    "name": "Cacao en poudre non sucré",
+    "category": "sucré",
+    "unit": "g",
+    "per100": {
+      "kcal": 380,
+      "protein": 20,
+      "carbs": 15,
+      "fat": 22,
+      "fiber": 30
+    },
+    "storage": "placard",
+    "shelfLifeDays": 365
+  }
+]

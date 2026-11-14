@@ -1,0 +1,169 @@
+[
+  {
+    "id": "skyr-banane",
+    "name": "Skyr et banane",
+    "items": [
+      {
+        "foodId": "skyr",
+        "qty": 1
+      },
+      {
+        "foodId": "banane",
+        "qty": 1
+      }
+    ],
+    "note": "Le plus rassasiant pour son poids."
+  },
+  {
+    "id": "skyr-chocolat",
+    "name": "Skyr au chocolat",
+    "items": [
+      {
+        "foodId": "skyr",
+        "qty": 1
+      },
+      {
+        "foodId": "chocolat-poudre",
+        "qty": 10
+      }
+    ],
+    "note": "Goût dessert, 10 g de protéines."
+  },
+  {
+    "id": "compote",
+    "name": "Une compote",
+    "items": [
+      {
+        "foodId": "compote",
+        "qty": 1
+      }
+    ]
+  },
+  {
+    "id": "betteraves",
+    "name": "Betteraves en vinaigrette",
+    "items": [
+      {
+        "foodId": "betteraves",
+        "qty": 100
+      },
+      {
+        "foodId": "huile-olive",
+        "qty": 5
+      }
+    ],
+    "note": "Pour finir le sachet ouvert."
+  },
+  {
+    "id": "chocolat-chaud",
+    "name": "Bol de lait chocolaté",
+    "items": [
+      {
+        "foodId": "lait",
+        "qty": 250
+      },
+      {
+        "foodId": "chocolat-poudre",
+        "qty": 15
+      }
+    ]
+  },
+  {
+    "id": "pomme",
+    "name": "Une pomme",
+    "items": [
+      {
+        "foodId": "pomme",
+        "qty": 1
+      }
+    ]
+  },
+  {
+    "id": "clementines",
+    "name": "Deux clémentines",
+    "items": [
+      {
+        "foodId": "clementine",
+        "qty": 2
+      }
+    ]
+  },
+  {
+    "id": "kiwi",
+    "name": "Un kiwi",
+    "items": [
+      {
+        "foodId": "kiwi",
+        "qty": 1
+      }
+    ]
+  },
+  {
+    "id": "twix",
+    "name": "Une barre de Twix",
+    "items": [
+      {
+        "foodId": "twix",
+        "qty": 1
+      }
+    ],
+    "note": "Le paquet en contient 10."
+  },
+  {
+    "id": "mms",
+    "name": "Une poignée de M&M's",
+    "items": [
+      {
+        "foodId": "mms",
+        "qty": 30
+      }
+    ],
+    "note": "30 g, environ 12 bonbons."
+  },
+  {
+    "id": "mini-fondants",
+    "name": "Deux mini-fondants",
+    "items": [
+      {
+        "foodId": "oeuf",
+        "qty": 0.5
+      },
+      {
+        "foodId": "farine",
+        "qty": 15
+      },
+      {
+        "foodId": "chocolat-poudre",
+        "qty": 12.5
+      },
+      {
+        "foodId": "cassonade",
+        "qty": 10
+      },
+      {
+        "foodId": "lait",
+        "qty": 37.5
+      },
+      {
+        "foodId": "beurre",
+        "qty": 15
+      }
+    ],
+    "note": "Ta recette air fryer, moitié de la fournée. Pour un soir plaisir."
+  },
+  {
+    "id": "pois-chiches-grilles",
+    "name": "Pois chiches grillés à l’air fryer",
+    "items": [
+      {
+        "foodId": "pois-chiches",
+        "qty": 1
+      },
+      {
+        "foodId": "huile-olive",
+        "qty": 5
+      }
+    ],
+    "note": "200 °C, 12 à 15 min, paprika."
+  }
+]

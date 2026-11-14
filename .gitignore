@@ -1,0 +1,9 @@
+node_modules/
+dist/
+src-tauri/target/
+src-tauri/gen/schemas/
+# Données personnelles : jamais dans le dépôt (le dépôt est public).
+data/
+*.local
+.DS_Store
+.playwright-cli/
