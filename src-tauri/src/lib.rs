@@ -23,6 +23,10 @@ pub fn run() {
             data::load_data,
             data::save_collection,
             data::open_data_folder,
+            data::create_backup,
+            data::get_backup_info,
+            data::get_data_folder,
+            data::open_link,
             updater::check_for_app_update,
             updater::install_app_update,
         ])

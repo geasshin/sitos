@@ -35,6 +35,12 @@ s'annoncent dans l'app (carte en bas à droite) et s'installent d'un clic.
   Une fiche avec des quantités chiffrées a aussi des valeurs nutritionnelles.
 - **Poids** : pesées et tendance lissée.
 
+- **Paramètres** (⌘,) : version installée, recherche de mise à jour manuelle ou automatique, installation d'un clic ;
+  objectifs nutritionnels, fruits par jour ; apparence (comme le Mac, clair, sombre) ; dossier des données et
+  sauvegarde manuelle ; à propos et sources.
+- **Le soir** : un à-côté noté pour un soir à venir (« Prévu le soir ») compte dans la projection du stock dès maintenant
+  et sort du stock ce jour-là.
+
 ⌘Z (ou « Annuler » en bas de la barre latérale) défait la dernière modification.
 
 ## Données

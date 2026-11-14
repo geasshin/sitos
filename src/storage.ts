@@ -65,3 +65,49 @@ export async function saveCollection<K extends Key>(key: K, value: Data[K]): Pro
 export async function openDataFolder(): Promise<void> {
   if (isNative) await invoke('open_data_folder');
 }
+
+export interface BackupInfo {
+  automatic: number;
+  manual: string[];
+}
+
+export async function getBackupInfo(): Promise<BackupInfo | undefined> {
+  return isNative ? invoke<BackupInfo>('get_backup_info') : undefined;
+}
+
+/** Copie toutes les données dans un dossier de sauvegarde daté. Renvoie son nom. */
+export async function createBackup(now = new Date()): Promise<string> {
+  const p = (n: number) => String(n).padStart(2, '0');
+  const label = `${now.getFullYear()}${p(now.getMonth() + 1)}${p(now.getDate())}-${p(now.getHours())}${p(now.getMinutes())}${p(now.getSeconds())}`;
+  return invoke<string>('create_backup', { label });
+}
+
+export async function getDataFolder(): Promise<string | undefined> {
+  return isNative ? invoke<string>('get_data_folder') : undefined;
+}
+
+export type Link = 'releases' | 'repo' | 'ciqual';
+const LINKS: Record<Link, string> = {
+  releases: 'https://github.com/geasshin/sitos/releases',
+  repo: 'https://github.com/geasshin/sitos',
+  ciqual: 'https://ciqual.anses.fr/',
+};
+
+/** Ouvre un lien connu dans le navigateur du système (liste fermée côté natif). */
+export async function openLink(target: Link): Promise<void> {
+  if (isNative) await invoke('open_link', { target });
+  else window.open(LINKS[target], '_blank', 'noopener');
+}
+
+/** Applique l'apparence choisie à la page et à la fenêtre native. */
+export async function applyTheme(theme: 'system' | 'light' | 'dark') {
+  if (theme === 'system') delete document.documentElement.dataset.theme;
+  else document.documentElement.dataset.theme = theme;
+  if (!isNative) return;
+  try {
+    const { getCurrentWindow } = await import('@tauri-apps/api/window');
+    await getCurrentWindow().setTheme(theme === 'system' ? null : theme);
+  } catch {
+    // la barre de titre garde l'apparence du système
+  }
+}

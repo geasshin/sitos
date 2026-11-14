@@ -156,6 +156,8 @@ export function recommendSides(
     let bestScore = 0.03;
     for (const p of pool) {
       if (picks.some((x) => x.candidate.id === p.c.id)) continue;
+      // Pas deux fois le même aliment dans la même soirée (l'huile d'assaisonnement ne compte pas).
+      if (p.c.items.some((i) => i.foodId !== 'huile-olive' && picks.some((x) => x.candidate.items.some((j) => j.foodId === i.foodId)))) continue;
       const s = scoreSide(n, plant, { n: p.n, plantG: p.plantG }, t, p.sweet);
       if (s > bestScore) {
         best = p;

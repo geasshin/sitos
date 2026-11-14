@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { CalendarDays, ChartColumn, ChefHat, Package, Scale, Sun, Undo2 } from 'lucide-react';
+import { CalendarDays, ChartColumn, ChefHat, Package, Scale, Settings, Sun, Undo2 } from 'lucide-react';
 import { AppContext, useDerived, type Route, type View } from './context';
 import { formatLong, todayISO } from './domain/dates';
 import type { ISODate } from './domain/types';
 import { useStore } from './store';
 import { UpdateNotice } from './components/UpdateNotice';
-import { isNative, openDataFolder } from './storage';
+import { applyTheme, isNative, openDataFolder } from './storage';
 import logo from './assets/sitos-mark.png';
 import { TodayView } from './views/Today';
 import { CalendarView } from './views/Calendar';
@@ -15,6 +15,8 @@ import { RecipesView } from './views/Recipes';
 import { RecipeDetail } from './views/RecipeDetail';
 import { RecipeEditor } from './views/RecipeEditor';
 import { WeightView } from './views/Weight';
+import { SettingsView } from './views/Settings';
+import { useUpdates } from './updates';
 
 const NAV: { id: View; label: string; Icon: typeof Sun }[] = [
   { id: 'today', label: "Aujourd'hui", Icon: Sun },
@@ -27,7 +29,7 @@ const NAV: { id: View; label: string; Icon: typeof Sun }[] = [
 
 function readRoute(): Route {
   const parts = window.location.hash.replace(/^#\/?/, '').split('/').map(decodeURIComponent);
-  const view = (NAV.some((n) => n.id === parts[0]) ? parts[0] : 'today') as View;
+  const view = (NAV.some((n) => n.id === parts[0]) || parts[0] === 'settings' ? parts[0] : 'today') as View;
   if (view === 'recipes' && parts[1]) return { view, recipeId: parts[1], edit: parts[2] === 'modifier' || parts[1] === 'nouvelle' };
   return { view };
 }
@@ -112,6 +114,22 @@ function Loaded({
     },
     back: () => (window.history.length > 1 ? window.history.back() : navigate({ view: 'recipes' })),
   };
+  const updates = useUpdates();
+  const theme = data.settings.theme ?? 'system';
+  useEffect(() => {
+    void applyTheme(theme);
+  }, [theme]);
+  useEffect(() => {
+    // ⌘, ouvre les paramètres, comme dans toute app Mac
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey && e.key === ',') {
+        e.preventDefault();
+        navigate({ view: 'settings' });
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [navigate]);
   const alerts = derived.priorities.length;
   const urgent = derived.priorities.some((p) => p.daysLeft <= 2);
   const simulated = today !== todayISO();
@@ -127,6 +145,7 @@ function Loaded({
       stock: <StockView />,
       nutrition: <NutritionView />,
       weight: <WeightView />,
+      settings: <SettingsView />,
     }[route.view];
   }
 
@@ -162,6 +181,20 @@ function Loaded({
                 </a>
               ))}
             </nav>
+            <a
+              href="#/settings"
+              className={`nav-item nav-settings ${route.view === 'settings' ? 'is-active' : ''}`}
+              aria-current={route.view === 'settings' ? 'page' : undefined}
+              title="Paramètres (⌘,)"
+              onClick={(e) => {
+                e.preventDefault();
+                ctx.goTo('settings');
+              }}
+            >
+              <Settings size={20} strokeWidth={1.6} aria-hidden />
+              <span className="nav-label">Paramètres</span>
+              {updates.phase === 'available' && <span className="nav-badge" aria-label="Mise à jour disponible">1</span>}
+            </a>
             <div className="island-foot">
               <button type="button" className="text-button" onClick={store.undo} disabled={!store.canUndo} title="Annuler la dernière modification (⌘Z)">
                 <Undo2 size={16} aria-hidden /> Annuler
@@ -183,7 +216,7 @@ function Loaded({
           {page}
         </main>
       </div>
-      <UpdateNotice />
+      <UpdateNotice auto={data.settings.autoUpdate !== false} hidden={route.view === 'settings'} onOpenSettings={() => ctx.goTo('settings')} />
     </AppContext.Provider>
   );
 }

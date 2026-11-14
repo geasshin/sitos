@@ -89,7 +89,7 @@ export function DayBalanceCard({ date, compact }: { date: ISODate; compact?: boo
   const mealKcal = day.meal?.nutrients.kcal ?? 0;
   const mealGoal = targets.kcal * targets.mealShare;
   const smallMeal = day.meal && mealKcal < mealGoal * 0.75;
-  const canLog = date <= today;
+  const future = date > today;
 
   return (
     <div className="day-balance">
@@ -112,12 +112,12 @@ export function DayBalanceCard({ date, compact }: { date: ISODate; compact?: boo
               <li key={p.candidate.id} className="pick-row">
                 <span className="pick-label">{p.candidate.label}</span>
                 <span className="pick-brings small muted">{p.brings.join(' · ')}</span>
-                {canLog && (
+                {date >= today && (
                   <button
                     type="button"
                     className="icon-button"
-                    aria-label={`Noter « ${p.candidate.label} » pour le soir`}
-                    title="Noter pour ce soir"
+                    aria-label={`${future ? 'Prévoir' : 'Noter'} « ${p.candidate.label} » pour le soir`}
+                    title={future ? 'Prévoir pour ce soir-là (sort du stock ce jour-là)' : 'Noter pour ce soir'}
                     onClick={() =>
                       store.update('journal', (j) => ({ ...j, snacks: [...j.snacks, { id: newId('s'), date, label: p.candidate.label, items: p.candidate.items }] }))
                     }

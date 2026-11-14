@@ -114,6 +114,98 @@ pub fn open_data_folder(app: AppHandle) -> Result<(), String> {
         .map_err(|e| e.to_string())
 }
 
+/// Nom de sauvegarde accepté : chiffres et tirets seulement (jamais de chemin).
+fn valid_label(label: &str) -> bool {
+    !label.is_empty() && label.len() <= 24 && label.chars().all(|c| c.is_ascii_digit() || c == '-')
+}
+
+/// Copie toutes les collections dans `data/.sauvegardes/manuel-<label>/`. Renvoie le nom du dossier.
+pub fn snapshot(dir: &Path, label: &str) -> Result<String, String> {
+    if !valid_label(label) {
+        return Err("nom de sauvegarde invalide".to_string());
+    }
+    let name = format!("manuel-{label}");
+    let target = dir.join(".sauvegardes").join(&name);
+    fs::create_dir_all(&target).map_err(|e| format!("dossier de sauvegarde : {e}"))?;
+    let mut copied = 0;
+    for collection in COLLECTIONS {
+        let file = dir.join(format!("{collection}.json"));
+        if file.exists() {
+            fs::copy(&file, target.join(format!("{collection}.json")))
+                .map_err(|e| format!("copie de {collection} : {e}"))?;
+            copied += 1;
+        }
+    }
+    if copied == 0 {
+        let _ = fs::remove_dir(&target);
+        return Err("aucune donnée à sauvegarder".to_string());
+    }
+    Ok(name)
+}
+
+#[derive(serde::Serialize, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct BackupInfo {
+    /// Copies automatiques gardées avant chaque écriture.
+    pub automatic: usize,
+    /// Sauvegardes manuelles, la plus récente d'abord.
+    pub manual: Vec<String>,
+}
+
+pub fn backup_info(dir: &Path) -> BackupInfo {
+    let mut info = BackupInfo {
+        automatic: 0,
+        manual: vec![],
+    };
+    let Ok(entries) = fs::read_dir(dir.join(".sauvegardes")) else {
+        return info;
+    };
+    for entry in entries.flatten() {
+        let name = entry.file_name().to_string_lossy().to_string();
+        if entry.path().is_dir() && name.starts_with("manuel-") {
+            info.manual.push(name);
+        } else if name.ends_with(".json") {
+            info.automatic += 1;
+        }
+    }
+    info.manual.sort();
+    info.manual.reverse();
+    info
+}
+
+#[tauri::command]
+pub fn create_backup(app: AppHandle, label: String) -> Result<String, String> {
+    snapshot(&data_dir(&app)?, &label)
+}
+
+#[tauri::command]
+pub fn get_backup_info(app: AppHandle) -> Result<BackupInfo, String> {
+    Ok(backup_info(&data_dir(&app)?))
+}
+
+#[tauri::command]
+pub fn get_data_folder(app: AppHandle) -> Result<String, String> {
+    Ok(data_dir(&app)?.to_string_lossy().to_string())
+}
+
+/// Liens que l'interface peut ouvrir dans le navigateur : une liste fermée, jamais une adresse libre.
+pub fn link_url(target: &str) -> Option<&'static str> {
+    match target {
+        "releases" => Some("https://github.com/geasshin/sitos/releases"),
+        "repo" => Some("https://github.com/geasshin/sitos"),
+        "ciqual" => Some("https://ciqual.anses.fr/"),
+        _ => None,
+    }
+}
+
+#[tauri::command]
+pub fn open_link(app: AppHandle, target: String) -> Result<(), String> {
+    let url = link_url(&target).ok_or_else(|| "lien inconnu".to_string())?;
+    app.opener()
+        .open_url(url, None::<&str>)
+        .map_err(|e| e.to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -157,5 +249,34 @@ mod tests {
             .count();
         assert_eq!(kept, KEEP_BACKUPS);
         assert!(!dir.path().join("plan.json.tmp").exists());
+    }
+
+    #[test]
+    fn manual_backup_copies_every_collection_and_refuses_paths() {
+        let dir = tempfile::tempdir().unwrap();
+        write_collection(dir.path(), "plan", &json!({"n": 1})).unwrap();
+        write_collection(dir.path(), "settings", &json!({"n": 2})).unwrap();
+        write_collection(dir.path(), "plan", &json!({"n": 3})).unwrap();
+        let name = snapshot(dir.path(), "20261114-1830").unwrap();
+        assert_eq!(name, "manuel-20261114-1830");
+        let copy = dir.path().join(".sauvegardes").join(&name);
+        let plan: Value =
+            serde_json::from_str(&fs::read_to_string(copy.join("plan.json")).unwrap()).unwrap();
+        assert_eq!(plan["n"], 3);
+        assert!(copy.join("settings.json").exists());
+        assert!(snapshot(dir.path(), "../x").is_err());
+        assert!(snapshot(dir.path(), "").is_err());
+        let info = backup_info(dir.path());
+        assert_eq!(info.manual, vec!["manuel-20261114-1830".to_string()]);
+        assert_eq!(info.automatic, 1);
+    }
+
+    #[test]
+    fn only_known_links_open() {
+        assert_eq!(
+            link_url("releases"),
+            Some("https://github.com/geasshin/sitos/releases")
+        );
+        assert_eq!(link_url("https://evil.example"), None);
     }
 }

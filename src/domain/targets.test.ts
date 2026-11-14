@@ -103,6 +103,13 @@ describe('à-côtés', () => {
     expect(r.picks[0].candidate.id).toBe('pomme');
   });
 
+  it('ne propose pas deux fois le même aliment le même soir', () => {
+    const withSkyr = [...all, { id: 'skyr-pomme', label: 'Skyr et pomme', items: [{ foodId: 'skyr', qty: 1 }, { foodId: 'pomme', qty: 1 }] }];
+    const r = recommendSides({ nutrients: n({ kcal: 900, protein: 20, fiber: 10 }), plantG: 100 }, t, withSkyr, fx);
+    const used = r.picks.flatMap((p) => p.candidate.items.map((i) => i.foodId));
+    expect(new Set(used).size).toBe(used.length);
+  });
+
   it('ne propose rien de calorique quand la journée est déjà pleine', () => {
     const r = recommendSides({ nutrients: n({ kcal: 2400, protein: 90, fiber: 30 }), plantG: 450 }, t, all, fx);
     expect(r.picks.map((p) => p.candidate.id)).not.toContain('twix');

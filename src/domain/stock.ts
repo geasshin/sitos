@@ -179,7 +179,17 @@ export function forecast(data: Data, stock: Map<string, FoodStock>, today: ISODa
   const shortages: Shortage[] = [];
   const nextUse = new Map<string, ISODate>();
   let fruitDebt = 0;
+  // Ce qui est prévu pour un soir à venir (déjà compté dans le stock jusqu'à aujourd'hui).
+  const plannedSnacks = data.journal.snacks.filter((s) => s.date > today);
   for (let d = today; d <= horizon; d = addDays(d, 1)) {
+    for (const s of plannedSnacks) {
+      if (s.date !== d) continue;
+      for (const ing of s.items) {
+        if (!nextUse.has(ing.foodId)) nextUse.set(ing.foodId, d);
+        const missing = takeFIFO(lots.get(ing.foodId) ?? [], ing.qty, d);
+        if (missing > 0) shortages.push({ date: d, entryId: s.id, name: s.label, foodId: ing.foodId, missing });
+      }
+    }
     for (const e of future) {
       if (e.date !== d) continue;
       const meal = mealOfCook(data.recipes, e);
@@ -337,7 +347,7 @@ export function rescueSuggestions(prio: Priority[], limit = 3): Rescue[] {
 
 /**
  * Ce qu'on peut prendre d'un aliment pour un à-côté, un jour donné : les lots encore bons ce
- * jour-là, moins tout ce que les plats prévus vont utiliser. Un à-côté ne prive jamais un plat.
+ * jour-là, moins tout ce que les plats et les soirs prévus vont utiliser. Un à-côté ne prive jamais un plat.
  */
 export function availableOn(data: Data, stock: Map<string, FoodStock>, today: ISODate, date: ISODate): (foodId: string) => number {
   const planned = new Map<string, number>();
@@ -345,6 +355,10 @@ export function availableOn(data: Data, stock: Map<string, FoodStock>, today: IS
     for (const e of data.plan.entries) {
       if (e.kind !== 'cook' || e.done || e.date < today) continue;
       for (const ing of mealOfCook(data.recipes, e).ingredients) planned.set(ing.foodId, (planned.get(ing.foodId) ?? 0) + ing.qty);
+    }
+    for (const sn of data.journal.snacks) {
+      if (sn.date <= today) continue;
+      for (const ing of sn.items) planned.set(ing.foodId, (planned.get(ing.foodId) ?? 0) + ing.qty);
     }
   }
   return (foodId) => {

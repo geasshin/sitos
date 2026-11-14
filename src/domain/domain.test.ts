@@ -115,6 +115,23 @@ describe('disponible à une date', () => {
   });
 });
 
+describe('soirs prévus', () => {
+  it('un à-côté noté pour un soir à venir compte dans la projection et n’est plus proposé ailleurs', () => {
+    const data = makeData([cook('c1', '2026-11-17')], {
+      journal: { snacks: [{ id: 's1', date: '2026-11-16', label: 'Gaspacho', items: [{ foodId: 'courgette', qty: 1 }] }], adjustments: [], weights: [] },
+    });
+    const stock = computeStock(data, indexFoods(foods), '2026-11-14');
+    // Pas encore mangé : le stock du jour garde ses 4 courgettes
+    expect(stock.get('courgette')!.remaining).toBe(4);
+    // 1 pour le soir du 16, 2 pour le plat du 17 : il en reste 1 de libre
+    expect(availableOn(data, stock, '2026-11-14', '2026-11-15')('courgette')).toBe(1);
+    const fc = forecast(data, stock, '2026-11-14');
+    expect(fc.shortages).toEqual([]);
+    expect(fc.losses.find((l) => l.foodId === 'courgette')?.qty).toBe(1);
+    expect(fc.nextUse.get('courgette')).toBe('2026-11-16');
+  });
+});
+
 describe('plan', () => {
   const base = () => [
     cook('c1', '2026-11-14', 'riz-courgette', 2, true),

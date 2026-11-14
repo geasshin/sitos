@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AlertTriangle, ArrowLeft, ArrowRight, BookOpen, Check, ChevronDown, ChevronLeft, ChevronRight, CookingPot, GripVertical, Refrigerator, Repeat, Rows3, Trash2, Utensils, X } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ArrowRight, BookOpen, Check, ChevronDown, ChevronLeft, ChevronRight, CookingPot, GripVertical, Moon, Refrigerator, Repeat, Rows3, Trash2, Utensils, X } from 'lucide-react';
 import { useApp } from '../context';
 import { addDays, diffDays, formatDayMonth, formatLong, formatShort, range, startOfWeek } from '../domain/dates';
 import { mealOf, mealPortion } from '../domain/nutrition';
@@ -28,6 +28,7 @@ export function CalendarView({ focusDate }: { focusDate?: ISODate }) {
   const last = addDays(startOfWeek(addDays(app.planEnd, 7)), 6);
   const days = range(first, last);
   const byDate = new Map(data.plan.entries.map((e) => [e.date, e]));
+  const eveningDates = new Set(data.journal.snacks.map((s) => s.date));
   const issues = new Map<ISODate, string[]>();
   for (const s of app.forecast.shortages) {
     issues.set(s.date, [...(issues.get(s.date) ?? []), `Il manquera ${amount(app.foods.get(s.foodId), s.missing)}`]);
@@ -36,7 +37,9 @@ export function CalendarView({ focusDate }: { focusDate?: ISODate }) {
     if (w.level === 'alerte') issues.set(w.date, [...(issues.get(w.date) ?? []), w.message]);
   }
   const planFrom = data.plan.startDate > today ? data.plan.startDate : today;
-  const gaps = data.plan.entries.length === 0 ? 0 : days.filter((d) => d >= planFrom && d <= app.planEnd && !byDate.has(d)).length;
+  // Un trou, c'est un jour vide AVANT le dernier plat prévu : la fin du plan n'en est pas un.
+  const lastPlanned = data.plan.entries.reduce((m, e) => (e.date > m ? e.date : m), '');
+  const gaps = days.filter((d) => d >= planFrom && d < lastPlanned && !byDate.has(d)).length;
 
   return (
     <div className="page page-wide">
@@ -75,7 +78,7 @@ export function CalendarView({ focusDate }: { focusDate?: ISODate }) {
                   e?.done && 'is-done',
                   e && `kind-${e.kind}`,
                   over === d && dragId && 'is-over',
-                  !e && d >= planFrom && d <= app.planEnd && 'is-gap',
+                  !e && d >= planFrom && d < lastPlanned && 'is-gap',
                 ]
                   .filter(Boolean)
                   .join(' ');
@@ -145,6 +148,7 @@ export function CalendarView({ focusDate }: { focusDate?: ISODate }) {
                             <span className="cal-kind"><Refrigerator size={12} aria-hidden /> reste</span>
                           )}
                           {kcal !== undefined && <span className="num" title="kcal par repas">{Math.round(kcal)}</span>}
+                          {eveningDates.has(d) && <Moon size={11} className="cal-evening" aria-label="à-côté prévu le soir" />}
                         </div>
                       </>
                     )}
@@ -263,6 +267,8 @@ function DayPanel({
             </button>
           )}
 
+          <EveningList date={date} />
+
           <section className="panel-balance" aria-label="Bilan de la journée">
             <p className="balance-title">Bilan de la journée</p>
             <DayBalanceCard date={date} />
@@ -312,4 +318,33 @@ function chunk<T>(arr: T[], n: number): T[][] {
   const out: T[][] = [];
   for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n));
   return out;
+}
+
+/** Ce qui est noté ou prévu pour le soir de ce jour-là. */
+function EveningList({ date }: { date: ISODate }) {
+  const { data, store, today } = useApp();
+  const items = data.journal.snacks.filter((s) => s.date === date);
+  if (items.length === 0) return null;
+  return (
+    <div className="evening">
+      <p className="balance-sub">{date > today ? 'Prévu le soir' : 'Le soir'}</p>
+      <ul className="picks">
+        {items.map((s) => (
+          <li key={s.id} className="pick-row">
+            <span className="pick-label">
+              <Moon size={13} aria-hidden /> {s.label}
+            </span>
+            <button
+              type="button"
+              className="icon-button"
+              aria-label={`Retirer ${s.label}`}
+              onClick={() => store.update('journal', (j) => ({ ...j, snacks: j.snacks.filter((x) => x.id !== s.id) }))}
+            >
+              <X size={14} aria-hidden />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }

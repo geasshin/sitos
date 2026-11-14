@@ -165,5 +165,24 @@
       }
     ],
     "note": "200 °C, 12 à 15 min, paprika."
+  },
+  {
+    "id": "gaspacho-courgette-feta",
+    "name": "Gaspacho de courgette et feta",
+    "items": [
+      {
+        "foodId": "courgette",
+        "qty": 1
+      },
+      {
+        "foodId": "feta",
+        "qty": 100
+      },
+      {
+        "foodId": "huile-olive",
+        "qty": 10
+      }
+    ],
+    "note": "1 courgette, ½ bloc de feta, un filet d’huile d’olive, mixés. Servi frais dans un bol."
   }
 ]

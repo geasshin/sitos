@@ -45,7 +45,7 @@ export function useDerived(data: Data, today: ISODate) {
   return useMemo(() => derive(data, today), [data, today]);
 }
 
-export type View = 'today' | 'calendar' | 'stock' | 'nutrition' | 'recipes' | 'weight';
+export type View = 'today' | 'calendar' | 'stock' | 'nutrition' | 'recipes' | 'weight' | 'settings';
 
 /** Adresse interne : #/recipes, #/recipes/<id>, #/recipes/<id>/modifier, #/recipes/nouvelle */
 export interface Route {

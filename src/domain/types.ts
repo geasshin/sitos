@@ -208,6 +208,10 @@ export interface Settings {
   fruitsPerDay: number;
   demo: boolean;
   profile?: Profile;
+  /** Rechercher une mise à jour à l'ouverture (vrai par défaut). */
+  autoUpdate?: boolean;
+  /** Apparence : suit le système par défaut. */
+  theme?: 'system' | 'light' | 'dark';
 }
 
 export interface SnackIdea {
