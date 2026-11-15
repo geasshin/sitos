@@ -1,20 +1,22 @@
 import { useState } from 'react';
-import { Minus, Plus } from 'lucide-react';
+import { ClipboardPaste, Minus, Plus, Search, ShoppingBasket } from 'lucide-react';
 import { useApp } from '../context';
+import { OrderImport } from '../components/OrderImport';
+import { ShoppingList } from '../components/ShoppingList';
 import { formatDayMonth, formatShort, relative } from '../domain/dates';
 import { newId } from '../domain/plan';
-import { amount, formatQty, type FoodStock } from '../domain/stock';
+import { amount, formatQty, shortQty, type FoodStock } from '../domain/stock';
 import { urgencyTone } from './Today';
 import type { Adjustment, Storage } from '../domain/types';
 import { Empty } from '../components/ui';
 
-type Filter = 'watch' | Storage | 'all';
+type Filter = Storage | 'all' | 'watch';
 const FILTERS: { id: Filter; label: string }[] = [
-  { id: 'watch', label: 'À surveiller' },
+  { id: 'all', label: 'Tout' },
   { id: 'frigo', label: 'Frigo' },
   { id: 'fruitier', label: 'Fruitier' },
   { id: 'placard', label: 'Placard' },
-  { id: 'all', label: 'Tout' },
+  { id: 'watch', label: 'À surveiller' },
 ];
 
 const FRESH_LABEL: Record<FoodStock['freshness'], string> = {
@@ -28,16 +30,21 @@ const FRESH_LABEL: Record<FoodStock['freshness'], string> = {
 export function StockView() {
   const app = useApp();
   const { data, today, store } = app;
-  const [filter, setFilter] = useState<Filter>('watch');
+  const [filter, setFilter] = useState<Filter>('all');
+  const [q, setQ] = useState('');
+  const [mode, setMode] = useState<'stock' | 'courses'>('stock');
   const [adding, setAdding] = useState(false);
+  const [ordering, setOrdering] = useState(false);
   const risk = new Map<string, number>();
   for (const l of app.forecast.losses) risk.set(l.foodId, (risk.get(l.foodId) ?? 0) + l.qty);
 
   const all = [...app.stock.values()];
   const watchIds = new Set(app.priorities.map((p) => p.food.id));
   const watched = (s: FoodStock) => watchIds.has(s.food.id) || s.freshness === 'périmé';
+  const needle = q.trim().toLowerCase();
   const rows = all
     .filter((s) => (filter === 'all' ? true : filter === 'watch' ? watched(s) : s.food.storage === filter))
+    .filter((s) => !needle || s.food.name.toLowerCase().includes(needle))
     .sort((a, b) => (a.daysLeft ?? 9999) - (b.daysLeft ?? 9999) || a.food.name.localeCompare(b.food.name, 'fr'));
   const live = all.filter((s) => s.remaining > 1e-6);
 
@@ -54,23 +61,46 @@ export function StockView() {
           </p>
         </div>
         <div className="head-actions">
-          <button type="button" className="primary-button" onClick={() => setAdding((v) => !v)} aria-expanded={adding}>
-            <Plus size={16} aria-hidden /> Ajouter un achat
+          <button type="button" className="primary-button" onClick={() => { setMode('stock'); setOrdering((v) => !v); setAdding(false); }} aria-expanded={ordering}>
+            <ClipboardPaste size={16} aria-hidden /> Saisir une commande
+          </button>
+          <button type="button" className="secondary-button" onClick={() => { setMode('stock'); setAdding((v) => !v); setOrdering(false); }} aria-expanded={adding}>
+            <Plus size={16} aria-hidden /> Un achat
           </button>
         </div>
       </header>
 
-      {adding && <PurchaseForm onDone={() => setAdding(false)} />}
-
-      <div className="seg-group" role="tablist" aria-label="Filtrer le stock">
-        {FILTERS.map((f) => (
-          <button key={f.id} type="button" role="tab" aria-selected={filter === f.id} className={`seg-pill ${filter === f.id ? 'on' : ''}`} onClick={() => setFilter(f.id)}>
-            {f.label}
-          </button>
-        ))}
+      <div className="seg-group" role="tablist" aria-label="Vue">
+        <button type="button" role="tab" aria-selected={mode === 'stock'} className={`seg-pill ${mode === 'stock' ? 'on' : ''}`} onClick={() => setMode('stock')}>
+          Mon stock
+        </button>
+        <button type="button" role="tab" aria-selected={mode === 'courses'} className={`seg-pill ${mode === 'courses' ? 'on' : ''}`} onClick={() => { setMode('courses'); setOrdering(false); setAdding(false); }}>
+          <ShoppingBasket size={14} aria-hidden /> Liste de courses
+        </button>
       </div>
 
-      {rows.length === 0 ? (
+      {mode === 'courses' && <ShoppingList />}
+
+      {mode === 'stock' && ordering && <OrderImport onDone={() => setOrdering(false)} />}
+      {mode === 'stock' && adding && <PurchaseForm onDone={() => setAdding(false)} />}
+
+      {mode === 'stock' && (
+        <div className="stock-toolbar">
+          <label className="search-pill">
+            <Search size={15} aria-hidden />
+            <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Chercher un produit" aria-label="Chercher un produit" />
+          </label>
+          <div className="seg-group" role="tablist" aria-label="Filtrer le stock">
+            {FILTERS.map((f) => (
+              <button key={f.id} type="button" role="tab" aria-selected={filter === f.id} className={`seg-pill ${filter === f.id ? 'on' : ''}`} onClick={() => setFilter(f.id)}>
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {mode === 'stock' && (rows.length === 0 ? (
         <Empty title={filter === 'watch' ? 'Rien à surveiller' : 'Rien ici'}>{filter === 'watch' ? 'Tout ce qui est frais sera cuisiné à temps avec le plan actuel.' : undefined}</Empty>
       ) : (
         <ul className="stock-list">
@@ -85,8 +115,13 @@ export function StockView() {
             <StockRow key={s.food.id} s={s} risk={risk.get(s.food.id) ?? 0} onAdjust={adjust} />
           ))}
         </ul>
+      ))}
+      {mode === 'stock' && (
+        <p className="hint">
+          Durées de conservation estimées depuis la réception, sauf date limite saisie. Fruits nature comptés à {data.settings.fruitsPerDay} par jour,
+          réglage qui vit dans la liste de courses. Un repas ne sort du stock qu’une fois coché : un plat passé non coché apparaît ici comme non prévu.
+        </p>
       )}
-      <p className="hint">Durées de conservation estimées depuis la réception, sauf date limite saisie. Fruits nature comptés à {data.settings.fruitsPerDay} par jour.</p>
     </div>
   );
 }
@@ -127,12 +162,16 @@ function StockRow({ s, risk, onAdjust }: { s: FoodStock; risk: number; onAdjust:
         <span className={next || s.food.dailyFruit ? '' : 'muted'}>
           {next ? <>Plat {relative(today, next) === "aujourd'hui" ? "aujourd'hui" : `le ${formatShort(next)}`}</> : s.food.dailyFruit ? <>Fruit nature</> : <>Aucun plat prévu</>}
         </span>
-        {risk > 0.01 && <span className="risk">{amount(s.food, risk)} en trop</span>}
+        {risk > 0.01 && (
+          <span className="risk" title="Ni dans un plat prévu, ni dans un à-côté : ça reste en stock">
+            {shortQty(s.food, risk)} non prévu
+          </span>
+        )}
         {s.overdrawn > 0.01 && <span className="risk">{amount(s.food, s.overdrawn)} utilisé en plus du stock</span>}
       </div>
       <div className="stock-actions">
         <button type="button" className="secondary-button is-sm" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
-          <Minus size={14} aria-hidden /> Ajuster
+          <Minus size={14} aria-hidden /> Corriger
         </button>
       </div>
       {open && (
