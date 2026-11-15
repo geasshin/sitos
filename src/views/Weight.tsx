@@ -8,7 +8,7 @@ import { capitalize } from './Today';
 
 const fmtKg = (n: number) => n.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
-export function WeightView() {
+export function WeightSection() {
   const { data, today, store } = useApp();
   const [date, setDate] = useState(today);
   const [kg, setKg] = useState('');
@@ -17,12 +17,7 @@ export function WeightView() {
   const last = points[points.length - 1];
 
   return (
-    <div className="page">
-      <header className="page-head">
-        <h1 className="display-title">Poids</h1>
-        <p className="page-subtitle">La tendance lisse les variations d’un jour à l’autre : c’est elle qu’il faut regarder.</p>
-      </header>
-
+    <>
       <div className="two-col">
         <Section title="Nouvelle pesée">
           <form
@@ -84,6 +79,19 @@ export function WeightView() {
           </ul>
         </Section>
       )}
+    </>
+  );
+}
+
+/** La page Poids, gardée pour les liens directs. La navigation passe par Nutrition. */
+export function WeightView() {
+  return (
+    <div className="page">
+      <header className="page-head">
+        <h1 className="display-title">Poids</h1>
+        <p className="page-subtitle">La tendance lisse les variations d’un jour à l’autre : c’est elle qu’il faut regarder.</p>
+      </header>
+      <WeightSection />
     </div>
   );
 }

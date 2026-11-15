@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ArrowLeft, ArrowRight, Check, Target } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, ChevronDown, Target } from 'lucide-react';
 import { useApp } from '../context';
 import { ACTIVITY_LABEL, applyTargets, computeTargets, GOAL_LABEL, RHYTHM_LABEL, type Targets } from '../domain/targets';
 import type { Activity, Diet, Goal, Profile, Rhythm, Sex } from '../domain/types';
@@ -18,6 +18,7 @@ export function GoalsCard() {
   const { data, targets } = app;
   const [editing, setEditing] = useState(false);
   const p = data.settings.profile;
+  const [open, setOpen] = useState(!p);
 
   if (editing) return <GoalsWizard onDone={() => setEditing(false)} />;
 
@@ -42,18 +43,27 @@ export function GoalsCard() {
               : 'Les valeurs ci-dessous sont provisoires. Quatre questions suffisent pour les caler sur toi, selon les repères de l’ANSES.'}
           </p>
         </div>
-        <button type="button" className={p ? 'secondary-button' : 'primary-button'} onClick={() => setEditing(true)}>
-          <Target size={15} aria-hidden /> {p ? 'Revoir' : 'Commencer'}
-        </button>
+        <div className="head-actions">
+          {p && (
+            <button type="button" className="text-button is-sm" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+              {open ? 'Masquer le détail' : 'Voir le détail'} <ChevronDown size={14} className={`chev ${open ? 'up' : ''}`} aria-hidden />
+            </button>
+          )}
+          <button type="button" className={p ? 'secondary-button' : 'primary-button'} onClick={() => setEditing(true)}>
+            <Target size={15} aria-hidden /> {p ? 'Revoir' : 'Commencer'}
+          </button>
+        </div>
       </div>
-      <dl className="goals-grid">
-        {items.map(([k, v]) => (
-          <div key={k}>
-            <dt>{k}</dt>
-            <dd className="num">{v}</dd>
-          </div>
-        ))}
-      </dl>
+      {open && (
+        <dl className="goals-grid">
+          {items.map(([k, v]) => (
+            <div key={k}>
+              <dt>{k}</dt>
+              <dd className="num">{v}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
     </section>
   );
 }

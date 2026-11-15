@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { CalendarDays, ChartColumn, ChefHat, Package, Scale, Settings, Sun, Undo2 } from 'lucide-react';
+import { CalendarDays, ChartColumn, ChefHat, Package, Settings, Sun, Undo2 } from 'lucide-react';
 import { AppContext, useDerived, type Route, type View } from './context';
 import { formatLong, todayISO } from './domain/dates';
 import type { ISODate } from './domain/types';
@@ -20,16 +20,16 @@ import { useUpdates } from './updates';
 
 const NAV: { id: View; label: string; Icon: typeof Sun }[] = [
   { id: 'today', label: "Aujourd'hui", Icon: Sun },
-  { id: 'calendar', label: 'Calendrier', Icon: CalendarDays },
+  { id: 'calendar', label: 'Semaine', Icon: CalendarDays },
   { id: 'recipes', label: 'Recettes', Icon: ChefHat },
   { id: 'stock', label: 'Stock', Icon: Package },
   { id: 'nutrition', label: 'Nutrition', Icon: ChartColumn },
-  { id: 'weight', label: 'Poids', Icon: Scale },
 ];
 
 function readRoute(): Route {
   const parts = window.location.hash.replace(/^#\/?/, '').split('/').map(decodeURIComponent);
-  const view = (NAV.some((n) => n.id === parts[0]) || parts[0] === 'settings' ? parts[0] : 'today') as View;
+  const known = NAV.some((n) => n.id === parts[0]) || parts[0] === 'settings' || parts[0] === 'weight';
+  const view = (known ? parts[0] : 'today') as View;
   if (view === 'recipes' && parts[1]) return { view, recipeId: parts[1], edit: parts[2] === 'modifier' || parts[1] === 'nouvelle' };
   return { view };
 }
@@ -196,8 +196,15 @@ function Loaded({
               {updates.phase === 'available' && <span className="nav-badge" aria-label="Mise à jour disponible">1</span>}
             </a>
             <div className="island-foot">
-              <button type="button" className="text-button" onClick={store.undo} disabled={!store.canUndo} title="Annuler la dernière modification (⌘Z)">
-                <Undo2 size={16} aria-hidden /> Annuler
+              <button
+                type="button"
+                className="icon-button undo"
+                onClick={store.undo}
+                disabled={!store.canUndo}
+                title="Annuler la dernière modification (⌘Z)"
+                aria-label="Annuler la dernière modification"
+              >
+                <Undo2 size={16} aria-hidden />
               </button>
               <span className={`save save-${store.saveState}`} role="status">
                 {store.saveState === 'enregistrement' ? 'Enregistrement…' : store.saveState === 'erreur' ? 'Échec de l’enregistrement' : 'Enregistré'}
