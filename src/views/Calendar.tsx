@@ -1,34 +1,71 @@
 import { useEffect, useState } from 'react';
-import { AlertTriangle, ArrowLeft, ArrowRight, BookOpen, Check, ChevronDown, ChevronLeft, ChevronRight, CookingPot, GripVertical, Moon, Refrigerator, Repeat, Rows3, Trash2, Utensils, X } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowLeft,
+  ArrowRight,
+  BookOpen,
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  GripVertical,
+  Moon,
+  Plus,
+  Refrigerator,
+  Repeat,
+  Rows3,
+  Trash2,
+  Utensils,
+  X,
+} from 'lucide-react';
 import { useApp } from '../context';
-import { addDays, diffDays, formatDayMonth, formatLong, formatShort, range, startOfWeek } from '../domain/dates';
-import { mealOf, mealPortion } from '../domain/nutrition';
-import { closeGaps, markOut, moveBlock, planCustom, planRecipe, removeEntry, swapBlock, toggleDone, unmarkOut } from '../domain/plan';
+import { addDays, formatDayMonth, formatLong, formatShort, range, startOfWeek } from '../domain/dates';
+import { dayNutrition, entriesOn, mealOf, type Meal } from '../domain/nutrition';
+import {
+  addCustomOn,
+  addMealOn,
+  closeGaps,
+  markOut,
+  moveBlock,
+  planCustom,
+  planRecipe,
+  removeEntry,
+  setEaten,
+  setSkipped,
+  swapBlock,
+  toggleDone,
+  unmarkOut,
+} from '../domain/plan';
 import { amount } from '../domain/stock';
 import type { ISODate, PlanEntry } from '../domain/types';
 import { MealPlanner } from '../components/MealPlanner';
 import { MealEditor } from '../components/MealEditor';
 import { DayBalanceCard } from '../components/Balance';
+import { PortionPrompt } from '../components/PortionPrompt';
 import { capitalize } from './Today';
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+const SPAN = 14;
 
 export function CalendarView({ focusDate }: { focusDate?: ISODate }) {
   const app = useApp();
   const { data, today, store } = app;
+  const [anchor, setAnchor] = useState<ISODate>(startOfWeek(focusDate ?? today));
   const [selected, setSelected] = useState<ISODate>(focusDate ?? today);
   const [dragId, setDragId] = useState<string | null>(null);
   const [over, setOver] = useState<ISODate | null>(null);
   useEffect(() => {
-    if (focusDate) setSelected(focusDate);
+    if (!focusDate) return;
+    setSelected(focusDate);
+    setAnchor(startOfWeek(focusDate));
   }, [focusDate]);
 
   const setEntries = (fn: (e: PlanEntry[]) => PlanEntry[]) => store.update('plan', (p) => ({ ...p, entries: fn(p.entries) }));
-  const first = startOfWeek(data.plan.startDate < today ? data.plan.startDate : today);
-  const last = addDays(startOfWeek(addDays(app.planEnd, 7)), 6);
-  const days = range(first, last);
-  const byDate = new Map(data.plan.entries.map((e) => [e.date, e]));
+  const days = range(anchor, addDays(anchor, SPAN - 1));
+  const entriesByDate = new Map<ISODate, PlanEntry[]>();
+  for (const e of data.plan.entries) entriesByDate.set(e.date, [...(entriesByDate.get(e.date) ?? []), e]);
   const eveningDates = new Set(data.journal.snacks.map((s) => s.date));
+
   const issues = new Map<ISODate, string[]>();
   for (const s of app.forecast.shortages) {
     issues.set(s.date, [...(issues.get(s.date) ?? []), `Il manquera ${amount(app.foods.get(s.foodId), s.missing)}`]);
@@ -36,23 +73,40 @@ export function CalendarView({ focusDate }: { focusDate?: ISODate }) {
   for (const w of app.warnings) {
     if (w.level === 'alerte') issues.set(w.date, [...(issues.get(w.date) ?? []), w.message]);
   }
+
   const planFrom = data.plan.startDate > today ? data.plan.startDate : today;
   // Un trou, c'est un jour vide AVANT le dernier plat prévu : la fin du plan n'en est pas un.
   const lastPlanned = data.plan.entries.reduce((m, e) => (e.date > m ? e.date : m), '');
-  const gaps = days.filter((d) => d >= planFrom && d < lastPlanned && !byDate.has(d)).length;
+  const gaps = days.filter((d) => d >= planFrom && d < lastPlanned && !entriesByDate.has(d)).length;
+  const label = `${formatDayMonth(anchor)} – ${formatDayMonth(addDays(anchor, SPAN - 1))}`;
+  const thisWeek = startOfWeek(today);
 
   return (
     <div className="page page-wide">
       <header className="page-head page-head-row">
         <div>
-          <h1 className="display-title">Calendrier</h1>
+          <h1 className="display-title">Semaine</h1>
           <p className="page-subtitle">Glisse un plat pour le déplacer avec ses restes.</p>
         </div>
-        {gaps > 0 && (
-          <button type="button" className="secondary-button" onClick={() => setEntries((e) => closeGaps(e, planFrom))} title="Supprime les jours vides du plan">
-            <Rows3 size={15} aria-hidden /> Resserrer ({gaps} jour{gaps > 1 ? 's' : ''} vide{gaps > 1 ? 's' : ''})
+        <div className="week-nav" role="group" aria-label="Semaines">
+          <button type="button" className="icon-button" onClick={() => setAnchor(addDays(anchor, -7))} aria-label="Deux semaines plus tôt">
+            <ChevronLeft size={18} aria-hidden />
           </button>
-        )}
+          <span className="week-label">{label}</span>
+          <button type="button" className="icon-button" onClick={() => setAnchor(addDays(anchor, 7))} aria-label="Deux semaines plus tard">
+            <ChevronRight size={18} aria-hidden />
+          </button>
+          {anchor !== thisWeek && (
+            <button type="button" className="text-button is-sm" onClick={() => { setAnchor(thisWeek); setSelected(today); }}>
+              Aujourd’hui
+            </button>
+          )}
+          {gaps > 0 && (
+            <button type="button" className="secondary-button is-sm" onClick={() => setEntries((e) => closeGaps(e, planFrom))} title="Supprime les jours vides du plan">
+              <Rows3 size={15} aria-hidden /> Resserrer ({gaps} jour{gaps > 1 ? 's' : ''} vide{gaps > 1 ? 's' : ''})
+            </button>
+          )}
+        </div>
       </header>
 
       <div className="cal-layout">
@@ -62,26 +116,39 @@ export function CalendarView({ focusDate }: { focusDate?: ISODate }) {
               <div key={w} role="columnheader" className="cal-wd">{w}</div>
             ))}
           </div>
-          {chunk(days, 7).map((week) => (
+          {chunk(days, 7).map((week, wi) => (
             <div className="cal-row" role="row" key={week[0]}>
-              {week.map((d) => {
-                const e = byDate.get(d);
-                const meal = mealOf(data, e);
-                const movable = !!e && !e.done && d >= today;
+              {week.map((d, i) => {
+                const list = [...(entriesByDate.get(d) ?? [])].sort((a, b) => (a.kind === 'cook' ? -1 : b.kind === 'cook' ? 1 : 0));
+                const first = list[0];
+                const meal = mealOf(data, first);
+                const extra = list.length - 1;
+                const movable = !!first && !first.done && d >= today;
                 const problems = issues.get(d) ?? [];
-                const kcal = meal && meal.ingredients.length ? mealPortion(app.foods, meal).nutrients.kcal : undefined;
+                const out = first?.kind === 'out';
+                // Une cuisson et ses restes forment un seul ruban qui traverse les jours.
+                const leftover = first?.kind === 'leftover';
+                const sameBefore = leftover && i > 0 && (entriesByDate.get(week[i - 1]) ?? []).some((e) => e.kind === 'leftover' && e.batchId === first.batchId);
+                const sameAfter = leftover && i < week.length - 1 && (entriesByDate.get(week[i + 1]) ?? []).some((e) => e.kind === 'leftover' && e.batchId === first.batchId);
+                const idle = !first;
                 const cls = [
                   'cal-day',
                   d < today && 'is-past',
                   d === today && 'is-today',
                   d === selected && 'is-selected',
-                  e?.done && 'is-done',
-                  e && `kind-${e.kind}`,
+                  first?.done && 'is-done',
+                  first && `kind-${first.kind}`,
+                  leftover && 'is-leftover',
+                  sameBefore && 'run-mid',
+                  leftover && !sameBefore && sameAfter && 'run-start',
+                  leftover && sameBefore && !sameAfter && 'run-end',
                   over === d && dragId && 'is-over',
-                  !e && d >= planFrom && d < lastPlanned && 'is-gap',
+                  idle && d >= planFrom && d < lastPlanned && 'is-gap',
+                  idle && d >= today && 'is-free',
                 ]
                   .filter(Boolean)
                   .join(' ');
+                const aria = `${formatLong(d)}${meal ? `, ${meal.name}` : out ? ', dehors' : ', libre'}${extra > 0 ? `, ${extra} autre${extra > 1 ? 's' : ''} repas` : ''}`;
                 return (
                   <div
                     key={d}
@@ -89,7 +156,7 @@ export function CalendarView({ focusDate }: { focusDate?: ISODate }) {
                     className={cls}
                     tabIndex={0}
                     aria-selected={d === selected}
-                    aria-label={`${formatLong(d)}${meal ? `, ${meal.name}` : e?.kind === 'out' ? ', dehors' : ', libre'}`}
+                    aria-label={aria}
                     onClick={() => setSelected(d)}
                     onKeyDown={(ev) => {
                       if (ev.key === 'Enter' || ev.key === ' ') {
@@ -99,10 +166,10 @@ export function CalendarView({ focusDate }: { focusDate?: ISODate }) {
                     }}
                     draggable={movable}
                     onDragStart={(ev) => {
-                      if (!e) return;
-                      setDragId(e.id);
+                      if (!first) return;
+                      setDragId(first.id);
                       ev.dataTransfer.effectAllowed = 'move';
-                      ev.dataTransfer.setData('text/plain', e.id);
+                      ev.dataTransfer.setData('text/plain', first.id);
                     }}
                     onDragEnd={() => {
                       setDragId(null);
@@ -127,31 +194,28 @@ export function CalendarView({ focusDate }: { focusDate?: ISODate }) {
                   >
                     <div className="cal-date">
                       <span className="num">{Number(d.slice(8))}</span>
-                      {(d.slice(8) === '01' || d === first) && <span className="cal-month">{formatDayMonth(d).split(' ')[1]}</span>}
-                      {e?.done && <Check size={13} className="cal-check" aria-label="fait" />}
+                      {(d.slice(8) === '01' || (wi === 0 && i === 0)) && <span className="cal-month">{formatDayMonth(d).split(' ')[1]}</span>}
+                      {first?.done && <Check size={13} className="cal-check" aria-label="fait" />}
+                      {eveningDates.has(d) && <Moon size={11} className="cal-evening" aria-label="à-côté prévu le soir" />}
                       {problems.length > 0 && (
                         <span className="cal-alert" title={problems.join('\n')}>
-                          <AlertTriangle size={13} aria-label={problems.join(' ; ')} />
+                          <AlertTriangle size={12} aria-label={problems.join(' ; ')} />
                         </span>
                       )}
                     </div>
-                    {e?.kind === 'out' && <div className="cal-meal"><Utensils size={13} aria-hidden /> Dehors</div>}
-                    {meal && (
-                      <>
-                        <div className="cal-meal">{meal.name}</div>
-                        <div className="cal-sub">
-                          {e?.kind === 'cook' ? (
-                            <span className="cal-kind" title={`Cuisson pour ${meal.portions} repas`}>
-                              <CookingPot size={12} aria-hidden /> {meal.portions > 1 ? `×${meal.portions}` : ''}
-                            </span>
-                          ) : (
-                            <span className="cal-kind"><Refrigerator size={12} aria-hidden /> reste</span>
-                          )}
-                          {kcal !== undefined && <span className="num" title="kcal par repas">{Math.round(kcal)}</span>}
-                          {eveningDates.has(d) && <Moon size={11} className="cal-evening" aria-label="à-côté prévu le soir" />}
-                        </div>
-                      </>
+                    {out && (
+                      <div className="cal-meal">
+                        <Utensils size={13} aria-hidden /> Dehors
+                      </div>
                     )}
+                    {meal && (
+                      <div className={`cal-meal ${leftover ? 'is-left' : ''}`}>
+                        {leftover && <Refrigerator size={11} aria-hidden className="cal-left-icon" />}
+                        {meal.name}
+                      </div>
+                    )}
+                    {extra > 0 && <span className="cal-more">+{extra}</span>}
+                    {subtitleOf(entryKindOf(first), meal) && <div className="cal-sub">{subtitleOf(entryKindOf(first), meal)}</div>}
                     {movable && <GripVertical size={14} className="cal-grip" aria-hidden />}
                   </div>
                 );
@@ -160,7 +224,71 @@ export function CalendarView({ focusDate }: { focusDate?: ISODate }) {
           ))}
         </div>
 
-        <DayPanel key={selected} date={selected} issues={issues.get(selected) ?? []} setEntries={setEntries} onSelect={setSelected} />
+        <DayPanel key={selected} date={selected} issues={[...new Set(issues.get(selected) ?? [])]} setEntries={setEntries} onSelect={setSelected} />
+      </div>
+
+      <WeekSummary days={days} />
+    </div>
+  );
+}
+
+const entryKindOf = (e: PlanEntry | undefined) => (e?.kind === 'cook' ? 'cook' : e?.kind === 'leftover' ? 'leftover' : undefined);
+
+/** Sous-titre d'une case : le nombre de repas ou « reste », jamais les calories. */
+function subtitleOf(kind: 'cook' | 'leftover' | undefined, meal: Meal | undefined): string | null {
+  if (kind === 'cook') return meal && meal.portions > 1 ? `${meal.portions} repas` : null;
+  if (kind === 'leftover') return 'reste';
+  return null;
+}
+
+/** Ligne de fin de quinzaine : ce que ça donne, ce qui reste à remplir, ce qui va se perdre. */
+function WeekSummary({ days }: { days: ISODate[] }) {
+  const app = useApp();
+  const { data, today } = app;
+  const planned = days.map((d) => dayNutrition(data, app.foods, d)).filter((d) => d.meals.length > 0);
+  const empties = days.filter((d) => d >= today && !data.plan.entries.some((e) => e.date === d)).length;
+  const losses = app.forecast.losses.filter((l) => l.expiry >= days[0] && l.expiry <= days[days.length - 1]);
+  const avgKcal = planned.length ? planned.reduce((s, d) => s + d.total.kcal, 0) / planned.length : 0;
+  const avgProtein = planned.length ? planned.reduce((s, d) => s + d.total.protein, 0) / planned.length : 0;
+  const fr = (v: number) => Math.round(v).toLocaleString('fr-FR');
+  return (
+    <div className="week-summary">
+      <div>
+        <p className="balance-sub">Ces deux semaines</p>
+        <p>
+          {planned.length} jour{planned.length > 1 ? 's' : ''} prévu{planned.length > 1 ? 's' : ''}
+          {planned.length > 0 && (
+            <>
+              {' · '}
+              <span className="num">{fr(avgKcal)}</span> kcal et <span className="num">{fr(avgProtein)}</span> g de protéines par jour en moyenne
+            </>
+          )}
+        </p>
+      </div>
+      <div>
+        <p className="balance-sub">Reste à remplir</p>
+        <p>{empties === 0 ? 'Aucun jour vide.' : `${empties} jour${empties > 1 ? 's' : ''} sans repas.`}</p>
+      </div>
+      <div>
+        <p className="balance-sub">Risque de perte</p>
+        <p>
+          {losses.length === 0 ? (
+            'Rien ne se perd.'
+          ) : (
+            <>
+              {losses.length} produit{losses.length > 1 ? 's' : ''} :{' '}
+              {losses
+                .slice(0, 3)
+                .map((l) => app.foods.get(l.foodId)?.name ?? l.foodId)
+                .join(', ')}
+              {losses.length > 3 && ` et ${losses.length - 3} autre${losses.length - 3 > 1 ? 's' : ''}`}
+              {' · '}
+              <button type="button" className="link small" onClick={() => app.goTo('stock')}>
+                voir le stock
+              </button>
+            </>
+          )}
+        </p>
       </div>
     </div>
   );
@@ -179,134 +307,238 @@ function DayPanel({
 }) {
   const app = useApp();
   const { data, today } = app;
+  const [tab, setTab] = useState<'repas' | 'bilan'>('repas');
   const [replacing, setReplacing] = useState(false);
   const [showIngredients, setShowIngredients] = useState(false);
-  const entry = data.plan.entries.find((e) => e.date === date);
-  const meal = mealOf(data, entry);
+  const [adding, setAdding] = useState(false);
   const editable = date >= today;
+  const dayEntries = entriesOn(data, date);
+  const entry = dayEntries[0];
+  const others = dayEntries.slice(1);
+  const meals = app.targets.mealsPerDay;
+  const canAddMeal = editable && dayEntries.filter((e) => e.kind !== 'out').length < meals;
+  const meal = mealOf(data, entry);
   const rests = meal ? data.plan.entries.filter((e) => e.kind === 'leftover' && e.batchId === meal.cook.id).sort((a, b) => (a.date < b.date ? -1 : 1)) : [];
+  const age = meal ? Math.max(0, Math.round((Date.parse(date) - Date.parse(meal.cook.date)) / 86400000)) : 0;
 
   return (
     <aside className="day-panel" aria-label={`Détail du ${formatLong(date)}`}>
       <header className="day-panel-head">
-        <button type="button" className="icon-button" onClick={() => onSelect(addDays(date, -1))} aria-label="Jour précédent"><ChevronLeft size={18} aria-hidden /></button>
+        <button type="button" className="icon-button" onClick={() => onSelect(addDays(date, -1))} aria-label="Jour précédent">
+          <ChevronLeft size={18} aria-hidden />
+        </button>
         <h2>{capitalize(formatLong(date))}</h2>
-        <button type="button" className="icon-button" onClick={() => onSelect(addDays(date, 1))} aria-label="Jour suivant"><ChevronRight size={18} aria-hidden /></button>
+        <button type="button" className="icon-button" onClick={() => onSelect(addDays(date, 1))} aria-label="Jour suivant">
+          <ChevronRight size={18} aria-hidden />
+        </button>
       </header>
+
+      <div className="seg-group panel-tabs" role="tablist" aria-label="Vue du jour">
+        <button type="button" role="tab" aria-selected={tab === 'repas'} className={`seg-pill ${tab === 'repas' ? 'on' : ''}`} onClick={() => setTab('repas')}>
+          Repas
+        </button>
+        <button type="button" role="tab" aria-selected={tab === 'bilan'} className={`seg-pill ${tab === 'bilan' ? 'on' : ''}`} onClick={() => setTab('bilan')}>
+          Bilan
+        </button>
+      </div>
 
       {issues.length > 0 && (
         <ul className="attention">
           {issues.map((i) => (
-            <li key={i}><AlertTriangle size={14} aria-hidden /> {i}</li>
+            <li key={i}>
+              <AlertTriangle size={14} aria-hidden /> {i}
+            </li>
           ))}
         </ul>
       )}
 
-      {!entry &&
-        (editable ? (
-          <>
-            <MealPlanner
-              submitLabel="Planifier"
-              onRecipe={(r, n) => setEntries((e) => planRecipe(e, date, r, n))}
-              onCustom={(t, n) => setEntries((e) => planCustom(e, date, t, n))}
-            />
-            <button type="button" className="text-button" onClick={() => setEntries((e) => markOut(e, date))}>
-              <Utensils size={15} aria-hidden /> Je mange dehors ce jour-là
-            </button>
-          </>
-        ) : (
-          <p className="muted">Rien de noté.</p>
-        ))}
-
-      {entry?.kind === 'out' && (
+      {tab === 'bilan' ? (
         <>
-          <p className="panel-title">Repas dehors</p>
-          {editable && (
-            <button type="button" className="secondary-button" onClick={() => setEntries((e) => unmarkOut(e, entry.id))}>
-              <X size={15} aria-hidden /> Finalement à la maison
-            </button>
-          )}
-        </>
-      )}
-
-      {entry && meal && (
-        <>
-          <div>
-            <p className="panel-title">{meal.name}</p>
-            <p className="muted small">
-              {entry.kind === 'cook'
-                ? rests.length
-                  ? `Cuisson, restes jusqu’au ${formatShort(rests[rests.length - 1].date)}`
-                  : 'Cuisson du jour'
-                : `Reste du ${formatShort(meal.cook.date)} · J+${diffDays(meal.cook.date, date)} sur ${meal.fridgeDays}`}
-            </p>
-          </div>
-
-          <div className="panel-actions">
-            <button type="button" className={entry.done ? 'done-button' : 'primary-button'} aria-pressed={!!entry.done} onClick={() => setEntries((e) => toggleDone(e, entry.id))} disabled={date > today}>
-              <Check size={15} aria-hidden /> {entry.done ? 'Fait' : entry.kind === 'cook' ? 'C’est fait' : 'Mangé'}
-            </button>
-            {entry.kind === 'cook' && (
-              <button type="button" className="secondary-button" onClick={() => setShowIngredients((v) => !v)} aria-expanded={showIngredients}>
-                Ingrédients <span className="num muted">{meal.ingredients.length}</span>
-                <ChevronDown size={15} className={`chev ${showIngredients ? 'up' : ''}`} aria-hidden />
-              </button>
-            )}
-            {meal.recipe && (
-              <button type="button" className="secondary-button" onClick={() => app.openRecipe(meal.recipe!.id)}>
-                <BookOpen size={15} aria-hidden /> Recette
-              </button>
-            )}
-          </div>
-
-          {entry.kind === 'cook' ? (
-            showIngredients && <MealEditor cook={entry} editable={!entry.done} />
-          ) : (
-            <button type="button" className="text-button" onClick={() => onSelect(meal.cook.date)}>
-              Voir la cuisson du {formatShort(meal.cook.date)} <ArrowRight size={14} aria-hidden />
-            </button>
-          )}
-
           <EveningList date={date} />
-
           <section className="panel-balance" aria-label="Bilan de la journée">
             <p className="balance-title">Bilan de la journée</p>
             <DayBalanceCard date={date} />
           </section>
-
-          {editable && !entry.done && (
-            <div className="panel-tools" role="group" aria-label="Organiser">
-              <button type="button" className="tool" onClick={() => setEntries((e) => swapBlock(e, entry.id, -1, today))} title="Échanger avec le plat d’avant">
-                <ArrowLeft size={15} aria-hidden /> Plus tôt
-              </button>
-              <button type="button" className="tool" onClick={() => setEntries((e) => swapBlock(e, entry.id, 1, today))} title="Échanger avec le plat suivant">
-                Plus tard <ArrowRight size={15} aria-hidden />
-              </button>
-              <button type="button" className="tool" onClick={() => setEntries((e) => markOut(e, date))} title="La suite glisse d’un jour">
-                <Utensils size={15} aria-hidden /> Dehors
-              </button>
-              {entry.kind === 'cook' && (
-                <button type="button" className={`tool ${replacing ? 'on' : ''}`} onClick={() => setReplacing((v) => !v)} aria-expanded={replacing}>
-                  <Repeat size={15} aria-hidden /> Changer
-                </button>
-              )}
-              <button type="button" className="tool danger" onClick={() => setEntries((e) => removeEntry(e, entry.id))} title={entry.kind === 'cook' && rests.length ? 'Retire aussi ses restes' : 'Retirer'}>
-                <Trash2 size={15} aria-hidden /> Retirer
-              </button>
+        </>
+      ) : (
+        <>
+          {others.length > 0 && (
+            <div>
+              <p className="balance-sub">Aussi ce jour-là</p>
+              <ul className="picks">
+                {others.map((o) => {
+                  const om = mealOf(data, o);
+                  return (
+                    <li key={o.id} className="pick-row">
+                      <span className="pick-label">
+                        {o.kind === 'out' ? (
+                          <>
+                            <Utensils size={13} aria-hidden /> Dehors
+                          </>
+                        ) : (
+                          <>
+                            {om?.name ?? 'Repas'}
+                            {o.done ? ' · mangé' : ''}
+                          </>
+                        )}
+                      </span>
+                      <span className="pick-actions">
+                        {o.kind !== 'out' && (
+                          <button
+                            type="button"
+                            className={o.done ? 'icon-button is-done' : 'icon-button'}
+                            aria-label={o.done ? 'Décocher' : 'Marquer mangé'}
+                            aria-pressed={!!o.done}
+                            onClick={() => setEntries((e) => toggleDone(e, o.id))}
+                            disabled={date > today}
+                          >
+                            <Check size={14} aria-hidden />
+                          </button>
+                        )}
+                        <button type="button" className="icon-button" aria-label="Retirer ce repas" onClick={() => setEntries((e) => removeEntry(e, o.id))} disabled={!editable}>
+                          <X size={14} aria-hidden />
+                        </button>
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
             </div>
           )}
-          {replacing && entry.kind === 'cook' && (
+
+          {canAddMeal && !adding && (
+            <button type="button" className="secondary-button is-sm" onClick={() => setAdding(true)}>
+              <Plus size={15} aria-hidden /> Ajouter un repas ce jour-là
+            </button>
+          )}
+          {adding && (
             <MealPlanner
-              submitLabel="Remplacer"
-              onRecipe={(r, n) => {
-                setEntries((e) => planRecipe(removeEntry(e, entry.id), date, r, n));
-                setReplacing(false);
+              submitLabel="Ajouter"
+              date={date}
+              onRecipe={(r) => {
+                setEntries((e) => addMealOn(e, date, r));
+                setAdding(false);
               }}
-              onCustom={(t, n) => {
-                setEntries((e) => planCustom(removeEntry(e, entry.id), date, t, n));
-                setReplacing(false);
+              onCustom={(t) => {
+                setEntries((e) => addCustomOn(e, date, t));
+                setAdding(false);
               }}
             />
+          )}
+
+          {!entry &&
+            (editable ? (
+              <>
+                <MealPlanner submitLabel="Planifier" date={date} onRecipe={(r, n) => setEntries((e) => planRecipe(e, date, r, n))} onCustom={(t, n) => setEntries((e) => planCustom(e, date, t, n))} />
+                <button type="button" className="text-button" onClick={() => setEntries((e) => markOut(e, date))}>
+                  <Utensils size={15} aria-hidden /> Je mange dehors ce jour-là
+                </button>
+              </>
+            ) : (
+              <p className="muted">Rien de noté.</p>
+            ))}
+
+          {entry?.kind === 'out' && (
+            <>
+              <p className="panel-title">Repas dehors</p>
+              {editable && (
+                <button type="button" className="secondary-button" onClick={() => setEntries((e) => unmarkOut(e, entry.id))}>
+                  <X size={15} aria-hidden /> Finalement à la maison
+                </button>
+              )}
+            </>
+          )}
+
+          {entry && meal && (
+            <>
+              <div>
+                {others.length > 0 && <p className="balance-sub">Repas principal</p>}
+                <p className="panel-title">{meal.name}</p>
+                <p className="muted small">
+                  {entry.kind === 'cook'
+                    ? rests.length
+                      ? `Cuisson, restes jusqu’au ${formatShort(rests[rests.length - 1].date)}`
+                      : 'Cuisson du jour'
+                    : `Reste du ${formatShort(meal.cook.date)} · J+${age} sur ${meal.fridgeDays}`}
+                </p>
+              </div>
+
+              <div className="panel-actions">
+                <button
+                  type="button"
+                  className={entry.done ? 'done-button' : 'primary-button'}
+                  aria-pressed={!!entry.done}
+                  onClick={() => setEntries((e) => toggleDone(e, entry.id))}
+                  disabled={date > today}
+                  title={entry.done ? 'Décocher : le stock remonte' : 'Cocher sort les ingrédients du stock'}
+                >
+                  <Check size={15} aria-hidden /> {entry.done ? 'Fait' : entry.kind === 'cook' ? 'C’est fait' : 'Mangé'}
+                </button>
+                {date < today && !entry.done && !entry.skipped && (
+                  <button type="button" className="text-button is-sm" onClick={() => setEntries((e) => setSkipped(e, entry.id))} title="Ne sort rien du stock et ne redemande plus">
+                    Pas mangé
+                  </button>
+                )}
+                {entry.kind === 'cook' && (
+                  <button type="button" className="secondary-button" onClick={() => setShowIngredients((v) => !v)} aria-expanded={showIngredients}>
+                    Ingrédients <span className="num muted">{meal.ingredients.length}</span>
+                    <ChevronDown size={15} className={`chev ${showIngredients ? 'up' : ''}`} aria-hidden />
+                  </button>
+                )}
+                {meal.recipe && (
+                  <button type="button" className="secondary-button" onClick={() => app.openRecipe(meal.recipe!.id)}>
+                    <BookOpen size={15} aria-hidden /> Recette
+                  </button>
+                )}
+              </div>
+
+              <PortionPrompt entry={entry} onPick={(k) => setEntries((e) => setEaten(e, entry.id, k))} />
+              {date < today && !entry.done && !entry.skipped && <p className="hint">Tant qu’il n’est pas coché, ce repas ne sort rien du stock.</p>}
+
+              {entry.kind === 'cook' ? (
+                showIngredients && <MealEditor cook={entry} editable={!entry.done} />
+              ) : (
+                <button type="button" className="text-button" onClick={() => onSelect(meal.cook.date)}>
+                  Voir la cuisson du {formatShort(meal.cook.date)} <ArrowRight size={14} aria-hidden />
+                </button>
+              )}
+
+              {editable && !entry.done && (
+                <div className="panel-tools" role="group" aria-label="Organiser">
+                  <button type="button" className="tool" onClick={() => setEntries((e) => swapBlock(e, entry.id, -1, today))} title="Échanger avec le plat d’avant">
+                    <ArrowLeft size={15} aria-hidden /> Plus tôt
+                  </button>
+                  <button type="button" className="tool" onClick={() => setEntries((e) => swapBlock(e, entry.id, 1, today))} title="Échanger avec le plat suivant">
+                    Plus tard <ArrowRight size={15} aria-hidden />
+                  </button>
+                  <button type="button" className="tool" onClick={() => setEntries((e) => markOut(e, date))} title="La suite glisse d’un jour">
+                    <Utensils size={15} aria-hidden /> Dehors
+                  </button>
+                  {entry.kind === 'cook' && (
+                    <button type="button" className={`tool ${replacing ? 'on' : ''}`} onClick={() => setReplacing((v) => !v)} aria-expanded={replacing}>
+                      <Repeat size={15} aria-hidden /> Changer
+                    </button>
+                  )}
+                  <button type="button" className="tool danger" onClick={() => setEntries((e) => removeEntry(e, entry.id))} title={entry.kind === 'cook' && rests.length ? 'Retire aussi ses restes' : 'Retirer'}>
+                    <Trash2 size={15} aria-hidden /> Retirer
+                  </button>
+                </div>
+              )}
+              {replacing && entry.kind === 'cook' && (
+                <MealPlanner
+                  submitLabel="Remplacer"
+                  date={date}
+                  onRecipe={(r, n) => {
+                    setEntries((e) => planRecipe(removeEntry(e, entry.id), date, r, n));
+                    setReplacing(false);
+                  }}
+                  onCustom={(t, n) => {
+                    setEntries((e) => planCustom(removeEntry(e, entry.id), date, t, n));
+                    setReplacing(false);
+                  }}
+                />
+              )}
+            </>
           )}
         </>
       )}
@@ -324,7 +556,7 @@ function chunk<T>(arr: T[], n: number): T[][] {
 function EveningList({ date }: { date: ISODate }) {
   const { data, store, today } = useApp();
   const items = data.journal.snacks.filter((s) => s.date === date);
-  if (items.length === 0) return null;
+  if (items.length === 0) return <p className="hint">Rien de prévu au soir pour l’instant.</p>;
   return (
     <div className="evening">
       <p className="balance-sub">{date > today ? 'Prévu le soir' : 'Le soir'}</p>

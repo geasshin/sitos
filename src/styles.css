@@ -525,7 +525,7 @@ input::placeholder, textarea::placeholder { color: var(--color-placeholder); }
 .cal-head { position: sticky; top: 0; z-index: 2; background: var(--color-canvas); padding: var(--space-1) 0; }
 .cal-wd { font-family: var(--font-label); font-size: var(--text-2xs); color: var(--color-text-muted); padding-left: var(--space-2); text-transform: uppercase; letter-spacing: 0.08em; }
 .cal-day {
-  position: relative; min-width: 0; min-height: 112px; padding: var(--space-2) var(--space-2) var(--space-2);
+  position: relative; min-width: 0; min-height: 152px; padding: var(--space-2) var(--space-2) var(--space-2);
   border-radius: var(--radius-md); background: var(--color-surface); border: 1px solid var(--color-hairline);
   display: flex; flex-direction: column; gap: var(--space-1);
   transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out), background-color var(--duration-fast) var(--ease-out);
@@ -537,9 +537,25 @@ input::placeholder, textarea::placeholder { color: var(--color-placeholder); }
 .cal-day.is-selected { box-shadow: 0 0 0 2px var(--color-accent), var(--shadow-visual); border-color: transparent; }
 .cal-day.kind-leftover { background: var(--color-surface-muted); }
 .cal-day.kind-leftover.is-past { background: transparent; }
+
+/* Une cuisson et ses restes : un seul ruban qui traverse les jours. */
+.cal-day.is-leftover { border-left-color: transparent; border-radius: 0; box-shadow: inset 2px 0 var(--color-border-strong); }
+.cal-day.is-leftover.run-start { border-top-left-radius: var(--radius-md); border-bottom-left-radius: var(--radius-md); box-shadow: inset 2px 0 var(--color-border-strong); }
+.cal-day.is-leftover.run-mid { box-shadow: inset 2px 0 var(--color-border-strong); }
+.cal-day.is-leftover.run-end { border-top-right-radius: var(--radius-md); border-bottom-right-radius: var(--radius-md); }
+.cal-day.is-leftover.run-start.run-end { border-radius: var(--radius-md); }
+.cal-day.is-leftover.is-selected { box-shadow: inset 2px 0 var(--color-border-strong), 0 0 0 2px var(--color-accent); }
+.cal-day.is-leftover .cal-date { color: var(--color-text-muted); }
+.cal-meal.is-left { font-weight: 500; color: var(--color-text); opacity: 0.82; display: flex; align-items: baseline; gap: var(--space-1); -webkit-line-clamp: 3; }
+.cal-left-icon { flex: none; color: var(--color-text-muted); }
+.cal-more { position: absolute; right: var(--space-2); bottom: var(--space-2); font-size: var(--text-2xs); font-family: var(--font-label); letter-spacing: 0.04em; padding: 1px var(--space-1-5); border-radius: 999px; background: var(--color-surface-muted); color: var(--color-text-secondary); }
+.cal-day.is-past .cal-more { opacity: 0.7; }
 .cal-day.kind-out { background: var(--color-warning-soft); border-color: var(--color-warning-border); }
 .cal-day.is-gap { background: transparent; border-style: dashed; border-color: var(--color-border-strong); }
 .cal-day.is-over { border-color: var(--color-accent); background: var(--color-accent-soft); transform: scale(1.02); }
+.cal-day.is-free::after { content: '+'; position: absolute; right: var(--space-2-5); bottom: var(--space-1-5); font-size: 1.25rem; line-height: 1; color: var(--color-text-subtle); opacity: 0; transition: opacity var(--duration-fast) var(--ease-out); pointer-events: none; }
+.cal-day.is-free:hover::after, .cal-day.is-free:focus-visible::after { opacity: 1; }
+.cal-day.is-free:hover .cal-grip { display: none; }
 .cal-day[draggable='true'] { cursor: grab; }
 .cal-day[draggable='true']:active { cursor: grabbing; }
 .cal-date { display: flex; align-items: center; gap: var(--space-1); font-size: var(--text-sm); font-weight: 700; color: var(--color-text-secondary); }
@@ -557,6 +573,11 @@ input::placeholder, textarea::placeholder { color: var(--color-placeholder); }
 .cal-grip { position: absolute; right: var(--space-1); top: var(--space-2); color: var(--color-text-subtle); opacity: 0; transition: opacity var(--duration-fast) var(--ease-out); }
 .cal-day:hover .cal-grip { opacity: 1; }
 .cal-day:has(.cal-alert) .cal-grip { display: none; }
+.panel-tabs { align-self: flex-start; }
+.week-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5); padding: var(--space-4) var(--space-5); border-top: 1px solid var(--color-hairline); margin-top: var(--space-5); }
+.week-summary p { font-size: var(--text-sm); }
+.week-summary .balance-sub { margin-bottom: var(--space-1); }
+@media (max-width: 900px) { .week-summary { grid-template-columns: 1fr; gap: var(--space-3); } }
 .day-panel {
   position: sticky; top: var(--space-6);
   display: flex; flex-direction: column; gap: var(--space-3);
@@ -716,7 +737,7 @@ input::placeholder, textarea::placeholder { color: var(--color-placeholder); }
 
 @media (max-width: 1180px) {
   .cal-layout { grid-template-columns: 1fr; }
-  .day-panel { position: static; }
+.day-panel { position: static; }
   .stock-head { display: none; }
   .stock-row { grid-template-columns: 1fr auto; }
   .stock-qty, .stock-fresh, .stock-use { grid-column: 1 / -1; }
@@ -764,7 +785,7 @@ input::placeholder, textarea::placeholder { color: var(--color-placeholder); }
 /* ---------- bilan nutritionnel ---------- */
 
 .balance { display: flex; flex-direction: column; gap: var(--space-3); }
-.balance-sub { font-family: var(--font-label); font-size: var(--text-2xs); text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text-muted); margin-top: var(--space-1); }
+.balance-sub { font-family: var(--font-label); font-size: var(--text-2xs); text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text-secondary); margin-top: var(--space-1); }
 .balance-title { font-family: var(--font-display); font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; font-size: var(--text-sm); }
 .balance-compact .nutrients { gap: var(--space-2-5); }
 .nutrients-caps .nutrient dt { font-weight: 500; }
@@ -822,6 +843,10 @@ input::placeholder, textarea::placeholder { color: var(--color-placeholder); }
 .target-why { line-height: 1.5; color: var(--color-text-secondary); padding-top: var(--space-6); }
 .wizard .field-row { grid-template-columns: repeat(3, 150px); justify-content: start; }
 .wizard .field .qty-input { width: 150px; }
+
+/* ---------- planning ---------- */
+
+.pick-group { font-family: var(--font-label); font-size: var(--text-2xs); text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text-muted); padding: var(--space-2) 0 var(--space-1); display: flex; align-items: center; gap: var(--space-1); }
 
 /* ---------- le soir, bilan compact ---------- */
 
