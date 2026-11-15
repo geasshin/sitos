@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Archive, Check, ExternalLink, FolderOpen, Loader2, Minus, Plus, RefreshCw, Target } from 'lucide-react';
+import { Archive, Check, ExternalLink, FolderOpen, Loader2, RefreshCw, Target } from 'lucide-react';
 import { useApp } from '../context';
 import { Section } from '../components/ui';
 import { applyTheme, createBackup, getBackupInfo, getDataFolder, isNative, openDataFolder, openLink, type BackupInfo } from '../storage';
 import { appVersion, checkForUpdate, installUpdate, useUpdates } from '../updates';
+import { clearCoverCache, coverCacheSize } from '../imageCache';
 
 const THEMES = [
   ['system', 'Comme le Mac'],
@@ -25,6 +26,8 @@ export function SettingsView() {
   const [folder, setFolder] = useState<string>();
   const [backups, setBackups] = useState<BackupInfo>();
   const [backupState, setBackupState] = useState<'idle' | 'saving' | 'done' | 'error'>('idle');
+  const [covers, setCovers] = useState<{ count: number; bytes: number }>();
+  useEffect(() => void coverCacheSize().then(setCovers), []);
 
   const refreshBackups = () => void getBackupInfo().then(setBackups);
   useEffect(() => {
@@ -35,6 +38,7 @@ export function SettingsView() {
 
   const setSettings = (patch: Partial<typeof s>) => store.update('settings', (x) => ({ ...x, ...patch }));
   const auto = s.autoUpdate !== false;
+  const meals = s.mealsPerDay ?? 1;
   const theme = s.theme ?? 'system';
   const checking = u.phase === 'checking';
 
@@ -104,6 +108,53 @@ export function SettingsView() {
       <Section title="Nutrition">
         <div className="setting-row">
           <div>
+            <p className="setting-label">Repas principaux par jour</p>
+            <p className="hint">
+              {meals === 1
+                ? 'Un seul repas principal ; le soir reste léger.'
+                : `Les objectifs se partagent entre les ${meals} repas. La grille du calendrier garde un repas par jour jusqu’à la version 0.4.`}
+            </p>
+          </div>
+          <div className="seg-group" role="radiogroup" aria-label="Repas principaux par jour">
+            {([1, 2, 3] as const).map((k) => (
+              <button
+                key={k}
+                type="button"
+                role="radio"
+                aria-checked={meals === k}
+                className={`seg-pill ${meals === k ? 'on' : ''}`}
+                onClick={() => {
+                  setSettings({ mealsPerDay: k, mealShare: k === 1 ? 0.75 : k === 2 ? 0.45 : 0.35 });
+                  if (s.profile) setSettings({ profile: { ...s.profile, rhythm: k === 1 ? 'un-repas' : k === 2 ? 'deux-repas' : 'trois-repas' } });
+                }}
+              >
+                {k}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="setting-row">
+          <div>
+            <p className="setting-label">Repas par cuisson</p>
+            <p className="hint">Ce qu'une recette donne quand sa fiche ne le précise pas. Deux ou trois repas, c'est le rythme du batch cooking.</p>
+          </div>
+          <div className="seg-group" role="radiogroup" aria-label="Repas par cuisson">
+            {([2, 3, 4] as const).map((k) => (
+              <button
+                key={k}
+                type="button"
+                role="radio"
+                aria-checked={(s.mealsPerCook ?? 2) === k}
+                className={`seg-pill ${(s.mealsPerCook ?? 2) === k ? 'on' : ''}`}
+                onClick={() => setSettings({ mealsPerCook: k })}
+              >
+                {k}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="setting-row">
+          <div>
             <p className="setting-label">Mes objectifs</p>
             <p className="setting-value">
               {Math.round(targets.kcal).toLocaleString('fr-FR')} kcal, {targets.protein} g de protéines par jour
@@ -116,18 +167,12 @@ export function SettingsView() {
         </div>
         <div className="setting-row">
           <div>
-            <p className="setting-label">Fruits mangés nature par jour</p>
-            <p className="hint">Sert à prévoir quand le stock de fruits sera épuisé.</p>
+            <p className="setting-label">Liste de courses</p>
+            <p className="hint">Ce qui manque pour le plan, ce qui va finir et les produits de base, avec le nombre de fruits par jour.</p>
           </div>
-          <div className="stepper" role="group" aria-label="Fruits par jour">
-            <button type="button" className="icon-button" aria-label="Un fruit de moins" disabled={s.fruitsPerDay <= 0} onClick={() => setSettings({ fruitsPerDay: Math.max(0, s.fruitsPerDay - 1) })}>
-              <Minus size={15} aria-hidden />
-            </button>
-            <span className="num">{s.fruitsPerDay}</span>
-            <button type="button" className="icon-button" aria-label="Un fruit de plus" disabled={s.fruitsPerDay >= 4} onClick={() => setSettings({ fruitsPerDay: Math.min(4, s.fruitsPerDay + 1) })}>
-              <Plus size={15} aria-hidden />
-            </button>
-          </div>
+          <button type="button" className="secondary-button" onClick={() => app.goTo('stock')}>
+            <Archive size={15} aria-hidden /> Ouvrir le stock
+          </button>
         </div>
       </Section>
 
@@ -193,6 +238,27 @@ export function SettingsView() {
         ) : (
           <p className="hint">Dans le navigateur, les données sont dans le dossier data/ du dépôt.</p>
         )}
+        <div className="setting-row">
+          <div>
+            <p className="setting-label">Photos des recettes</p>
+            <p className="hint">
+              {covers
+                ? `${covers.count} photo${covers.count > 1 ? 's' : ''} en cache (${Math.round(covers.bytes / 1024 / 1024 * 10) / 10} Mo). Elles s'affichent sans réseau.`
+                : 'Gardées sur ce Mac après le premier affichage, pour ne pas les retélécharger.'}
+            </p>
+          </div>
+          <button
+            type="button"
+            className="secondary-button"
+            disabled={!covers?.count}
+            onClick={async () => {
+              await clearCoverCache();
+              setCovers(await coverCacheSize());
+            }}
+          >
+            Vider le cache
+          </button>
+        </div>
       </Section>
 
       <Section title="À propos">
