@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Heart, Link2, Plus, Search } from 'lucide-react';
+import { CheckCircle2, Heart, Link2, Plus, Search } from 'lucide-react';
 import { useApp } from '../context';
 import { DISHES, isPlannable, type Recipe, type RecipeStatus } from '../domain/types';
 import { Cover, STATUS_LABEL, StatusPill, sourceLabel } from '../components/recipe';
 import { Empty } from '../components/ui';
+import { makeable, missingCount } from '../domain/recipes';
 
 type StatusFilter = 'tous' | RecipeStatus | 'favoris';
 type Sort = 'titre' | 'recent';
@@ -12,15 +13,18 @@ interface Filters {
   status: StatusFilter;
   dish: string;
   linked: boolean;
+  /** Ne garder que ce qui est cuisinable avec le stock du jour. */
+  ready: boolean;
   sort: Sort;
 }
 const KEY = 'cuisine-recettes-filtres';
-const DEFAULTS: Filters = { q: '', status: 'tous', dish: 'tous', linked: false, sort: 'titre' };
+const DEFAULTS: Filters = { q: '', status: 'tous', dish: 'tous', linked: false, ready: true, sort: 'titre' };
 
 const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
 
 export function RecipesView() {
-  const { data, openRecipe, editRecipe, portions } = useApp();
+  const app = useApp();
+  const { data, openRecipe, editRecipe, portions } = app;
   const [f, setF] = useState<Filters>(() => {
     try {
       return { ...DEFAULTS, ...JSON.parse(sessionStorage.getItem(KEY) ?? '{}') };
@@ -34,6 +38,8 @@ export function RecipesView() {
   const dishes = DISHES.filter((d) => data.recipes.some((r) => r.dish === d));
   const favorites = data.recipes.filter((r) => r.favorite).length;
   const linked = data.recipes.filter(isPlannable).length;
+  const ready = data.recipes.filter((r) => makeable(r, app.stock)).length;
+  const oneAway = data.recipes.filter((r) => missingCount(r, app.stock) === 1).length;
 
   const list = useMemo(() => {
     const q = norm(f.q.trim());
@@ -41,6 +47,7 @@ export function RecipesView() {
       if (f.status === 'favoris' ? !r.favorite : f.status !== 'tous' && r.status !== f.status) return false;
       if (f.dish !== 'tous' && r.dish !== f.dish) return false;
       if (f.linked && !isPlannable(r)) return false;
+      if (f.ready && !makeable(r, app.stock)) return false;
       if (q) {
         const hay = norm([r.name, r.source ?? '', ...(r.ingredientsText ?? []), r.note ?? ''].join(' '));
         if (!hay.includes(q)) return false;
@@ -50,7 +57,7 @@ export function RecipesView() {
     return out.sort((a, b) =>
       f.sort === 'recent' ? (b.createdAt ?? '').localeCompare(a.createdAt ?? '') : a.name.localeCompare(b.name, 'fr'),
     );
-  }, [data.recipes, f]);
+  }, [data.recipes, f, app.stock]);
 
   const statusTabs: { id: StatusFilter; label: string }[] = [
     { id: 'tous', label: 'Tous' },
@@ -68,7 +75,8 @@ export function RecipesView() {
           <p className="page-subtitle">
             <span className="num">{data.recipes.length}</span> recettes dont <span className="num">{favorites}</span> coup{favorites > 1 ? 's' : ''} de cœur
             <span className="subtitle-sep">·</span>
-            <span className="num">{linked}</span> reliées au stock
+            <span className="num">{linked}</span> reliées au stock<span className="subtitle-sep">·</span>
+            <span className="num">{ready}</span> réalisables aujourd'hui
           </p>
         </div>
         <button type="button" className="primary-button" onClick={() => editRecipe('nouvelle')}>
@@ -99,6 +107,15 @@ export function RecipesView() {
           ))}
         </div>
         <div className="tools-end">
+          <button
+            type="button"
+            className={`secondary-button ${f.ready ? 'is-on' : ''}`}
+            aria-pressed={f.ready}
+            onClick={() => set({ ready: !f.ready })}
+            title="Ne garder que les recettes dont tous les ingrédients sont en stock"
+          >
+            <CheckCircle2 size={15} aria-hidden /> Réalisables maintenant
+          </button>
           <button type="button" className={`secondary-button ${f.linked ? 'is-on' : ''}`} aria-pressed={f.linked} onClick={() => set({ linked: !f.linked })} title="Les recettes dont les quantités sont reliées au stock se planifient dans le calendrier">
             <Link2 size={15} aria-hidden /> Reliées au stock
           </button>
@@ -113,12 +130,38 @@ export function RecipesView() {
       </div>
 
       {list.length === 0 ? (
-        <Empty title="Aucune recette ne correspond" action={<button type="button" className="secondary-button" onClick={() => setF(DEFAULTS)}>Tout afficher</button>} />
+        <Empty
+          title={f.ready ? 'Rien n’est réalisable avec le stock du jour' : 'Aucune recette ne correspond'}
+          action={
+            <div className="empty-actions">
+              {f.ready && (
+                <button type="button" className="secondary-button" onClick={() => set({ ready: false })}>
+                  Voir toutes les recettes
+                </button>
+              )}
+              <button type="button" className="secondary-button" onClick={() => setF(DEFAULTS)}>
+                Tout afficher
+              </button>
+              <button type="button" className="secondary-button" onClick={() => app.goTo('stock')}>
+                Ouvrir la liste de courses
+              </button>
+            </div>
+          }
+        >
+          {f.ready
+            ? `${oneAway} recette${oneAway > 1 ? 's ne manquent' : ' ne manque'} que d’un produit. La liste de courses sait lesquels.`
+            : undefined}
+        </Empty>
       ) : (
         <ul className="card-grid">
           {list.map((r) => (
             <li key={r.id}>
-              <RecipeCard r={r} kcal={isPlannable(r) ? portions.get(r.id)?.nutrients.kcal : undefined} onOpen={() => openRecipe(r.id)} />
+              <RecipeCard
+                r={r}
+                kcal={isPlannable(r) ? portions.get(r.id)?.nutrients.kcal : undefined}
+                missing={missingCount(r, app.stock)}
+                onOpen={() => openRecipe(r.id)}
+              />
             </li>
           ))}
         </ul>
@@ -127,8 +170,9 @@ export function RecipesView() {
   );
 }
 
-function RecipeCard({ r, kcal, onOpen }: { r: Recipe; kcal?: number; onOpen: () => void }) {
+function RecipeCard({ r, kcal, missing, onOpen }: { r: Recipe; kcal?: number; missing?: number; onOpen: () => void }) {
   const meta = r.origin === 'assemblage' ? `Repas assemblé · ${r.parts?.length ?? 0} fiche${(r.parts?.length ?? 0) > 1 ? 's' : ''}` : [r.dish, sourceLabel(r.source)].filter(Boolean).join(' · ');
+  const state = missing === undefined ? 'à relier au stock' : missing === 0 ? 'prêt' : `il manque ${missing} produit${missing > 1 ? 's' : ''}`;
   return (
     <button type="button" className="recipe-card" onClick={onOpen} aria-label={`Ouvrir la fiche de ${r.name}`}>
       <Cover recipe={r} />
@@ -141,6 +185,7 @@ function RecipeCard({ r, kcal, onOpen }: { r: Recipe; kcal?: number; onOpen: () 
         <span className="card-foot">
           <StatusPill status={r.status} />
           {kcal !== undefined && <span className="card-kcal num" title="Par repas, estimation">{Math.round(kcal)} kcal</span>}
+          <span className={`card-state ${missing === 0 ? 'is-ready' : ''}`}>{state}</span>
         </span>
       </span>
     </button>

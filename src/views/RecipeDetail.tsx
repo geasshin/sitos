@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, CalendarPlus, Check, ExternalLink, Minus, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, CalendarPlus, Check, ChefHat, ExternalLink, Link2, Minus, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useApp } from '../context';
 import { addDays, formatShort } from '../domain/dates';
 import { nextSlot, planRecipe } from '../domain/plan';
@@ -7,6 +7,8 @@ import { amount, splitAmount } from '../domain/stock';
 import { isPlannable, portionsOf, type Recipe } from '../domain/types';
 import { Cover, HeartToggle, STATUS_LABEL, STATUSES, Stars, isUrl, sourceLabel } from '../components/recipe';
 import { Empty } from '../components/ui';
+import { CookMode } from '../components/CookMode';
+import { LinkIngredients } from '../components/LinkIngredients';
 import { BalanceRows } from '../components/Balance';
 import { assessDay } from '../domain/balance';
 import { mealTargets } from '../domain/targets';
@@ -22,6 +24,8 @@ export function RecipeDetail({ id }: { id: string }) {
       </div>
     );
   }
+  const [cooking, setCooking] = useState(false);
+  const [linking, setLinking] = useState(false);
   const patch = (p: Partial<Recipe>) => store.update('recipes', (list) => list.map((x) => (x.id === r.id ? { ...x, ...p } : x)));
   const planned = data.plan.entries.filter((e) => e.kind === 'cook' && e.recipeId === r.id).sort((a, b) => (a.date < b.date ? -1 : 1));
   const usedIn = data.recipes.filter((x) => x.parts?.includes(r.id));
@@ -42,6 +46,11 @@ export function RecipeDetail({ id }: { id: string }) {
           <ArrowLeft size={16} aria-hidden /> Recettes
         </button>
         <div className="detail-actions">
+          {r.steps?.length > 0 && (
+            <button type="button" className="secondary-button" onClick={() => setCooking(true)}>
+              <ChefHat size={15} aria-hidden /> Mode cuisine
+            </button>
+          )}
           <button type="button" className="secondary-button" onClick={() => app.editRecipe(r.id)}>
             <Pencil size={15} aria-hidden /> Modifier
           </button>
@@ -62,6 +71,9 @@ export function RecipeDetail({ id }: { id: string }) {
           </button>
         </div>
       </div>
+
+      {cooking && <CookMode recipe={r} onClose={() => setCooking(false)} />}
+      {linking && <LinkIngredients recipe={r} onClose={() => setLinking(false)} />}
 
       <div className="detail-layout">
         <div className="detail-side">
@@ -147,18 +159,20 @@ export function RecipeDetail({ id }: { id: string }) {
             </section>
           )}
 
-          <MenuBlock r={r} planned={planned.map((p) => p.date)} today={today} />
+          <MenuBlock r={r} planned={planned.map((p) => p.date)} today={today} onLink={() => setLinking(true)} />
         </div>
       </div>
     </div>
   );
 }
 
-function MenuBlock({ r, planned, today }: { r: Recipe; planned: string[]; today: string }) {
+function MenuBlock({ r, planned, today, onLink }: { r: Recipe; planned: string[]; today: string; onLink: () => void }) {
   const app = useApp();
   const { data, store } = app;
+  const ingredientsTextCount = r.ingredientsText?.length ?? 0;
   const [date, setDate] = useState(() => nextSlot(data.plan.entries, addDays(today, 1)));
-  const [portions, setPortions] = useState(portionsOf(r));
+  // Sans nombre de repas sur la fiche, on part du réglage « repas par cuisson ».
+  const [portions, setPortions] = useState(r.portions ?? data.settings.mealsPerCook ?? 2);
   const [done, setDone] = useState<string | null>(null);
 
   const planForm = (
@@ -201,7 +215,15 @@ function MenuBlock({ r, planned, today }: { r: Recipe; planned: string[]; today:
     return (
       <section className="menu-box">
         <h2 className="section-label">Dans tes menus</h2>
-        <p className="hint">Pas de quantités chiffrées : au calendrier, tu ajoutes les ingrédients de ce repas, et ils sortent du stock une fois coché.</p>
+        <p className="hint">
+          Cette fiche n'a pas encore de quantités reliées au stock : elle ne compte ni les calories ni les courses.
+          {ingredientsTextCount > 0 ? ' La relier prend une minute, l’app propose les correspondances.' : ' Ajoute les ingrédients depuis « Modifier ».'}
+        </p>
+        {ingredientsTextCount > 0 && (
+          <button type="button" className="secondary-button" onClick={onLink}>
+            <Link2 size={15} aria-hidden /> Relier les {ingredientsTextCount} ingrédients au stock
+          </button>
+        )}
         {planned.length > 0 && <p className="small">Prévue {planned.map((d) => `le ${formatShort(d)}`).join(', ')}.</p>}
         {planForm}
       </section>
