@@ -13,6 +13,10 @@ export interface Store {
   update: <K extends Key>(key: K, fn: (value: Data[K]) => Data[K]) => void;
   undo: () => void;
   canUndo: boolean;
+  /** Nombre de modifications annulables depuis l'ouverture. */
+  changeCount: number;
+  /** Réessaie d'écrire ce qui n'a pas pu l'être. */
+  retry: () => void;
 }
 
 export function useStore(): Store {
@@ -109,5 +113,5 @@ export function useStore(): Store {
     };
   }, [undo]);
 
-  return { data, error, saveState, update, undo, canUndo: historyLength > 0 };
+  return { data, error, saveState, update, undo, canUndo: historyLength > 0, changeCount: historyLength, retry: () => void flush() };
 }

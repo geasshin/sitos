@@ -40,7 +40,8 @@ passés non cochés et les portions jamais calibrées.
 Aujourd'hui, Calendrier, Recettes, Stock, Nutrition, Poids, Paramètres : sept entrées, dont deux peu utilisées.
 
  ✅ **Cinq entrées** : Aujourd'hui · Semaine · Recettes · Stock · Nutrition, et Paramètres en bas. Le Poids est passé
-dans Nutrition. « Annuler » est devenue une icône discrète à côté de « Enregistré », avec ⌘Z toujours actif.
+dans Nutrition. Paramètres vit en bas de la barre, séparé par un filet ; « Annuler » n'existe plus à l'écran,
+seulement ⌘Z, et une puce le rappelle quelques secondes après un changement.
 
 ### Aujourd'hui ✅ 0.3
 

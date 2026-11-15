@@ -66,7 +66,8 @@ s'annoncent dans l'app (carte en bas à droite) et s'installent d'un clic.
   groupées par « ce qui fait passer le stock », plats, puis accompagnements, et le nombre de jours occupés par les
   restes est annoncé avant de valider. En bas, le bilan de la quinzaine : moyenne, jours à remplir, produits à risque.
 
-⌘Z (ou « Annuler » en bas de la barre latérale) défait la dernière modification.
+⌘Z défait la dernière modification ; une puce « Modifié · Annuler » apparaît quelques secondes après un changement,
+puis s'efface.
 
 ## Données
 

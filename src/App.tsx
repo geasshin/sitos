@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { CalendarDays, ChartColumn, ChefHat, Package, Settings, Sun, Undo2 } from 'lucide-react';
+import { CalendarDays, ChartColumn, ChefHat, Package, RotateCcw, Settings, Sun } from 'lucide-react';
 import { AppContext, useDerived, type Route, type View } from './context';
 import { formatLong, todayISO } from './domain/dates';
 import type { ISODate } from './domain/types';
@@ -130,6 +130,15 @@ function Loaded({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [navigate]);
+  // « Annulé » ne s'affiche qu'après une modification, puis s'efface : pas de bouton permanent.
+  const [undoVisible, setUndoVisible] = useState(false);
+  useEffect(() => {
+    if (!store.changeCount) return;
+    setUndoVisible(true);
+    const t = window.setTimeout(() => setUndoVisible(false), 7000);
+    return () => window.clearTimeout(t);
+  }, [store.changeCount]);
+
   const alerts = derived.priorities.length;
   const urgent = derived.priorities.some((p) => p.daysLeft <= 2);
   const simulated = today !== todayISO();
@@ -160,7 +169,7 @@ function Loaded({
               </span>
               <span className="brand-name">Sitos</span>
             </div>
-            <nav>
+            <nav aria-label="Sections">
               {NAV.map(({ id, label, Icon }) => (
                 <a
                   key={id}
@@ -172,43 +181,40 @@ function Loaded({
                     ctx.goTo(id);
                   }}
                 >
-                  <Icon size={20} strokeWidth={1.6} aria-hidden />
+                  <Icon size={19} strokeWidth={1.6} aria-hidden />
                   <span className="nav-label">{label}</span>
                   {id === 'recipes' && <span className="nav-count num">{data.recipes.length}</span>}
                   {id === 'stock' && alerts > 0 && (
-                    <span className={`nav-badge ${urgent ? 'is-urgent' : ''}`} aria-label={`${alerts} produits à surveiller`}>{alerts}</span>
+                    <span
+                      className={`nav-count num is-alert ${urgent ? 'is-urgent' : ''}`}
+                      aria-label={`${alerts} produits à surveiller`}
+                      title={`${alerts} produits à surveiller`}
+                    >
+                      {alerts}
+                    </span>
                   )}
                 </a>
               ))}
             </nav>
-            <a
-              href="#/settings"
-              className={`nav-item nav-settings ${route.view === 'settings' ? 'is-active' : ''}`}
-              aria-current={route.view === 'settings' ? 'page' : undefined}
-              title="Paramètres (⌘,)"
-              onClick={(e) => {
-                e.preventDefault();
-                ctx.goTo('settings');
-              }}
-            >
-              <Settings size={20} strokeWidth={1.6} aria-hidden />
-              <span className="nav-label">Paramètres</span>
-              {updates.phase === 'available' && <span className="nav-badge" aria-label="Mise à jour disponible">1</span>}
-            </a>
-            <div className="island-foot">
-              <button
-                type="button"
-                className="icon-button undo"
-                onClick={store.undo}
-                disabled={!store.canUndo}
-                title="Annuler la dernière modification (⌘Z)"
-                aria-label="Annuler la dernière modification"
+            <div className="island-bottom">
+              <a
+                href="#/settings"
+                className={`nav-item ${route.view === 'settings' ? 'is-active' : ''}`}
+                aria-current={route.view === 'settings' ? 'page' : undefined}
+                title="Paramètres (⌘,)"
+                onClick={(e) => {
+                  e.preventDefault();
+                  ctx.goTo('settings');
+                }}
               >
-                <Undo2 size={16} aria-hidden />
-              </button>
-              <span className={`save save-${store.saveState}`} role="status">
-                {store.saveState === 'enregistrement' ? 'Enregistrement…' : store.saveState === 'erreur' ? 'Échec de l’enregistrement' : 'Enregistré'}
-              </span>
+                <Settings size={19} strokeWidth={1.6} aria-hidden />
+                <span className="nav-label">Paramètres</span>
+                {updates.phase === 'available' ? (
+                  <span className="nav-dot" aria-label="Mise à jour disponible" title="Mise à jour disponible" />
+                ) : (
+                  <kbd className="nav-key">⌘,</kbd>
+                )}
+              </a>
             </div>
           </div>
         </aside>
@@ -220,9 +226,32 @@ function Loaded({
               {simulated && <span><strong>Date simulée :</strong> {formatLong(today)}.</span>}
             </div>
           )}
+          {store.saveState === 'erreur' && (
+            <div className="banner is-error" role="alert">
+              <span><strong>L’enregistrement a échoué.</strong> La dernière modification n’est pas encore sur le disque.</span>
+              <button type="button" className="link" onClick={store.retry}>
+                Réessayer
+              </button>
+            </div>
+          )}
           {page}
         </main>
       </div>
+      {undoVisible && store.canUndo && (
+        <div className="undo-chip" role="status">
+          <RotateCcw size={14} aria-hidden />
+          <span>Modifié</span>
+          <button
+            type="button"
+            onClick={() => {
+              store.undo();
+              setUndoVisible(false);
+            }}
+          >
+            Annuler <kbd>⌘Z</kbd>
+          </button>
+        </div>
+      )}
       <UpdateNotice auto={data.settings.autoUpdate !== false} hidden={route.view === 'settings'} onOpenSettings={() => ctx.goTo('settings')} />
     </AppContext.Provider>
   );
