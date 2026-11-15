@@ -1,16 +1,18 @@
 import { useState } from 'react';
-import { AlertTriangle, ArrowRight, BookOpen, Check, ChevronDown, CookingPot, Plus, Refrigerator, Utensils, X } from 'lucide-react';
+import { AlertTriangle, ArrowRight, BookOpen, Check, ChevronDown, CookingPot, Refrigerator, Utensils, X } from 'lucide-react';
 import { useApp } from '../context';
 import { addDays, diffDays, formatDayMonth, formatLong, formatShort } from '../domain/dates';
-import { itemsNutrients, mealOf, mealPortion } from '../domain/nutrition';
-import { leftoversInFridge, markOut, newId, nextSlot, planCustom, planRecipe, toggleDone, unmarkOut } from '../domain/plan';
-import { amount, rescueSuggestions } from '../domain/stock';
+import { dayNutrition, entriesOn, mealOf, mealPortion } from '../domain/nutrition';
+import { leftoversInFridge, markOut, nextSlot, pendingPast, planCustom, planRecipe, setEaten, setSkipped, toggleDone, unmarkOut } from '../domain/plan';
+import { amount, shortQty, rescueSuggestions } from '../domain/stock';
 import type { PlanEntry, Recipe } from '../domain/types';
 import { MealPlanner } from '../components/MealPlanner';
 import { DayBalanceCard } from '../components/Balance';
 import { MealEditor } from '../components/MealEditor';
+import { EveningPicker } from '../components/EveningPicker';
+import { PortionPrompt } from '../components/PortionPrompt';
 import { Cover } from '../components/recipe';
-import { Section, kcal } from '../components/ui';
+import { Section } from '../components/ui';
 
 export const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -23,6 +25,7 @@ export function TodayView() {
   const app = useApp();
   const { data, today, store } = app;
   const entry = data.plan.entries.find((e) => e.date === today);
+  const eveningKcal = dayNutrition(data, app.foods, today).snacks.nutrients.kcal;
   const dayIndex = diffDays(data.plan.startDate, today) + 1;
   const planDays = diffDays(data.plan.startDate, app.planEnd) + 1;
   const setEntries = (fn: (e: PlanEntry[]) => PlanEntry[]) => store.update('plan', (p) => ({ ...p, entries: fn(p.entries) }));
@@ -32,8 +35,8 @@ export function TodayView() {
       <header className="page-head page-head-row">
         <h1 className="display-title is-date">{formatLong(today)}</h1>
         {data.plan.entries.length > 0 && dayIndex >= 1 && dayIndex <= planDays && (
-          <button type="button" className="secondary-button" onClick={() => app.goTo('calendar', today)}>
-            Jour <span className="num">{dayIndex}</span> sur <span className="num">{planDays}</span>
+          <button type="button" className="secondary-button" onClick={() => app.goTo('calendar', app.planEnd)} title="Voir la fin du plan">
+            Plan jusqu’au {formatShort(app.planEnd)}
             <ArrowRight size={14} aria-hidden />
           </button>
         )}
@@ -44,24 +47,34 @@ export function TodayView() {
         )}
       </header>
 
+      <ToSettle setEntries={setEntries} />
+
       <div className="today-grid">
         <div className="today-main">
           <Section title="Au menu">
             <MealHero entry={entry} setEntries={setEntries} />
           </Section>
-          <NextDays />
+          <Section
+            title="Le soir"
+            aside={
+              <span className="muted small num">
+                {eveningKcal > 0 ? `${Math.round(eveningKcal).toLocaleString('fr-FR')} kcal au total` : 'rien pour l’instant'}
+              </span>
+            }
+          >
+            <EveningPicker date={today} />
+          </Section>
         </div>
         <div className="today-side">
           <Section title="Bilan du jour" aside={entry && entry.kind !== 'out' ? <span className="muted small">{entry.done ? 'mangé' : 'prévu'}</span> : undefined}>
-            <DayBalanceCard date={today} compact />
+            <DayBalanceCard date={today} mode="today" />
           </Section>
+          <NextDays />
           <Priorities setEntries={setEntries} />
           <Fridge />
           <Attention />
         </div>
       </div>
-
-      <Snacks />
     </div>
   );
 }
@@ -98,7 +111,10 @@ function MealHero({ entry, setEntries }: { entry?: PlanEntry; setEntries: (fn: (
       </section>
     );
   }
-  const p = mealPortion(app.foods, meal);
+  const p = mealPortion(app.foods, meal, entry.eaten ?? 1);
+  const perMeal = app.targets.kcal * app.targets.mealShare;
+  const small = p.nutrients.kcal > 0 && p.nutrients.kcal < perMeal * 0.75;
+  const extra = entriesOn(data, today).filter((e) => e.id !== entry.id && e.kind !== 'out');
   const rests = data.plan.entries.filter((e) => e.kind === 'leftover' && e.batchId === meal.cook.id && e.date > today);
   const cover = meal.recipe ?? ({ id: 'maison', name: meal.name, dish: 'Plat', status: 'à découvrir', favorite: false, steps: [] } as Recipe);
 
@@ -129,8 +145,27 @@ function MealHero({ entry, setEntries }: { entry?: PlanEntry; setEntries: (fn: (
             )}
           </p>
           {rests.length > 0 && <p className="muted small">Reste {rests.map((r) => formatShort(r.date)).join(', ')}</p>}
+          {extra.length > 0 && (
+            <p className="muted small">
+              Aussi aujourd’hui : {extra.map((e) => mealOf(data, e)?.name ?? 'repas').join(', ')}
+              {' · '}
+              <button type="button" className="link small" onClick={() => app.goTo('calendar', today)}>voir</button>
+            </p>
+          )}
+          {small && entry.kind === 'cook' && (
+            <p className="hero-hint">
+              Portion un peu juste pour un repas principal : {Math.round(perMeal).toLocaleString('fr-FR')} kcal visées, {Math.round(p.nutrients.kcal).toLocaleString('fr-FR')} ici.{' '}
+              <button type="button" className="link small" onClick={() => setOpen(true)}>Ajuster la portion</button>
+            </p>
+          )}
           <div className="hero-actions">
-            <button type="button" className={entry.done ? 'done-button' : 'primary-button'} onClick={() => setEntries((e) => toggleDone(e, entry.id))} aria-pressed={!!entry.done}>
+            <button
+              type="button"
+              className={entry.done ? 'done-button' : 'primary-button'}
+              onClick={() => setEntries((e) => toggleDone(e, entry.id))}
+              aria-pressed={!!entry.done}
+              title={entry.done ? 'Décocher : le stock remonte' : 'Cocher sort les ingrédients du stock'}
+            >
               <Check size={16} aria-hidden /> {entry.done ? 'Fait' : entry.kind === 'cook' ? 'C’est fait' : 'Mangé'}
             </button>
             {entry.kind === 'cook' && (
@@ -149,6 +184,9 @@ function MealHero({ entry, setEntries }: { entry?: PlanEntry; setEntries: (fn: (
               </button>
             )}
           </div>
+          {entry.kind === 'cook' && (
+            <PortionPrompt entry={entry} onPick={(k) => setEntries((e) => setEaten(e, entry.id, k))} />
+          )}
         </div>
       </div>
       {open && entry.kind === 'cook' && (
@@ -160,10 +198,57 @@ function MealHero({ entry, setEntries }: { entry?: PlanEntry; setEntries: (fn: (
   );
 }
 
+/**
+ * Les repas passés qui attendent une réponse. Tant qu'ils ne sont pas cochés, rien ne sort
+ * du stock : c'est la règle, elle est dite ici en clair. « Pas mangé » les clôt sans toucher au stock.
+ */
+function ToSettle({ setEntries }: { setEntries: (fn: (e: PlanEntry[]) => PlanEntry[]) => void }) {
+  const app = useApp();
+  const { data, today } = app;
+  const pending = pendingPast(data.plan.entries, today, 7);
+  if (pending.length === 0) return null;
+  return (
+    <section className="settle" aria-label="Repas passés à régler">
+      <div className="settle-head">
+        <p className="settle-title">
+          {pending.length} repas {pending.length > 1 ? 'attendent' : 'attend'} une réponse
+        </p>
+        <p className="hint">Tant qu’un repas n’est pas coché, il ne sort rien du stock.</p>
+      </div>
+      <ul className="settle-list">
+        {pending.slice(0, 4).map((e) => {
+          const meal = mealOf(data, e);
+          return (
+            <li key={e.id} className="settle-row">
+              <span className="settle-when">
+                {e.date === addDays(today, -1) ? 'Hier' : <>{shortDay(e.date)} <span className="num">{Number(e.date.slice(8))}</span></>}
+              </span>
+              <span className="settle-name">{e.kind === 'leftover' ? `Reste · ${meal?.name ?? ''}` : (meal?.name ?? 'Repas')}</span>
+              <span className="settle-actions">
+                <button type="button" className="secondary-button is-sm" onClick={() => setEntries((x) => toggleDone(x, e.id))}>
+                  <Check size={14} aria-hidden /> Mangé
+                </button>
+                <button type="button" className="secondary-button is-sm" onClick={() => setEntries((x) => setSkipped(x, e.id))}>
+                  Pas mangé
+                </button>
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+      {pending.length > 4 && (
+        <button type="button" className="link small" onClick={() => app.goTo('calendar', pending[4].date)}>
+          Voir les {pending.length - 4} autres
+        </button>
+      )}
+    </section>
+  );
+}
+
 function NextDays() {
   const app = useApp();
   const { data, today } = app;
-  const days = [1, 2, 3, 4].map((i) => addDays(today, i));
+  const days = [1, 2, 3].map((i) => addDays(today, i));
   if (!days.some((d) => data.plan.entries.some((e) => e.date === d))) return null;
   return (
     <Section title="Les prochains jours">
@@ -211,7 +296,7 @@ function Priorities({ setEntries }: { setEntries: (fn: (e: PlanEntry[]) => PlanE
         {list.map((p) => (
           <li key={p.food.id} className="prio-row" title={p.nextUse ? `Prochain plat : ${formatShort(p.nextUse)}` : 'Aucun plat prévu'}>
             <span className="prio-name">{p.food.name}</span>
-            <span className="prio-qty muted small num">{p.atRisk > 0 ? `${amount(p.food, p.atRisk)} en trop` : 'prévu bientôt'}</span>
+            <span className="prio-qty muted small num">{p.atRisk > 0 ? `${shortQty(p.food, p.atRisk)} non prévu` : 'prévu bientôt'}</span>
             <span className={`pill pill-${urgencyTone(p.daysLeft)}`} title={`Se garde jusqu’au ${formatDayMonth(p.expiry)}`}>
               {p.daysLeft < 0 ? 'dépassé' : p.daysLeft === 0 ? 'auj.' : `${p.daysLeft} j`}
             </span>
@@ -255,7 +340,7 @@ function Attention() {
   const { today } = app;
   const horizon = addDays(today, 14);
   const items = [
-    ...app.warnings.filter((w) => w.message.startsWith('Pas encore coché')).slice(0, 3).map((w) => ({ key: w.entryId, date: w.date, text: 'pas coché' })),
+    // Les repas non cochés ont leur propre bloc en haut de la page : pas de doublon ici.
     ...app.forecast.shortages.filter((s) => s.date <= horizon).slice(0, 4).map((s) => ({ key: s.entryId + s.foodId, date: s.date, text: `manque ${amount(app.foods.get(s.foodId), s.missing)}` })),
     ...app.warnings.filter((w) => w.level === 'alerte' && w.date >= today && w.date <= horizon).slice(0, 3).map((w) => ({ key: w.entryId + w.message, date: w.date, text: w.message.toLowerCase() })),
   ];
@@ -269,52 +354,6 @@ function Attention() {
             <span>
               <button type="button" className="link" onClick={() => app.goTo('calendar', it.date)}>{capitalize(formatShort(it.date))}</button> · {it.text}
             </span>
-          </li>
-        ))}
-      </ul>
-    </Section>
-  );
-}
-
-function Snacks() {
-  const app = useApp();
-  const { data, today, store } = app;
-  const snacks = data.journal.snacks.filter((s) => s.date === today);
-  const ideas = data.snackIdeas
-    .filter((idea) => idea.items.every((i) => (app.stock.get(i.foodId)?.remaining ?? 0) + 1e-6 >= i.qty))
-    .map((idea) => ({ idea, n: itemsNutrients(app.foods, idea.items) }));
-  const total = snacks.reduce((a, s) => a + itemsNutrients(app.foods, s.items).kcal, 0);
-
-  return (
-    <Section title="Le soir" aside={<span className="muted small num">{snacks.length > 0 ? kcal(total) : 'en kcal'}</span>}>
-      {snacks.length > 0 && (
-        <ul className="chips">
-          {snacks.map((s) => (
-            <li key={s.id}>
-              <span className="chip chip-on">
-                {s.label}
-                <span className="num chip-meta">{Math.round(itemsNutrients(app.foods, s.items).kcal)}</span>
-                <button type="button" className="chip-x" aria-label={`Retirer ${s.label}`} onClick={() => store.update('journal', (j) => ({ ...j, snacks: j.snacks.filter((x) => x.id !== s.id) }))}>
-                  <X size={13} aria-hidden />
-                </button>
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
-      {ideas.length === 0 && snacks.length === 0 && <p className="hint">Les idées pour le soir apparaissent avec ce que tu as en stock.</p>}
-      <ul className="chips">
-        {ideas.map(({ idea, n }) => (
-          <li key={idea.id}>
-            <button
-              type="button"
-              className="chip"
-              title={[idea.note, `${Math.round(n.protein)} g de protéines`].filter(Boolean).join(' · ')}
-              onClick={() => store.update('journal', (j) => ({ ...j, snacks: [...j.snacks, { id: newId('s'), date: today, label: idea.name, items: idea.items }] }))}
-            >
-              <Plus size={13} aria-hidden /> {idea.name}
-              <span className="num chip-meta">{Math.round(n.kcal)}</span>
-            </button>
           </li>
         ))}
       </ul>

@@ -1,4 +1,5 @@
-import { Plus } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronDown, Plus } from 'lucide-react';
 import { useApp } from '../context';
 import { assessDay, recommendSides, sideCandidates, type BalanceRow, type DayBalance } from '../domain/balance';
 import { dayNutrition, mealOf } from '../domain/nutrition';
@@ -11,8 +12,15 @@ import { Meter } from './ui';
 const fr = (v: number) => Math.round(v).toLocaleString('fr-FR');
 const dec = (v: number) => (Math.round(v * 10) / 10).toLocaleString('fr-FR');
 
+/**
+ * Un seul code de couleur partout : ce qui manque est ambre, ce qui est atteint est neutre,
+ * ce qui dépasse une limite est rouge, et une limite à moins de 10 % du plafond est ambre.
+ */
 function rowTone(r: BalanceRow): 'ink' | 'saffron' | 'tomato' {
-  if (r.kind === 'max') return r.status === 'haut' ? 'tomato' : 'ink';
+  if (r.kind === 'max') {
+    if (r.status === 'haut') return 'tomato';
+    return r.target > 0 && r.value >= r.target * 0.9 ? 'saffron' : 'ink';
+  }
   if (r.kind === 'band') return r.status === 'haut' ? 'saffron' : 'ink';
   return r.status === 'bas' ? 'saffron' : 'ink';
 }
@@ -28,6 +36,9 @@ export function BalanceRows({ rows, compact }: { rows: BalanceRow[]; compact?: b
         <span className="muted">
           {' '}
           {r.kind === 'max' ? 'max.' : '/'} {r.key === 'salt' ? dec(r.target) : fr(r.target)} {r.unit}
+          {r.kind !== 'max' && r.target > 0 && r.value > r.target * 1.15 && (
+            <span className="over-tag" title="Part de l’objectif atteinte"> · {Math.round((r.value / r.target) * 100)} %</span>
+          )}
         </span>
       </dd>
       <Meter value={r.value} target={r.target} tone={rowTone(r)} label={r.label} />
@@ -36,8 +47,12 @@ export function BalanceRows({ rows, compact }: { rows: BalanceRow[]; compact?: b
   return (
     <div className={`balance ${compact ? 'balance-compact' : ''}`}>
       <dl className="nutrients">{goals.map(one)}</dl>
-      <p className="balance-sub">À limiter</p>
-      <dl className="nutrients nutrients-caps">{caps.map(one)}</dl>
+      {caps.length > 0 && (
+        <>
+          <p className="balance-sub">À limiter</p>
+          <dl className="nutrients nutrients-caps">{caps.map(one)}</dl>
+        </>
+      )}
     </div>
   );
 }
@@ -73,7 +88,8 @@ export function SplitBar({ balance, targets }: { balance: DayBalance; targets: T
  * Le bilan d'une journée : repas + soir face aux objectifs, la répartition, et ce qu'on peut
  * ajouter avec ce qui restera en stock ce jour-là.
  */
-export function DayBalanceCard({ date, compact }: { date: ISODate; compact?: boolean }) {
+export function DayBalanceCard({ date, compact, mode = 'full' }: { date: ISODate; compact?: boolean; mode?: 'full' | 'today' }) {
+  const [detail, setDetail] = useState(false);
   const app = useApp();
   const { data, today, targets, store } = app;
   const day = dayNutrition(data, app.foods, date);
@@ -91,12 +107,49 @@ export function DayBalanceCard({ date, compact }: { date: ISODate; compact?: boo
   const smallMeal = day.meal && mealKcal < mealGoal * 0.75;
   const future = date > today;
 
+  const goals = balance.rows.filter((r) => r.kind !== 'max');
+  const caps = balance.rows.filter((r) => r.kind === 'max');
+  const missing = goals
+    .filter((r) => r.status === 'bas')
+    .sort((a, b) => (b.target - b.value) / b.target - (a.target - a.value) / a.target);
+  const over = caps.filter((r) => r.status === 'haut');
+  const label = (key: BalanceRow['key']) =>
+    key === 'protein' ? 'des protéines' : key === 'fiber' ? 'des fibres' : key === 'plant' ? 'des légumes et des fruits' : 'de l’énergie';
+  const sentence = (() => {
+    const parts: string[] = [];
+    if (missing.length === 1) parts.push(`il manque surtout ${label(missing[0].key)}`);
+    else if (missing.length > 1) parts.push(`il manque surtout ${label(missing[0].key)} et ${label(missing[1].key)}`);
+    if (over.length) parts.push(`au-dessus du plafond : ${over.map((r) => r.label.toLowerCase()).join(', ')}`);
+    if (parts.length === 0) return 'La journée est bien couverte.';
+    return `${parts[0].charAt(0).toUpperCase()}${parts[0].slice(1)}${parts[1] ? ` ; ${parts[1]}` : ''}.`;
+  })();
+
+  if (mode === 'today') {
+    return (
+      <div className="day-balance">
+        <BalanceRows rows={goals} compact />
+        <p className="balance-sentence">{sentence}</p>
+        <button type="button" className="link small" aria-expanded={detail} onClick={() => setDetail((v) => !v)}>
+          {detail ? 'Moins de détail' : 'Le détail'} <ChevronDown size={13} className={`chev ${detail ? 'up' : ''}`} aria-hidden />
+        </button>
+        {detail && (
+          <>
+            <BalanceRows rows={caps} compact />
+            <SplitBar balance={balance} targets={targets} />
+          </>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="day-balance">
       {day.meal && (
         <p className={`meal-vs ${smallMeal ? 'is-low' : ''}`}>
-          Repas <span className="num">{fr(mealKcal)}</span> kcal
-          <span className="muted"> · repas principal visé ≈ {fr(Math.round(mealGoal / 25) * 25)}</span>
+          {targets.mealsPerDay > 1 ? 'Repas du jour' : 'Repas'} <span className="num">{fr(mealKcal)}</span> kcal
+          <span className="muted">
+            {' '}· {targets.mealsPerDay > 1 ? 'par repas visé' : 'repas principal visé'} ≈ {fr(Math.round(mealGoal / 25) * 25)}
+          </span>
         </p>
       )}
       <BalanceRows rows={balance.rows} compact={compact} />
@@ -132,7 +185,7 @@ export function DayBalanceCard({ date, compact }: { date: ISODate; compact?: boo
         {reco.stillMissing.length > 0 && (
           <p className="hint">
             Même ainsi, il manquera {reco.stillMissing.join(', ')}.
-            {smallMeal && ' Le plat est petit pour un repas principal : une portion plus grosse (plus de féculents) règle l’essentiel.'}
+            {smallMeal && targets.mealsPerDay === 1 && ' Le plat est petit pour un repas principal : une portion plus grosse (plus de féculents) règle l’essentiel.'}
           </p>
         )}
       </div>

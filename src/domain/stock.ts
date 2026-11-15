@@ -324,6 +324,12 @@ export function amount(food: Food | undefined, qty: number): string {
   return `${q} ${/^[aeiouyhéèêàâîôû]/i.test(name) ? "d'" : 'de '}${name}`;
 }
 
+/** Quantité courte pour une ligne de liste : « 125 g » mais « ½ concombre » pour les pièces. */
+export function shortQty(food: Food | undefined, qty: number): string {
+  if (!food) return String(Math.round(qty));
+  return food.unit === 'pièce' ? amount(food, qty) : formatQty(food, qty);
+}
+
 export interface Rescue {
   recipe: Recipe;
   foods: Food[];
