@@ -1,3 +1,4 @@
+mod covers;
 mod data;
 mod updater;
 
@@ -29,6 +30,9 @@ pub fn run() {
             data::open_link,
             updater::check_for_app_update,
             updater::install_app_update,
+            covers::cover_cache,
+            covers::cover_cache_info,
+            covers::clear_cover_cache,
         ])
         .run(tauri::generate_context!())
         .expect("impossible de lancer Sitos");

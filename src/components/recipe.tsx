@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Cake, ChefHat, CookingPot, Croissant, Heart, Salad, Soup, Star, Wine } from 'lucide-react';
 import type { Recipe, RecipeStatus } from '../domain/types';
+import { cachedCover } from '../imageCache';
 
 export const STATUS_LABEL: Record<RecipeStatus, string> = {
   'à découvrir': 'À tester',
@@ -38,14 +39,36 @@ const DISH_ICON: Record<string, typeof ChefHat> = {
   Boisson: Wine,
 };
 
+/**
+ * L'adresse affichée pour une photo : celle du cache local quand elle y est, celle du web sinon.
+ * Le téléchargement se fait ensuite en tâche de fond, pour ne plus dépendre du réseau.
+ */
+function useCoverSrc(url?: string): string | undefined {
+  const [src, setSrc] = useState<string | undefined>(url);
+  useEffect(() => {
+    if (!url) return;
+    let alive = true;
+    setSrc(url);
+    void cachedCover(url).then((local) => {
+      if (alive && local) setSrc(local);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [url]);
+  return src;
+}
+
 /** Photo de la recette ; sans photo (ou si le site la refuse), le pictogramme du type de plat. */
 export function Cover({ recipe, ratio = 'square', className = '' }: { recipe: Recipe; ratio?: 'square' | 'photo'; className?: string }) {
   const [failed, setFailed] = useState(false);
   const Icon = DISH_ICON[recipe.dish] ?? ChefHat;
+  const src = useCoverSrc(recipe.cover);
+  useEffect(() => setFailed(false), [recipe.cover]);
   return (
     <div className={`poster poster-${ratio} ${className}`}>
-      {recipe.cover && !failed ? (
-        <img src={recipe.cover} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={() => setFailed(true)} />
+      {src && !failed ? (
+        <img src={src} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={() => setFailed(true)} />
       ) : (
         <div className="poster-fallback">
           <Icon size={28} strokeWidth={1.4} aria-hidden />
