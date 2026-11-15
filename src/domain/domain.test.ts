@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { addDays, diffDays, startOfWeek, weekday } from './dates';
 import { dayNutrition, indexFoods, mealOf, recipePortion, ZERO } from './nutrition';
-import { closeGaps, markOut, moveBlock, planCustom, planRecipe, removeEntry, setIngredients, setPortions, swapBlock, validatePlan } from './plan';
+import { closeGaps, markOut, moveBlock, pendingPast, planCustom, planRecipe, removeEntry, setEaten, setIngredients, setPortions, setSkipped, swapBlock, toggleDone, validatePlan } from './plan';
 import { availableOn, computeStock, forecast, priorities } from './stock';
 import type { Data, Food, PlanEntry, Recipe } from './types';
 import { weeklyRate, weightTrend } from './weight';
@@ -253,5 +253,63 @@ describe('poids', () => {
     expect(pts[3].trend).toBeLessThan(80);
     expect(pts[3].trend).toBeGreaterThan(78.6);
     expect(weeklyRate(pts)!).toBeLessThan(0);
+  });
+});
+
+describe('plusieurs repas par jour', () => {
+  it('additionne les repas posés le même jour', () => {
+    const data = makeData([cook('c1', '2026-11-16', 'riz-courgette', 1), cook('c2', '2026-11-16', 'riz-seul', 1)]);
+    const d = dayNutrition(data, indexFoods(foods), '2026-11-16');
+    expect(d.meals).toHaveLength(2);
+    expect(d.total.kcal).toBeCloseTo(390 + 350);
+    expect(d.meal!.nutrients.kcal).toBeCloseTo(390);
+  });
+
+  it('la portion réellement mangée change le bilan, pas le stock', () => {
+    const eaten = setEaten([cook('c1', '2026-11-16', 'riz-courgette', 2, true)], 'c1', 0.75);
+    const d = dayNutrition(makeData(eaten), indexFoods(foods), '2026-11-16');
+    expect(d.total.kcal).toBeCloseTo(390 * 0.75);
+    // Le plat est cuit avec tous ses ingrédients : le stock baisse d'autant.
+    const s = computeStock(makeData(eaten), indexFoods(foods), '2026-11-16');
+    expect(s.get('riz')!.remaining).toBe(800);
+    expect(s.get('courgette')!.remaining).toBe(2);
+  });
+});
+
+describe('repas passés à régler', () => {
+  it('ne retient que ce qui attend une réponse', () => {
+    const entries = [
+      cook('c1', '2026-11-13'),
+      cook('c2', '2026-11-14', 'riz-courgette', 2, true),
+      ...setSkipped([cook('c3', '2026-11-15')], 'c3'),
+      left('r1', '2026-11-15', 'c4'),
+      cook('c4', '2026-11-16'),
+      { id: 'o1', date: '2026-11-12', kind: 'out' as const },
+    ];
+    expect(pendingPast(entries, '2026-11-16').map((e) => e.id)).toEqual(['r1', 'c1']);
+  });
+
+  it('un repas non coché ne sort rien du stock, un repas coché oui', () => {
+    expect(computeStock(makeData([cook('c1', '2026-11-13')]), indexFoods(foods), '2026-11-14').get('riz')!.remaining).toBe(1000);
+    const checked = toggleDone([cook('c1', '2026-11-13')], 'c1');
+    expect(computeStock(makeData(checked), indexFoods(foods), '2026-11-14').get('riz')!.remaining).toBe(800);
+  });
+
+  it('cocher un repas efface « non mangé », et l’inverse', () => {
+    const skipped = setSkipped([cook('c1', '2026-11-13')], 'c1');
+    expect(skipped[0].skipped).toBe(true);
+    const back = toggleDone(skipped, 'c1');
+    expect(back[0].done).toBe(true);
+    expect(back[0].skipped).toBe(false);
+    expect(setSkipped(back, 'c1')[0].done).toBe(false);
+  });
+});
+
+describe('validation du plan', () => {
+  const entries = [cook('c1', '2026-11-16', 'riz-courgette', 1), cook('c2', '2026-11-16', 'riz-seul', 1)];
+  it('deux repas le même jour : une anomalie seulement si le réglage en prévoit un', () => {
+    const one = validatePlan(entries, recipes, '2026-11-16', 1);
+    expect(one.filter((w) => w.message.includes('même jour'))).toHaveLength(1);
+    expect(validatePlan(entries, recipes, '2026-11-16', 2).filter((w) => w.message.includes('même jour'))).toHaveLength(0);
   });
 });

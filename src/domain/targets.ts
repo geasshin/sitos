@@ -25,8 +25,10 @@ export interface Targets {
   proteinPct: [number, number];
   fatPct: [number, number];
   carbsPct: [number, number];
-  /** Part de l'énergie apportée par le repas principal. */
+  /** Part de l'énergie apportée par un repas principal. */
   mealShare: number;
+  /** Nombre de repas principaux par jour. */
+  mealsPerDay: 1 | 2 | 3;
 }
 
 export const PAL: Record<Activity, number> = { faible: 1.4, moderee: 1.6, elevee: 1.8 };
@@ -44,6 +46,9 @@ export const GOAL_LABEL: Record<Goal, string> = {
   perdre: 'Perdre (≈ 0,5 kg par semaine)',
 };
 
+/** Part de la journée que pèse un repas, selon le nombre de repas par jour. */
+export const MEALS_SHARE: Record<1 | 2 | 3, number> = { 1: 0.75, 2: 0.45, 3: 0.35 };
+export const RHYTHM_MEALS: Record<Rhythm, 1 | 2 | 3> = { 'un-repas': 1, 'deux-repas': 2, 'trois-repas': 3 };
 export const MEAL_SHARE: Record<Rhythm, number> = { 'un-repas': 0.75, 'deux-repas': 0.45, 'trois-repas': 0.35 };
 export const RHYTHM_LABEL: Record<Rhythm, string> = {
   'un-repas': 'Un gros repas par jour, plus le soir',
@@ -110,7 +115,8 @@ export function computeTargets(p: Profile): TargetPlan {
     proteinPct: [10, 20],
     fatPct: [35, 40],
     carbsPct: [40, 55],
-    mealShare: MEAL_SHARE[p.rhythm],
+    mealShare: MEALS_SHARE[RHYTHM_MEALS[p.rhythm]],
+    mealsPerDay: RHYTHM_MEALS[p.rhythm],
   };
 
   const fr = (n: number) => Math.round(n).toLocaleString('fr-FR');
@@ -146,6 +152,7 @@ export function computeTargets(p: Profile): TargetPlan {
 
 /** Les objectifs en vigueur : ceux enregistrés dans les réglages, complétés par les repères. */
 export function targetsOf(s: Settings): Targets {
+  const mealsPerDay = s.mealsPerDay ?? 1;
   return {
     kcal: s.kcalTarget,
     protein: s.proteinTarget,
@@ -157,7 +164,8 @@ export function targetsOf(s: Settings): Targets {
     proteinPct: [10, 20],
     fatPct: [35, 40],
     carbsPct: [40, 55],
-    mealShare: s.mealShare ?? MEAL_SHARE['un-repas'],
+    mealShare: s.mealShare ?? MEALS_SHARE[mealsPerDay],
+    mealsPerDay,
   };
 }
 
@@ -174,10 +182,11 @@ export function applyTargets(s: Settings, profile: Profile, t: Targets): Setting
     sugarsMaxG: t.sugarsMaxG,
     saltMaxG: t.saltMaxG,
     mealShare: t.mealShare,
+    mealsPerDay: t.mealsPerDay,
   };
 }
 
-/** Ce que vise un seul repas : les objectifs du jour multipliés par sa part. */
+/** Ce que vise un seul repas : les objectifs du jour multipliés par la part d'un repas. */
 export function mealTargets(t: Targets): Targets {
   const k = t.mealShare;
   return {

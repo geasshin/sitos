@@ -137,6 +137,10 @@ export interface PlanEntry {
   /** leftover : id de l'entrée cook d'origine. */
   batchId?: string;
   done?: boolean;
+  /** Part de la portion réellement mangée (0,75 · 1 · 1,25). Ne change pas la fiche ni le stock. */
+  eaten?: number;
+  /** Repas passé déclaré non mangé : ne sort rien du stock et ne redemande plus. */
+  skipped?: boolean;
   note?: string;
 }
 
@@ -206,6 +210,10 @@ export interface Settings {
   mealShare?: number;
   /** Fruits mangés nature par jour, pour projeter le stock de fruits. */
   fruitsPerDay: number;
+  /** Repas principaux par jour (1 à 3). Le calendrier s'y adapte. */
+  mealsPerDay?: 1 | 2 | 3;
+  /** Repas que donne une cuisson, quand la fiche ne le dit pas (2 à 4). */
+  mealsPerCook?: 2 | 3 | 4;
   demo: boolean;
   profile?: Profile;
   /** Rechercher une mise à jour à l'ouverture (vrai par défaut). */

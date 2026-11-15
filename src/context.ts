@@ -33,7 +33,7 @@ export function derive(data: Data, today: ISODate): Derived {
     stock,
     forecast: fc,
     priorities: priorities(data, stock, fc, today, 14),
-    warnings: validatePlan(data.plan.entries, data.recipes, today),
+    warnings: validatePlan(data.plan.entries, data.recipes, today, data.settings.mealsPerDay ?? 1),
     portions: new Map(data.recipes.map((r) => [r.id, recipePortion(foods, r)])),
     recipe: (id) => (id ? recipesById.get(id) : undefined),
     planEnd: lastEntry < addDays(today, 6) ? addDays(today, 6) : lastEntry,

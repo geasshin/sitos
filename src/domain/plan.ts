@@ -191,7 +191,28 @@ export function closeGaps(entries: PlanEntry[], from: ISODate): PlanEntry[] {
 }
 
 export function toggleDone(entries: PlanEntry[], id: string): PlanEntry[] {
-  return entries.map((e) => (e.id === id ? { ...e, done: !e.done } : e));
+  return entries.map((e) => (e.id === id ? { ...e, done: !e.done, skipped: false } : e));
+}
+
+/** Repas passé déclaré non mangé : il ne sort rien du stock et ne redemande plus. */
+export function setSkipped(entries: PlanEntry[], id: string, skipped = true): PlanEntry[] {
+  return entries.map((e) => (e.id === id ? { ...e, skipped, done: skipped ? false : e.done } : e));
+}
+
+/** Part de la portion réellement mangée : ne touche ni la fiche, ni le stock. */
+export function setEaten(entries: PlanEntry[], id: string, eaten: number): PlanEntry[] {
+  return entries.map((e) => (e.id === id ? { ...e, eaten } : e));
+}
+
+/**
+ * Repas passés qui demandent une réponse : ni cochés, ni déclarés non mangés.
+ * Tant qu'ils ne sont pas cochés, rien ne sort du stock : c'est voulu.
+ */
+export function pendingPast(entries: PlanEntry[], today: ISODate, back = 10): PlanEntry[] {
+  const from = addDays(today, -back);
+  return entries
+    .filter((e) => e.date < today && e.date >= from && !e.done && !e.skipped && e.kind !== 'out')
+    .sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 
 export interface PlanWarning {
@@ -201,15 +222,22 @@ export interface PlanWarning {
   message: string;
 }
 
-export function validatePlan(entries: PlanEntry[], recipes: Recipe[], today: ISODate): PlanWarning[] {
+export function validatePlan(entries: PlanEntry[], recipes: Recipe[], today: ISODate, mealsPerDay = 1): PlanWarning[] {
   const out: PlanWarning[] = [];
   const byId = new Map(entries.map((e) => [e.id, e]));
   const perDate = new Map<ISODate, number>();
-  for (const e of entries) perDate.set(e.date, (perDate.get(e.date) ?? 0) + 1);
+  const warnedDates = new Set<ISODate>();
+  for (const e of entries) {
+    if (e.kind === 'out') continue;
+    perDate.set(e.date, (perDate.get(e.date) ?? 0) + 1);
+  }
 
   for (const e of entries) {
-    if ((perDate.get(e.date) ?? 0) > 1) {
-      out.push({ entryId: e.id, date: e.date, level: 'alerte', message: 'Deux repas prévus le même jour' });
+    const count = perDate.get(e.date) ?? 0;
+    // Plusieurs repas le même jour n'est une anomalie que si le réglage n'en prévoit pas autant.
+    if (e.kind !== 'out' && count > mealsPerDay && !warnedDates.has(e.date)) {
+      warnedDates.add(e.date);
+      out.push({ entryId: e.id, date: e.date, level: 'alerte', message: `${count} repas prévus le même jour` });
     }
     if (e.date < today && !e.done && e.kind !== 'out') {
       out.push({ entryId: e.id, date: e.date, level: 'info', message: 'Pas encore coché comme fait' });
@@ -251,4 +279,17 @@ export function leftoversInFridge(entries: PlanEntry[], recipes: Recipe[], today
     if (left > 0 && eatBefore >= today) out.push({ cook, name: meal.name, portionsLeft: left, eatBefore });
   }
   return out;
+}
+
+/**
+ * Un repas de plus le même jour, sans rien décaler : c'est ce que demandent deux ou trois
+ * repas par jour. Réservé aux repas simples (une portion), pour ne pas empiler des restes.
+ */
+export function addMealOn(entries: PlanEntry[], at: ISODate, recipe: Recipe): PlanEntry[] {
+  return [...entries, { id: newId('c'), date: at, kind: 'cook' as const, recipeId: recipe.id, portions: 1 }].sort(byDate);
+}
+
+/** Un plat maison de plus le même jour. */
+export function addCustomOn(entries: PlanEntry[], at: ISODate, title: string): PlanEntry[] {
+  return [...entries, { id: newId('c'), date: at, kind: 'cook' as const, title, portions: 1, ingredients: [] }].sort(byDate);
 }

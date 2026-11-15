@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { assessDay, recommendSides, sideCandidates, type Candidate } from './balance';
 import { indexFoods, sugarsExLactose, ZERO } from './nutrition';
-import { applyTargets, computeTargets, henryBMR, targetsOf } from './targets';
+import { applyTargets, computeTargets, henryBMR, mealTargets, targetsOf } from './targets';
 import type { Food, Profile, Settings } from './types';
 
 const aurelien: Profile = {
@@ -125,5 +125,20 @@ describe('à-côtés', () => {
   it('dit ce qui manquera encore', () => {
     const r = recommendSides({ nutrients: n({ kcal: 700, protein: 20, fiber: 8 }), plantG: 100 }, t, [], fx);
     expect(r.stillMissing[0]).toBe('1600 kcal');
+  });
+});
+
+describe('nombre de repas par jour', () => {
+  it('deux repas : un repas pèse 45 % de la journée, et le réglage est prioritaire', () => {
+    const t = targetsOf({ kcalTarget: 2000, proteinTarget: 100, fiberTarget: 30, plantTargetG: 400, fruitsPerDay: 1, demo: true, mealsPerDay: 2 });
+    expect(t.mealsPerDay).toBe(2);
+    expect(t.mealShare).toBe(0.45);
+    expect(mealTargets(t).kcal).toBeCloseTo(900);
+  });
+
+  it('un seul repas par défaut', () => {
+    const t = targetsOf({ kcalTarget: 2000, proteinTarget: 100, fiberTarget: 30, plantTargetG: 400, fruitsPerDay: 1, demo: true });
+    expect(t.mealsPerDay).toBe(1);
+    expect(t.mealShare).toBe(0.75);
   });
 });

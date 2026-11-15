@@ -115,17 +115,31 @@ export function mealOf(data: Pick<Data, 'plan' | 'recipes'>, entry: PlanEntry | 
   return cook ? mealOfCook(data.recipes, cook) : undefined;
 }
 
-/** Valeurs d'un repas : les ingrédients de la cuisson divisés par le nombre de repas. */
-export function mealPortion(foods: FoodIndex, meal: Meal): PortionInfo {
+/**
+ * Valeurs d'un repas : les ingrédients de la cuisson divisés par le nombre de repas,
+ * puis par la part réellement mangée (0,75 si la portion était plus petite).
+ */
+export function mealPortion(foods: FoodIndex, meal: Meal, eaten = 1): PortionInfo {
   const n = Math.max(1, meal.portions);
+  const k = Math.max(0, eaten) / n;
   return {
-    nutrients: scale(itemsNutrients(foods, meal.ingredients), 1 / n),
-    plantG: plantGrams(foods, meal.ingredients) / n,
+    nutrients: scale(itemsNutrients(foods, meal.ingredients), k),
+    plantG: plantGrams(foods, meal.ingredients) * k,
   };
+}
+
+/** Tous les repas posés un jour donné, dans l'ordre. Un jour peut en porter plusieurs. */
+export function entriesOn(data: Pick<Data, 'plan'>, date: ISODate): PlanEntry[] {
+  return data.plan.entries
+    .filter((e) => e.date === date)
+    .sort((a, b) => (a.kind === b.kind ? 0 : a.kind === 'out' ? 1 : b.kind === 'out' ? -1 : 0));
 }
 
 export interface DayNutrition {
   date: ISODate;
+  /** Repas posés ce jour-là, un par entrée du plan. */
+  meals: PortionInfo[];
+  /** Le premier repas, pour les écrans qui n'en montrent qu'un. */
   meal?: PortionInfo;
   snacks: PortionInfo;
   total: Nutrients;
@@ -137,19 +151,25 @@ export interface DayNutrition {
 }
 
 export function dayNutrition(data: Data, foods: FoodIndex, date: ISODate): DayNutrition {
-  const entry = data.plan.entries.find((e) => e.date === date);
-  const m = mealOf(data, entry);
-  const meal = m && m.ingredients.length > 0 ? mealPortion(foods, m) : undefined;
+  const entries = entriesOn(data, date);
+  const meals = entries
+    .map((entry) => {
+      const m = mealOf(data, entry);
+      return m && m.ingredients.length > 0 ? mealPortion(foods, m, entry.eaten ?? 1) : undefined;
+    })
+    .filter((p): p is PortionInfo => !!p);
   const snackItems = data.journal.snacks.filter((s) => s.date === date).flatMap((s) => s.items);
   const snacks = { nutrients: itemsNutrients(foods, snackItems), plantG: plantGrams(foods, snackItems) };
+  const total = meals.reduce((acc, p) => add(acc, p.nutrients), snacks.nutrients);
   return {
     date,
-    meal,
+    meals,
+    meal: meals[0],
     snacks,
-    total: add(meal?.nutrients ?? ZERO, snacks.nutrients),
-    plantG: (meal?.plantG ?? 0) + snacks.plantG,
-    out: entry?.kind === 'out',
-    empty: !entry,
+    total,
+    plantG: meals.reduce((g, p) => g + p.plantG, snacks.plantG),
+    out: entries.some((e) => e.kind === 'out'),
+    empty: entries.length === 0,
   };
 }
 
