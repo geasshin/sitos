@@ -38,8 +38,33 @@ s'annoncent dans l'app (carte en bas à droite) et s'installent d'un clic.
 - **Paramètres** (⌘,) : version installée, recherche de mise à jour manuelle ou automatique, installation d'un clic ;
   objectifs nutritionnels, fruits par jour ; apparence (comme le Mac, clair, sombre) ; dossier des données et
   sauvegarde manuelle ; à propos et sources.
-- **Le soir** : un à-côté noté pour un soir à venir (« Prévu le soir ») compte dans la projection du stock dès maintenant
+- **Repas non coché** : rien ne sort du stock tant que le repas n'est pas coché. Aujourd'hui rappelle les repas passés
+  en attente (« N repas attendent une réponse ») : Mangé, ou Pas mangé (clos sans toucher au stock).
+- **Portion** : après « C'est fait », l'app demande si la portion était plus petite, comme prévu ou plus grosse.
+  Ça change le bilan de la journée, jamais la fiche ni le stock.
+- **Repas principaux par jour** (1 à 3) : règle la part de la journée que pèse un repas ; plusieurs repas peuvent être
+  posés le même jour. La grille du calendrier passera à plusieurs cases par jour en 0.4.
+- **Le soir** : un seul sélecteur, sous le plat du jour. Les à-côtés retenus (avec leurs kcal), puis ceux qui comblent
+  le mieux la journée (ce que chacun apporte), puis les autres idées possibles avec le stock, repliées. Un à-côté noté
+  pour un soir à venir (« Prévu le soir ») compte dans la projection du stock dès maintenant
   et sort du stock ce jour-là.
+
+- **Recettes** : bibliothèque héritée de Sylloge. Le filtre « Réalisables maintenant » ne montre que ce que le stock
+  permet ; les fiches sans quantités se relient au stock en une minute (l'app propose produit et quantité par ligne).
+  Mode cuisine pour les étapes en grand, photos gardées sur le Mac au premier affichage.
+- **Cinq onglets** : Aujourd'hui · Semaine · Recettes · Stock · Nutrition. Le Poids est une section de Nutrition
+  (et reste joignable par l'adresse `#/weight`).
+- **Nutrition** : trois chiffres de la semaine face aux objectifs avec une phrase, un graphique cliquable qui ouvre
+  le bilan du jour, « Cette semaine, essaie » avec deux ou trois gestes concrets, les objectifs (repliés une fois
+  définis) et le poids.
+- **Stock & courses** : tout le stock par date de péremption, recherche, correction d'une quantité. « Saisir une
+  commande » accepte un texte collé (« 2 courgettes », « 1 kg de riz ») et propose ce qu'il a compris avant
+  d'enregistrer. La liste de courses réunit ce qui manque pour le plan, ce qui va finir et les produits de base,
+  se coche et se copie.
+- **Semaine** : deux semaines à l'écran, navigation par quinzaine. Une cuisson et ses restes forment un seul ruban
+  qui se glisse d'un bloc. Le panneau du jour a deux onglets, Repas et Bilan. Pour un jour vide, les recettes sont
+  groupées par « ce qui fait passer le stock », plats, puis accompagnements, et le nombre de jours occupés par les
+  restes est annoncé avant de valider. En bas, le bilan de la quinzaine : moyenne, jours à remplir, produits à risque.
 
 ⌘Z (ou « Annuler » en bas de la barre latérale) défait la dernière modification.
 
