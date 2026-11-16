@@ -1,4 +1,4 @@
-import { BookOpen, Check, CookingPot, Plus, Refrigerator } from 'lucide-react';
+import { BookOpen, Check, Plus, Refrigerator, Utensils } from 'lucide-react';
 import { useApp } from '../context';
 import { formatShort } from '../domain/dates';
 import { mealOf, mealOfCook, mealPortion } from '../domain/nutrition';
@@ -7,6 +7,7 @@ import { splitAmount } from '../domain/stock';
 import type { PlanEntry } from '../domain/types';
 import { MealEditor } from './MealEditor';
 import { MealPlate } from './MealPlate';
+import { Cover } from './recipe';
 import { Meter } from './ui';
 
 const fr = (v: number) => Math.round(v).toLocaleString('fr-FR');
@@ -14,12 +15,12 @@ const targetLabel = (kcal: number) => Math.round(kcal / 25) * 25;
 
 function statusLabel(entry: PlanEntry) {
   if (entry.skipped) return 'Pas mangé';
-  return entry.done ? 'Mangé' : 'Prévu';
+  return entry.done ? 'Mangé' : '';
 }
 
 /**
- * Un repas du jour : le plat, ses chiffres pour une portion, et une seule action claire.
- * Une cuisson et un reste se ressemblent, seul le libellé du haut les distingue.
+ * Un repas du jour : le plat, sa courte liste d'ingrédients, ses chiffres pour une portion
+ * et une seule action claire. Une recette, un plat maison et un reste se lisent au premier regard.
  */
 export function MealCard({
   entry,
@@ -28,6 +29,8 @@ export function MealCard({
   onAdd,
   onIngredients,
   onRecipe,
+  onOut,
+  showOut,
 }: {
   entry?: PlanEntry;
   index: number;
@@ -35,6 +38,8 @@ export function MealCard({
   onAdd: () => void;
   onIngredients: (cook: PlanEntry, entry: PlanEntry, editable: boolean) => void;
   onRecipe: (id: string) => void;
+  onOut: () => void;
+  showOut: boolean;
 }) {
   const app = useApp();
   const { data, store, foods, targets } = app;
@@ -64,36 +69,40 @@ export function MealCard({
     const food = foods.get(item.foodId);
     return food ? [{ item, food }] : [];
   });
-  const visibleIngredients = knownIngredients.slice(0, 4).map(({ item, food }) => ({
+  const visibleIngredients = knownIngredients.slice(0, 6).map(({ item, food }) => ({
     key: food.id,
     ...splitAmount(food, item.qty),
   }));
   const hiddenIngredients = knownIngredients.length - visibleIngredients.length;
-
   return (
     <article className={`meal-card ${single ? 'is-single' : ''} ${done ? 'is-done' : ''}`}>
       <div className="meal-card-main">
         <div className="meal-main-body">
-          <div className="meal-card-top">
-            <span className="meal-slot num">{String(index + 1).padStart(2, '0')}</span>
-            <span className={`tag ${entry.kind === 'cook' ? 'tag-cook' : 'tag-left'}`}>
-              {entry.kind === 'cook' ? (
-                <>
-                  <CookingPot size={12} aria-hidden /> Cuisson{meal.portions > 1 ? ` · ${meal.portions} repas` : ''}
-                </>
-              ) : (
-                <>
-                  <Refrigerator size={12} aria-hidden /> Reste du {formatShort(meal.cook.date)}
-                </>
-              )}
-            </span>
-            <span className={`meal-state ${done ? 'is-done' : ''}`}>
-              {done && <Check size={13} aria-hidden />}
-              {statusLabel(entry)}
+          <div className="meal-card-label-row">
+            <span className="meal-card-label">
+              <Utensils size={14} className="module-title-icon" aria-hidden /> {single ? 'Repas principal' : `Repas ${index + 1}`}
             </span>
           </div>
 
-          <h2 className="meal-title">{meal.name}</h2>
+          <div className="meal-heading-row">
+            <span className="meal-slot num">{String(index + 1).padStart(2, '0')}</span>
+            <h2 className="meal-title">{meal.name}</h2>
+          </div>
+
+          {(entry.kind === 'leftover' || statusLabel(entry)) && (
+            <div className="meal-card-top">
+              {entry.kind === 'leftover' && (
+                <span className="tag tag-left">
+                  <Refrigerator size={12} aria-hidden /> Reste du {formatShort(meal.cook.date)}
+                </span>
+              )}
+              {statusLabel(entry) && (
+                <span className="meal-state is-done">
+                  <Check size={13} aria-hidden /> {statusLabel(entry)}
+                </span>
+              )}
+            </div>
+          )}
 
           {empty ? (
             <p className="meal-note">
@@ -103,37 +112,37 @@ export function MealCard({
               </button>
             </p>
           ) : (
-            <p className="meal-note">
-              {meal.portions > 1 ? `Une portion sur ${meal.portions}` : 'La portion du jour'}
-              {meal.adjusted ? ' · quantités ajustées' : ''}
-            </p>
+            meal.portions > 1 && <p className="meal-note">Une portion sur {meal.portions}</p>
           )}
 
-          {single && !empty && knownIngredients.length > 0 && (
-            <ul className="meal-ingredient-rail" aria-label="Ingrédients du repas">
-              {visibleIngredients.map((chip, i) => (
-                <li key={`${chip.key}-${i}`} className="meal-chip">
-                  <span className="meal-chip-qty num">{chip.qty}</span>
-                  <span className="meal-chip-name">{chip.label}</span>
-                </li>
-              ))}
-              {hiddenIngredients > 0 && <li className="meal-chip is-more num">+{hiddenIngredients}</li>}
-            </ul>
+          {!empty && (
+            <div className="meal-content-row">
+              {single && (
+                <div className="meal-visual" role="img" aria-label={meal.recipe?.cover ? 'Photo de la recette' : 'Visuel du repas'}>
+                  {meal.recipe?.cover ? (
+                    <Cover recipe={meal.recipe} ratio="square" className="meal-visual-media" />
+                  ) : (
+                    <span className="meal-visual-media meal-visual-icon" aria-hidden>
+                      <Utensils size={32} strokeWidth={1.5} />
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {knownIngredients.length > 0 && (
+                <ul className="meal-ingredient-rail" aria-label="Ingrédients du repas">
+                  {visibleIngredients.map((chip, i) => (
+                    <li key={`${chip.key}-${i}`} className="meal-chip">
+                      <span className="meal-chip-qty num">{chip.qty}</span>
+                      <span className="meal-chip-name">{chip.label}</span>
+                    </li>
+                  ))}
+                  {hiddenIngredients > 0 && <li className="meal-chip is-more num">+{hiddenIngredients}</li>}
+                </ul>
+              )}
+            </div>
           )}
         </div>
-
-        {!empty && (
-          <div className="meal-recipe-actions">
-            <button type="button" className="secondary-button is-sm" onClick={() => onIngredients(meal.cook, entry, editable)}>
-              Ingrédients
-            </button>
-            {meal.recipe && (
-              <button type="button" className="text-button is-sm" onClick={() => onRecipe(meal.recipe!.id)}>
-                <BookOpen size={14} aria-hidden /> Recette
-              </button>
-            )}
-          </div>
-        )}
       </div>
 
       <div className="meal-card-side">
@@ -163,25 +172,37 @@ export function MealCard({
             </dd>
           </div>
         </dl>
+      </div>
 
-        <div className="meal-actions">
-          {done ? (
-            <div className="meal-done-row">
-              <button type="button" className="text-button is-sm" onClick={() => setEntries((e) => toggleDone(e, entry.id))}>
-                Annuler
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              className="primary-button meal-eat"
-              onClick={() => setEntries((e) => toggleDone(e, entry.id))}
-              title="Marquer ce repas comme mangé : ses ingrédients sortent du stock"
-            >
-              <Check size={16} aria-hidden /> Marquer comme mangé
-            </button>
-          )}
-        </div>
+      <div className="meal-action-bar">
+        <button type="button" className="secondary-button is-sm" onClick={() => onIngredients(meal.cook, entry, editable)}>
+          Modifier les ingrédients
+        </button>
+        {meal.recipe && (
+          <button type="button" className="secondary-button is-sm" onClick={() => onRecipe(meal.recipe!.id)}>
+            <BookOpen size={14} aria-hidden /> Voir la recette
+          </button>
+        )}
+        {showOut && (
+          <button type="button" className="secondary-button is-sm" onClick={onOut}>
+            <Utensils size={14} aria-hidden /> Je mange dehors
+          </button>
+        )}
+        {done ? (
+          <button type="button" className="text-button is-sm" onClick={() => setEntries((e) => toggleDone(e, entry.id))}>
+            Je n’ai pas mangé
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="primary-button is-sm meal-eat"
+            disabled={empty}
+            onClick={() => setEntries((e) => toggleDone(e, entry.id))}
+            title="Ce repas sort du stock : ses ingrédients sont déduits et le bilan est validé"
+          >
+            <Check size={15} aria-hidden /> J’ai mangé
+          </button>
+        )}
       </div>
     </article>
   );

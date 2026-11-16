@@ -111,11 +111,15 @@ const WEIGHTS = { protein: 1.2, fiber: 0.8, plant: 1.0, kcal: 0.6 };
 export function scoreSide(n: Nutrients, plantG: number, add_: { n: Nutrients; plantG: number }, t: Targets, sweet: boolean): number {
   const fill = (before: number, after: number, target: number) => (Math.min(after, target) - Math.min(before, target)) / target;
   const next = add(n, add_.n);
+  const lowRoom = n.kcal >= t.kcal * 0.85;
+  const kcalWeight = lowRoom ? WEIGHTS.kcal * 0.3 : WEIGHTS.kcal;
   let score =
     WEIGHTS.protein * fill(n.protein, next.protein, t.protein) +
     WEIGHTS.fiber * fill(n.fiber, next.fiber, t.fiber) +
     WEIGHTS.plant * fill(plantG, plantG + add_.plantG, t.plantG) +
-    WEIGHTS.kcal * fill(n.kcal, next.kcal, t.kcal * 0.98);
+    kcalWeight * fill(n.kcal, next.kcal, t.kcal * 0.98);
+  // Quand l'énergie est presque couverte, on cherche la densité protéique plutôt que les calories.
+  if (lowRoom && add_.n.kcal > 0) score += 0.02 * (add_.n.protein / Math.max(40, add_.n.kcal)) * t.protein;
   const over = (before: number, after: number, cap: number) => (Math.max(0, after - cap) - Math.max(0, before - cap)) / cap;
   score -= 4 * over(n.kcal, next.kcal, t.kcal * 1.03);
   score -= 1.5 * over(n.satFat, next.satFat, t.satFatMaxG);

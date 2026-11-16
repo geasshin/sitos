@@ -6,7 +6,6 @@ import type { ISODate } from './domain/types';
 import { useStore } from './store';
 import { UpdateNotice } from './components/UpdateNotice';
 import { applyTheme, isNative, openDataFolder } from './storage';
-import logo from './assets/sitos-mark.png';
 import { TodayView } from './views/Today';
 import { CalendarView } from './views/Calendar';
 import { StockView } from './views/Stock';
@@ -188,19 +187,6 @@ function Loaded({
         </main>
 
         <nav className="dock" aria-label="Navigation principale">
-          <a
-            href="#/today"
-            className="dock-brand"
-            aria-label="Sitos, revenir à aujourd’hui"
-            onClick={(e) => {
-              e.preventDefault();
-              ctx.goTo('today');
-            }}
-          >
-            <img src={logo} alt="" />
-            <span>Sitos</span>
-          </a>
-          <span className="dock-sep" aria-hidden />
           {NAV.map(({ id, label, Icon }) => (
             <a
               key={id}
@@ -226,7 +212,6 @@ function Loaded({
               )}
             </a>
           ))}
-          <span className="dock-sep" aria-hidden />
           <a
             href="#/settings"
             className={`dock-item ${route.view === 'settings' ? 'is-active' : ''}`}

@@ -7,9 +7,9 @@ import { addCustomOn, addMealOn, leftoversInFridge, markOut, nextSlot, pendingPa
 import { amount, shortQty, rescueSuggestions } from '../domain/stock';
 import type { PlanEntry } from '../domain/types';
 import { MealPlanner } from '../components/MealPlanner';
-import { TodayBalanceCard } from '../components/Balance';
-import { DayPanel } from '../components/DayPanel';
+import { NutritionPanel } from '../components/NutritionPanel';
 import { MealCard, MealIngredientsDialog } from '../components/MealCard';
+import { ExpensePanel, TomorrowPanel, WeightPanel } from '../components/TodayExtras';
 import { Modal } from '../components/Modal';
 import { MiniPanel } from '../components/ui';
 
@@ -67,43 +67,38 @@ export function TodayView() {
               </button>
             </span>
           )}
-          {out ? (
-            <button type="button" className="text-button" onClick={() => setEntries((e) => unmarkOut(e, out.id))}>
-              <X size={15} aria-hidden /> Finalement à la maison
-            </button>
-          ) : (
-            <button type="button" className="text-button" onClick={() => setEntries((e) => markOut(e, today))} title="Le plan glisse d’un jour">
-              <Utensils size={15} aria-hidden /> Je mange dehors
-            </button>
-          )}
         </div>
       </header>
 
       <section className="today-block" aria-labelledby="today-meals-title">
-        <div className="today-section-head">
-          <h2 id="today-meals-title" className="section-title">
-            Repas
-          </h2>
-          <span className="section-meta num">
-            {out ? 'dehors' : `${meals.length} / ${targets.mealsPerDay}`}
-          </span>
-        </div>
+        <h2 id="today-meals-title" className="sr-only">
+          Repas
+        </h2>
 
         {out ? (
-          <article className="meal-card is-single out-card">
+          <article className="meal-card out-card">
             <div className="meal-card-main">
-              <div className="meal-card-top">
-                <span className="meal-slot num">01</span>
-                <span className="tag tag-out">
-                  <Utensils size={12} aria-hidden /> Dehors
-                </span>
+              <div className="meal-main-body">
+                <div className="meal-card-label-row">
+                  <span className="meal-card-label">
+                    <Utensils size={14} className="module-title-icon" aria-hidden /> Repas principal
+                  </span>
+                </div>
+                <div className="meal-heading-row">
+                  <span className="meal-slot num">01</span>
+                  <h2 className="meal-title">Repas dehors</h2>
+                </div>
+                <div className="meal-card-top">
+                  <span className="tag tag-out">
+                    <Utensils size={12} aria-hidden /> Dehors
+                  </span>
+                </div>
+                <p className="meal-note">La journée ne compte pas dans le bilan.</p>
               </div>
-              <h2 className="meal-title">Repas dehors</h2>
-              <p className="meal-note">La journée ne compte pas dans le bilan.</p>
             </div>
-            <div className="meal-card-side">
-              <button type="button" className="secondary-button" onClick={() => setEntries((e) => unmarkOut(e, out.id))}>
-                <X size={15} aria-hidden /> Finalement à la maison
+            <div className="meal-action-bar">
+              <button type="button" className="secondary-button is-sm" onClick={() => setEntries((e) => unmarkOut(e, out.id))}>
+                <X size={14} aria-hidden /> Finalement à la maison
               </button>
             </div>
           </article>
@@ -118,6 +113,8 @@ export function TodayView() {
                 onAdd={() => setAddOpen(true)}
                 onIngredients={(cook, entry) => setIngredients({ cookId: cook.id, entryId: entry.id })}
                 onRecipe={app.openRecipe}
+                onOut={() => setEntries((e) => markOut(e, today))}
+                showOut={i === 0}
               />
             ))}
           </div>
@@ -125,15 +122,17 @@ export function TodayView() {
       </section>
 
       {!out && (
-        <div className="today-columns">
-          <TodayBalanceCard />
-          <DayPanel />
+        <>
+          <NutritionPanel />
           <div className="mini-grid">
             <Priorities setEntries={setEntries} />
+            <TomorrowPanel />
             <Fridge />
+            <WeightPanel />
+            <ExpensePanel />
             <Attention />
           </div>
-        </div>
+        </>
       )}
 
       <PendingToast setEntries={setEntries} />
@@ -223,7 +222,13 @@ function PendingToast({ setEntries }: { setEntries: (fn: (e: PlanEntry[]) => Pla
 function Priorities({ setEntries }: { setEntries: (fn: (e: PlanEntry[]) => PlanEntry[]) => void }) {
   const app = useApp();
   const { data, today } = app;
-  const list = app.priorities.slice(0, 5);
+  const base = app.priorities.slice(0, 5);
+  const opened = [...app.stock.values()]
+    .filter((s) => s.food.storage !== 'placard' && s.lots.some((l) => l.qty < l.initial - 1e-6) && !base.some((p) => p.food.id === s.food.id))
+    .sort((a, b) => (a.daysLeft ?? 99) - (b.daysLeft ?? 99))
+    .slice(0, 3)
+    .map((s) => ({ food: s.food, daysLeft: s.daysLeft ?? 99, expiry: s.nextExpiry ?? today, atRisk: s.remaining, nextUse: undefined, opened: true }));
+  const list = [...base.map((p) => ({ ...p, opened: false })), ...opened].slice(0, 6);
   if (list.length === 0) return null;
   const soon = new Set(data.plan.entries.filter((e) => e.kind === 'cook' && e.date >= today && e.date <= addDays(today, 2)).map((e) => e.recipeId));
   const idea = rescueSuggestions(app.priorities, 4).find((x) => !soon.has(x.recipe.id));
@@ -241,9 +246,11 @@ function Priorities({ setEntries }: { setEntries: (fn: (e: PlanEntry[]) => PlanE
         {list.map((p) => (
           <li key={p.food.id} className="prio-row" title={p.nextUse ? `Prochain plat : ${formatShort(p.nextUse)}` : 'Aucun plat prévu'}>
             <span className="prio-name">{p.food.name}</span>
-            <span className="prio-qty muted small num">{p.atRisk > 0 ? `${shortQty(p.food, p.atRisk)} non prévu` : 'prévu bientôt'}</span>
+            <span className="prio-qty muted small num">
+              {p.opened ? `${shortQty(p.food, p.atRisk)} entamé` : p.atRisk > 0 ? `${shortQty(p.food, p.atRisk)} hors plat prévu` : 'prévu bientôt'}
+            </span>
             <span className={`pill pill-${urgencyTone(p.daysLeft)}`} title={`Se garde jusqu’au ${formatDayMonth(p.expiry)}`}>
-              {p.daysLeft < 0 ? 'dépassé' : p.daysLeft === 0 ? 'auj.' : `${p.daysLeft} j`}
+              {p.opened && p.daysLeft === 99 ? '—' : p.daysLeft < 0 ? 'dépassé' : p.daysLeft === 0 ? 'auj.' : `${p.daysLeft} j`}
             </span>
           </li>
         ))}

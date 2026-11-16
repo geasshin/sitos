@@ -48,6 +48,15 @@ seulement ⌘Z, et une puce le rappelle quelques secondes après un changement.
 > Refonte du 16 novembre 2026 : barre basse à la place de la barre latérale ; le bloc « À régler » devient une
 > notification en bas à droite ; « Le soir » devient Compléments ; le bandeau de lecture et les compléments
 > deviennent un seul module **Note du jour** dans la colonne de droite.
+>
+> Suite du même jour : bilan, note et compléments fusionnent en un seul module **Bilan du jour** ; la carte repas
+> sépare recette/ingrédients à gauche et nutrition à droite ; la page vise six modules (Repas, Bilan, À utiliser vite,
+> Demain, Poids, À découvrir).
+>
+> Suite : la barre d'actions du repas regroupe modification, recette, « Je mange dehors » et « Marquer comme mangé » ;
+> le score devient un anneau circulaire ; « À découvrir » cède la place à une « Dépense énergétique » verrouillée.
+> Le catalogue passe à des bases ajustables (pièces ou grammes). À garder pour plus tard : direction artistique plus
+> colorée, connexion API des balances/applications de poids et des données de santé (pas, sport, calories dépensées).
 
 Garder : le plat du jour et « C'est fait », le bilan, « À utiliser vite ».
 Changer :

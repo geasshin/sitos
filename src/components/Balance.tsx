@@ -14,16 +14,11 @@ const dec = (v: number) => (Math.round(v * 10) / 10).toLocaleString('fr-FR');
 const show = (r: BalanceRow, v: number) => (r.key === 'salt' ? dec(v) : fr(v));
 
 /**
- * Un seul code de couleur : ambre quand il manque quelque chose, rouge au-delà d'un plafond,
- * encre quand c'est atteint. Les mots le disent aussi, pour ne pas dépendre de la couleur.
+ * Un seul code de couleur : rouge quand un plafond est dépassé, neutre partout ailleurs.
+ * Les mots (« reste », « dépassé de ») portent l'information ; la couleur ne fait que confirmer.
  */
-function rowTone(r: BalanceRow): 'ink' | 'saffron' | 'tomato' {
-  if (r.kind === 'max') {
-    if (r.status === 'haut') return 'tomato';
-    return r.target > 0 && r.value >= r.target * 0.9 ? 'saffron' : 'ink';
-  }
-  if (r.kind === 'band') return r.status === 'haut' ? 'tomato' : r.status === 'bas' ? 'saffron' : 'ink';
-  return r.status === 'bas' ? 'saffron' : 'ink';
+function rowTone(r: BalanceRow): 'ink' | 'tomato' {
+  return r.status === 'haut' && (r.kind === 'max' || r.kind === 'band') ? 'tomato' : 'ink';
 }
 
 /** La barre reste neutre ; seul un plafond dépassé la passe au rouge. */
@@ -47,8 +42,9 @@ function statusText(r: BalanceRow): string {
 
 function Row({ row }: { row: BalanceRow }) {
   const tone = rowTone(row);
+  const near = row.kind === 'max' && row.status !== 'haut' && row.target > 0 && row.target - row.value <= row.target * 0.1;
   return (
-    <div className={`nutrient tone-${tone} is-${row.status}`}>
+    <div className={`nutrient tone-${tone} is-${row.status} ${near ? 'is-near' : ''}`}>
       <dt>
         <span>{row.label}</span>
         <span className="nutrient-status">{statusText(row)}</span>
@@ -102,52 +98,6 @@ export function SplitBar({ balance, targets }: { balance: DayBalance; targets: T
         ))}
       </ul>
     </div>
-  );
-}
-
-/** Le bilan de la page Aujourd'hui : énergie en tête, puis ce qui reste à atteindre et à limiter. */
-export function TodayBalanceCard() {
-  const app = useApp();
-  const { data, foods, targets, today } = app;
-  const day = dayNutrition(data, foods, today);
-  const balance = assessDay(day.total, day.plantG, targets);
-  const energy = balance.rows.find((r) => r.key === 'kcal')!;
-  const goals = balance.rows.filter((r) => r.kind !== 'max' && r.key !== 'kcal');
-  const caps = balance.rows.filter((r) => r.kind === 'max');
-
-  return (
-    <section className="panel balance-panel" aria-labelledby="balance-title">
-      <header className="panel-head">
-        <h2 id="balance-title" className="panel-title">
-          Bilan du jour
-        </h2>
-        <span className="panel-meta num">Objectif {fr(targets.kcal)} kcal</span>
-      </header>
-
-      <div className={`balance-energy is-${energy.status}`}>
-        <div className="balance-energy-line">
-          <p className="balance-energy-value">
-            <b className="num">{fr(energy.value)}</b>
-            <span> / {fr(energy.target)} kcal</span>
-          </p>
-          <span className="balance-energy-note">{statusText(energy)}</span>
-        </div>
-        <Meter value={energy.value} target={energy.target} tone={barTone(energy)} label="Énergie" />
-      </div>
-
-      <div className="balance-columns">
-        <div className="balance-group">
-          <p className="balance-sub">À atteindre</p>
-          <BalanceRows rows={goals} compact />
-        </div>
-        <div className="balance-group">
-          <p className="balance-sub">À limiter</p>
-          <BalanceRows rows={caps} compact />
-        </div>
-      </div>
-
-      <SplitBar balance={balance} targets={targets} />
-    </section>
   );
 }
 

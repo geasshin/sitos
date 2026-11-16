@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { BookOpen, Check, Plus, Search, X } from 'lucide-react';
 import { useApp } from '../context';
 import { recommendSides, sideCandidates } from '../domain/balance';
-import { mergeComplements, searchComplements } from '../domain/complements';
+import { baseAmount, mergeComplements, scaledItems, searchComplements } from '../domain/complements';
 import { dayNutrition, itemsNutrients, ZERO, type FoodIndex } from '../domain/nutrition';
 import { newId } from '../domain/plan';
 import { amount, availableOn } from '../domain/stock';
@@ -12,7 +12,9 @@ import { Modal } from './Modal';
 const fr = (v: number) => Math.round(v).toLocaleString('fr-FR');
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const byName = (a: Food, b: Food) => a.name.localeCompare(b.name, 'fr');
-const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
+type PortionIdea = { id: string; items: Ingredient[]; name?: string; label?: string };
+const ideaName = (idea: PortionIdea) => idea.name ?? idea.label ?? '';
 
 function facts(foodIndex: FoodIndex, items: Ingredient[]) {
   const n = itemsNutrients(foodIndex, items);
@@ -29,6 +31,23 @@ export function Complements({ date }: { date: ISODate }) {
   const [query, setQuery] = useState('');
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [amounts, setAmounts] = useState<Record<string, number>>({});
+
+  const amountOf = (idea: PortionIdea) => amounts[idea.id] ?? baseAmount(idea);
+  const stepOf = (idea: PortionIdea) => {
+    const food = foods.get(idea.items[0]?.foodId ?? '');
+    return food?.unit === 'pièce' ? 0.5 : 10;
+  };
+  const unitOf = (idea: PortionIdea) => {
+    const food = foods.get(idea.items[0]?.foodId ?? '');
+    return food?.unit === 'pièce' ? 'pièce' : food?.unit === 'ml' ? 'ml' : 'g';
+  };
+  const setAmountFor = (idea: PortionIdea, value: number) => {
+    const step = stepOf(idea);
+    const safe = Number.isFinite(value) ? Math.max(step, Math.round(value * 100) / 100) : baseAmount(idea);
+    setAmounts((prev) => ({ ...prev, [idea.id]: safe }));
+  };
+  const addIdea = (idea: PortionIdea) => add(ideaName(idea), scaledItems(idea, amountOf(idea)));
 
   const ideas = useMemo(() => mergeComplements(data.snackIdeas), [data.snackIdeas]);
   const known = useMemo(() => ideas.filter((c) => c.items.every((i) => foods.has(i.foodId))), [ideas, foods]);
@@ -118,17 +137,36 @@ export function Complements({ date }: { date: ISODate }) {
         <>
           <p className="comp-sub">Pour combler le manque</p>
           <ul className="comp-list is-picks">
-            {picks.map((p) => (
-              <li key={p.candidate.id}>
-                <button type="button" className="comp-row is-pick" onClick={() => add(p.candidate.label, p.candidate.items)}>
-                  <span className="comp-name">{p.candidate.label}</span>
-                  <span className="comp-facts num">{fr(p.nutrients.kcal)} kcal · {fr(p.nutrients.protein)} g prot.</span>
-                  <span className="comp-plus" aria-hidden>
-                    <Plus size={15} />
-                  </span>
-                </button>
-              </li>
-            ))}
+            {picks.map((p) => {
+              const idea = p.candidate;
+              const value = amountOf(idea);
+              const scaled = scaledItems(idea, value);
+              const n = itemsNutrients(foods, scaled);
+              return (
+                <li key={idea.id}>
+                  <div className={`comp-row is-pick ${avail(idea.items[0].foodId) + 1e-6 >= value ? '' : 'is-off'}`}>
+                    <span className="comp-name">{ideaName(idea)}</span>
+                    <span className="comp-facts num">{fr(n.kcal)} kcal · {fr(n.protein)} g prot.</span>
+                    <span className="comp-add">
+                      <input
+                        className="comp-qty-input num"
+                        type="number"
+                        min={stepOf(idea)}
+                        step={stepOf(idea)}
+                        value={value}
+                        onChange={(e) => setAmountFor(idea, Number(e.target.value))}
+                        aria-label={`Quantité de ${ideaName(idea)} en ${unitOf(idea)}`}
+                        title="Nombre de pièces ou grammes à ajouter"
+                      />
+                      <span className="comp-unit">{unitOf(idea)}</span>
+                      <button type="button" className="comp-plus" onClick={() => addIdea(idea)} aria-label={`Ajouter ${ideaName(idea)}`}>
+                        <Plus size={15} aria-hidden />
+                      </button>
+                    </span>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         </>
       )}
@@ -166,8 +204,11 @@ export function Complements({ date }: { date: ISODate }) {
 
             <ul className="comp-list catalog-dialog-list" aria-label="Catalogue de compléments">
               {catalogList.map((c) => {
-                const ok = c.items.every((i) => avail(i.foodId) + 1e-6 >= i.qty);
+                const value = amountOf(c);
+                const scaled = scaledItems(c, value);
+                const ok = scaled.every((i) => avail(i.foodId) + 1e-6 >= i.qty);
                 const added = chosenLabels.has(c.name);
+                const n = itemsNutrients(foods, scaled);
                 return (
                   <li key={c.id}>
                     {added ? (
@@ -179,16 +220,29 @@ export function Complements({ date }: { date: ISODate }) {
                         </span>
                       </div>
                     ) : (
-                      <button type="button" className={`comp-row ${ok ? '' : 'is-off'}`} onClick={() => add(c.name, c.items)}>
+                      <div className={`comp-row ${ok ? '' : 'is-off'}`}>
                         <span className="comp-name">{c.name}</span>
                         <span className="comp-facts num">
-                          {facts(foods, c.items)}
+                          {fr(n.kcal)} kcal · {fr(n.protein)} g prot.
                           {!ok && <span className="comp-state"> · pas en stock</span>}
                         </span>
-                        <span className="comp-plus" aria-hidden>
-                          <Plus size={15} />
+                        <span className="comp-add">
+                          <input
+                            className="comp-qty-input num"
+                            type="number"
+                            min={stepOf(c)}
+                            step={stepOf(c)}
+                            value={value}
+                            onChange={(e) => setAmountFor(c, Number(e.target.value))}
+                            aria-label={`Quantité de ${c.name} en ${unitOf(c)}`}
+                            title="Nombre de pièces ou grammes à ajouter"
+                          />
+                          <span className="comp-unit">{unitOf(c)}</span>
+                          <button type="button" className="comp-plus" onClick={() => addIdea(c)} aria-label={`Ajouter ${c.name}`}>
+                            <Plus size={15} aria-hidden />
+                          </button>
                         </span>
-                      </button>
+                      </div>
                     )}
                   </li>
                 );

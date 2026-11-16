@@ -17,15 +17,19 @@ s'annoncent dans l'app (carte en bas à droite) et s'installent d'un clic.
 
 ## Ce qu'elle fait
 
-- **Aujourd'hui** : autant de repas que le réglage (1 à 3), chacun avec son plat, ses kcal, protéines et fibres
-  pour une portion, et un seul bouton pour le marquer mangé (le décocher remet le stock). Un repas unique ajoute
-  une assiette de composition (végétal, protéines, féculents, autres), le nombre d'ingrédients et leurs quantités
-  en pastilles ; un clic ouvre la fiche. La fiche ingrédients s'ouvre en fenêtre : les quantités se modifient à
-  gauche, les valeurs du repas suivent à droite. Le bilan du jour reste fixé sur les objectifs, et les compléments
-  comblent les manques. Un module **Note du jour** réunit la note (jauge, « Très bien », « Encore un peu juste » ou
-  « Trop d'énergie ») et les compléments : les manques sont chiffrés, puis « Déjà choisis », les deux suggestions
-  « Pour combler le manque », et « Parcourir le catalogue » ouvre le catalogue complet dans une fenêtre avec
-  recherche, ajout et création d'un complément.
+- **Aujourd'hui** : autant de repas que le réglage (1 à 3). La carte sépare la recette à gauche (titre et courte liste
+  d'ingrédients) de la nutrition à droite (assiette de composition sur un repas unique, kcal / protéines / fibres).
+  Une tuile carrée sans légende occupe le bas de la colonne gauche : photo carrée de la recette si elle existe,
+  sinon une icône de couverts. Elle est centrée sur la hauteur des ingrédients placés à sa droite.
+  Une barre d'actions groupée réunit « Modifier les ingrédients », « Voir la recette », « Je mange dehors » et
+  « J'ai mangé » / « Je n'ai pas mangé » aligné à droite. Le mot **Repas principal** figure dans la carte, au-dessus du
+  numéro et du nom du plat : même typographie et même icône de titre que **Bilan du jour**.
+  Un seul module nutritionnel affiche un score circulaire, ce qu'il manque, les objectifs, la répartition et les
+  compléments. Les suggestions et le catalogue complet (fenêtre avec recherche) utilisent des bases ajustables :
+  œuf, clémentine, 100 g de skyr, 30 g de protéines de soja… on choisit le nombre de pièces ou de grammes avant l'ajout.
+  Les suggestions privilégient la densité protéique quand l'énergie est presque couverte.
+  Autour : « À utiliser vite » (périmations et lots entamés), « Demain » (icône du plat), « Poids » et
+  « Dépense énergétique », ces deux derniers verrouillés en attendant une connexion à des applications de suivi.
 - **Calendrier** : un ou plusieurs plats par jour. Glisser un plat le déplace avec ses restes. « Dehors » décale la suite.
   On planifie une recette de la bibliothèque ou un « plat maison » (un nom, puis ses ingrédients). Chaque cuisson a
   ses propres ingrédients : changer le nombre de repas, une quantité, retirer ou ajouter un ingrédient ne touche que

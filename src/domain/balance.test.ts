@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { biggestContributor } from './balance';
+import { biggestContributor, recommendSides } from './balance';
 import { indexFoods, ZERO } from './nutrition';
+import { targetsOf } from './targets';
 import type { Data, Food, Recipe } from './types';
 
 const n = (kcal: number, satFat = 0) => ({ ...ZERO, kcal, satFat });
@@ -52,5 +53,31 @@ describe('biggestContributor', () => {
     expect(c?.foodName).toBe('Beurre');
     expect(c?.value).toBeCloseTo(5);
     expect(c?.cookId).toBe('c');
+  });
+});
+
+describe('recommendSides', () => {
+  it('préfère la densité protéique quand les calories sont presque couvertes', () => {
+    const lean: Food = {
+      id: 'lean', name: 'Protéine maigre', category: 'viandes & œufs', unit: 'g',
+      per100: { ...ZERO, kcal: 100, protein: 20 }, storage: 'frigo', shelfLifeDays: 5,
+    };
+    const sweet: Food = {
+      id: 'sweet', name: 'Gâteau', category: 'sucré', unit: 'g',
+      per100: { ...ZERO, kcal: 400, protein: 2 }, storage: 'placard', shelfLifeDays: 30,
+    };
+    const index = indexFoods([lean, sweet]);
+    const t = targetsOf(data.settings);
+    const result = recommendSides(
+      { nutrients: { ...ZERO, kcal: 1800, protein: 40 }, plantG: 300 },
+      t,
+      [
+        { id: 'lean', label: 'Protéine maigre', items: [{ foodId: 'lean', qty: 100 }] },
+        { id: 'sweet', label: 'Gâteau', items: [{ foodId: 'sweet', qty: 100 }] },
+      ],
+      index,
+      1,
+    );
+    expect(result.picks[0].candidate.id).toBe('lean');
   });
 });
