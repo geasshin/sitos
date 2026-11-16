@@ -30,19 +30,22 @@ export function MealPlanner({
   onRecipe,
   onCustom,
   date,
+  fixedPortions,
 }: {
   submitLabel: string;
   onRecipe: (recipe: Recipe, portions: number) => void;
   onCustom: (title: string, portions: number) => void;
   /** Jour visé : sert à montrer où iront les restes avant de valider. */
   date?: ISODate;
+  /** Repas déjà posé ce jour-là : une seule portion, sans décaler la suite du plan. */
+  fixedPortions?: number;
 }) {
   const { data, portions: info, priorities } = useApp();
   const [mode, setMode] = useState<'fiche' | 'maison'>('fiche');
   const [q, setQ] = useState('');
   const [picked, setPicked] = useState<Recipe | null>(null);
   const [title, setTitle] = useState('');
-  const [portions, setPortions] = useState(2);
+  const [portions, setPortions] = useState(fixedPortions ?? 2);
 
   const all = useMemo(() => {
     const n = norm(q.trim());
@@ -162,13 +165,19 @@ export function MealPlanner({
       )}
 
       <div className="planner-foot">
-        <PortionStepper value={portions} onChange={setPortions} />
-        <span className="muted small">repas</span>
+        {fixedPortions ? (
+          <span className="muted small">{fixedPortions} repas</span>
+        ) : (
+          <>
+            <PortionStepper value={portions} onChange={setPortions} />
+            <span className="muted small">repas</span>
+          </>
+        )}
         <button
           type="button"
           className="primary-button"
           disabled={mode === 'fiche' ? !picked : !title.trim()}
-          onClick={() => (mode === 'fiche' ? picked && onRecipe(picked, portions) : onCustom(title.trim(), portions))}
+          onClick={() => (mode === 'fiche' ? picked && onRecipe(picked, fixedPortions ?? portions) : onCustom(title.trim(), fixedPortions ?? portions))}
         >
           {mode === 'fiche' && !picked ? 'Choisis une recette' : mode === 'maison' && !title.trim() ? 'Donne un nom' : submitLabel}
         </button>

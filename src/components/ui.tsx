@@ -43,3 +43,16 @@ export function Section({ title, aside, children, className }: { title: string; 
     </section>
   );
 }
+
+/** Un module secondaire de la page Aujourd'hui : titre court, contenu dense, aucune ombre. */
+export function MiniPanel({ title, aside, children }: { title: string; aside?: ReactNode; children: ReactNode }) {
+  return (
+    <section className="mini-panel">
+      <header className="mini-head">
+        <h2>{title}</h2>
+        {aside}
+      </header>
+      {children}
+    </section>
+  );
+}

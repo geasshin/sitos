@@ -556,16 +556,14 @@ function chunk<T>(arr: T[], n: number): T[][] {
 function EveningList({ date }: { date: ISODate }) {
   const { data, store, today } = useApp();
   const items = data.journal.snacks.filter((s) => s.date === date);
-  if (items.length === 0) return <p className="hint">Rien de prévu au soir pour l’instant.</p>;
+  if (items.length === 0) return <p className="hint">Aucun complément pour l’instant.</p>;
   return (
     <div className="evening">
-      <p className="balance-sub">{date > today ? 'Prévu le soir' : 'Le soir'}</p>
+      <p className="balance-sub">{date > today ? 'Compléments prévus' : 'Compléments'}</p>
       <ul className="picks">
         {items.map((s) => (
           <li key={s.id} className="pick-row">
-            <span className="pick-label">
-              <Moon size={13} aria-hidden /> {s.label}
-            </span>
+            <span className="pick-label">{s.label}</span>
             <button
               type="button"
               className="icon-button"

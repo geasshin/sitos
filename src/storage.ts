@@ -38,11 +38,15 @@ export async function loadData(today: string): Promise<Loaded> {
   const start = starterData(today);
   const missing = KEYS.filter((k) => raw[k] === undefined || raw[k] === null);
   const data = { ...start, ...raw } as Data;
+  // Les aliments ajoutés au catalogue au fil des versions (oléagineux, yaourt, pain complet…)
+  // rejoignent une installation existante sans toucher aux valeurs déjà présentes.
+  const known = new Set(data.foods.map((f) => f.id));
+  const addedFoods = start.foods.filter((f) => !known.has(f.id));
+  if (addedFoods.length && !missing.includes('foods')) missing.push('foods');
   return {
     data: {
       ...data,
-      // Valeurs d'avant la version 0.2 : seulement 5 nutriments. Les champs absents valent 0.
-      foods: data.foods.map((f) => ({ ...f, per100: completeNutrients(f.per100) })),
+      foods: [...data.foods, ...addedFoods].map((f) => ({ ...f, per100: completeNutrients(f.per100) })),
       recipes: data.recipes.map((r) => ({ ...r, steps: r.steps ?? [], favorite: !!r.favorite })),
     },
     missing,

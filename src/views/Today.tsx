@@ -1,18 +1,17 @@
 import { useState } from 'react';
-import { AlertTriangle, ArrowRight, BookOpen, Check, ChevronDown, CookingPot, Refrigerator, Utensils, X } from 'lucide-react';
+import { AlertTriangle, Check, Plus, Utensils, X } from 'lucide-react';
 import { useApp } from '../context';
-import { addDays, diffDays, formatDayMonth, formatLong, formatShort } from '../domain/dates';
-import { dayNutrition, entriesOn, mealOf, mealPortion } from '../domain/nutrition';
-import { leftoversInFridge, markOut, nextSlot, pendingPast, planCustom, planRecipe, setEaten, setSkipped, toggleDone, unmarkOut } from '../domain/plan';
+import { addDays, formatDayMonth, formatNumeric, formatShort, todayISO } from '../domain/dates';
+import { entriesOn, mealOf } from '../domain/nutrition';
+import { addCustomOn, addMealOn, leftoversInFridge, markOut, nextSlot, pendingPast, planCustom, planRecipe, setSkipped, toggleDone, unmarkOut } from '../domain/plan';
 import { amount, shortQty, rescueSuggestions } from '../domain/stock';
-import type { PlanEntry, Recipe } from '../domain/types';
+import type { PlanEntry } from '../domain/types';
 import { MealPlanner } from '../components/MealPlanner';
-import { DayBalanceCard } from '../components/Balance';
-import { MealEditor } from '../components/MealEditor';
-import { EveningPicker } from '../components/EveningPicker';
-import { PortionPrompt } from '../components/PortionPrompt';
-import { Cover } from '../components/recipe';
-import { Section } from '../components/ui';
+import { TodayBalanceCard } from '../components/Balance';
+import { DayPanel } from '../components/DayPanel';
+import { MealCard, MealIngredientsDialog } from '../components/MealCard';
+import { Modal } from '../components/Modal';
+import { MiniPanel } from '../components/ui';
 
 export const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -23,262 +22,201 @@ const shortDay = (d: string) => capitalize(formatShort(d).split(' ')[0]);
 
 export function TodayView() {
   const app = useApp();
-  const { data, today, store } = app;
-  const entry = data.plan.entries.find((e) => e.date === today);
-  const eveningKcal = dayNutrition(data, app.foods, today).snacks.nutrients.kcal;
-  const dayIndex = diffDays(data.plan.startDate, today) + 1;
-  const planDays = diffDays(data.plan.startDate, app.planEnd) + 1;
+  const { data, today, store, targets } = app;
+  const planned = entriesOn(data, today);
+  const out = planned.find((e) => e.kind === 'out');
+  const meals = planned.filter((e) => e.kind !== 'out');
+  const slots = Math.max(targets.mealsPerDay, meals.length);
+  const simulated = today !== todayISO();
+  const [addOpen, setAddOpen] = useState(false);
+  const [ingredients, setIngredients] = useState<{ cookId: string; entryId: string } | null>(null);
   const setEntries = (fn: (e: PlanEntry[]) => PlanEntry[]) => store.update('plan', (p) => ({ ...p, entries: fn(p.entries) }));
 
+  // La modale suit les entrées vivantes du plan : une quantité modifiée s'y reflète tout de suite.
+  const liveCook = ingredients ? data.plan.entries.find((e) => e.id === ingredients.cookId) : undefined;
+  const liveEntry = ingredients ? data.plan.entries.find((e) => e.id === ingredients.entryId) ?? liveCook : undefined;
+
+  const addMeal = (recipe?: Parameters<typeof planRecipe>[2], portions = 1, title?: string) => {
+    if (title !== undefined) {
+      setEntries((e) => (planned.length > 0 ? addCustomOn(e, today, title) : planCustom(e, today, title, portions)));
+      return;
+    }
+    if (!recipe) return;
+    setEntries((e) => (planned.length > 0 ? addMealOn(e, today, recipe) : planRecipe(e, today, recipe, portions)));
+  };
+
+  const resetSimulation = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('jour');
+    window.location.href = url.toString();
+  };
+
   return (
-    <div className="page">
-      <header className="page-head page-head-row">
-        <h1 className="display-title is-date">{formatLong(today)}</h1>
-        {data.plan.entries.length > 0 && dayIndex >= 1 && dayIndex <= planDays && (
-          <button type="button" className="secondary-button" onClick={() => app.goTo('calendar', app.planEnd)} title="Voir la fin du plan">
-            Plan jusqu’au {formatShort(app.planEnd)}
-            <ArrowRight size={14} aria-hidden />
-          </button>
-        )}
-        {data.plan.entries.length > 0 && dayIndex < 1 && (
-          <button type="button" className="secondary-button" onClick={() => app.goTo('calendar', data.plan.startDate)}>
-            Le plan commence {formatShort(data.plan.startDate)} <ArrowRight size={14} aria-hidden />
-          </button>
-        )}
+    <div className="page today">
+      <header className="today-head">
+        <div className="today-headline">
+          <h1 className="today-title">Aujourd’hui</h1>
+          <span className="today-date num">{formatNumeric(today)}</span>
+        </div>
+        <div className="today-head-actions">
+          {simulated && (
+            <span className="sim-chip">
+              Date simulée
+              <button type="button" onClick={resetSimulation}>
+                Revenir à aujourd’hui
+              </button>
+            </span>
+          )}
+          {out ? (
+            <button type="button" className="text-button" onClick={() => setEntries((e) => unmarkOut(e, out.id))}>
+              <X size={15} aria-hidden /> Finalement à la maison
+            </button>
+          ) : (
+            <button type="button" className="text-button" onClick={() => setEntries((e) => markOut(e, today))} title="Le plan glisse d’un jour">
+              <Utensils size={15} aria-hidden /> Je mange dehors
+            </button>
+          )}
+        </div>
       </header>
 
-      <ToSettle setEntries={setEntries} />
+      <section className="today-block" aria-labelledby="today-meals-title">
+        <div className="today-section-head">
+          <h2 id="today-meals-title" className="section-title">
+            Repas
+          </h2>
+          <span className="section-meta num">
+            {out ? 'dehors' : `${meals.length} / ${targets.mealsPerDay}`}
+          </span>
+        </div>
 
-      <div className="today-grid">
-        <div className="today-main">
-          <Section title="Au menu">
-            <MealHero entry={entry} setEntries={setEntries} />
-          </Section>
-          <Section
-            title="Le soir"
-            aside={
-              <span className="muted small num">
-                {eveningKcal > 0 ? `${Math.round(eveningKcal).toLocaleString('fr-FR')} kcal au total` : 'rien pour l’instant'}
-              </span>
-            }
-          >
-            <EveningPicker date={today} />
-          </Section>
+        {out ? (
+          <article className="meal-card is-single out-card">
+            <div className="meal-card-main">
+              <div className="meal-card-top">
+                <span className="meal-slot num">01</span>
+                <span className="tag tag-out">
+                  <Utensils size={12} aria-hidden /> Dehors
+                </span>
+              </div>
+              <h2 className="meal-title">Repas dehors</h2>
+              <p className="meal-note">La journée ne compte pas dans le bilan.</p>
+            </div>
+            <div className="meal-card-side">
+              <button type="button" className="secondary-button" onClick={() => setEntries((e) => unmarkOut(e, out.id))}>
+                <X size={15} aria-hidden /> Finalement à la maison
+              </button>
+            </div>
+          </article>
+        ) : (
+          <div className={`meal-grid is-${Math.min(slots, 3)}`}>
+            {Array.from({ length: slots }, (_, i) => (
+              <MealCard
+                key={meals[i]?.id ?? `slot-${i}`}
+                entry={meals[i]}
+                index={i}
+                single={slots === 1}
+                onAdd={() => setAddOpen(true)}
+                onIngredients={(cook, entry) => setIngredients({ cookId: cook.id, entryId: entry.id })}
+                onRecipe={app.openRecipe}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {!out && (
+        <div className="today-columns">
+          <TodayBalanceCard />
+          <DayPanel />
+          <div className="mini-grid">
+            <Priorities setEntries={setEntries} />
+            <Fridge />
+            <Attention />
+          </div>
         </div>
-        <div className="today-side">
-          <Section title="Bilan du jour" aside={entry && entry.kind !== 'out' ? <span className="muted small">{entry.done ? 'mangé' : 'prévu'}</span> : undefined}>
-            <DayBalanceCard date={today} mode="today" />
-          </Section>
-          <NextDays />
-          <Priorities setEntries={setEntries} />
-          <Fridge />
-          <Attention />
-        </div>
-      </div>
+      )}
+
+      <PendingToast setEntries={setEntries} />
+
+      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Ajouter un repas" size="md">
+        {addOpen && (
+          <MealPlanner
+            submitLabel={planned.length > 0 ? 'Ajouter ce repas' : 'Planifier ce repas'}
+            date={today}
+            fixedPortions={planned.length > 0 ? 1 : undefined}
+            onRecipe={(r, n) => {
+              addMeal(r, n);
+              setAddOpen(false);
+            }}
+            onCustom={(t, n) => {
+              addMeal(undefined, n, t);
+              setAddOpen(false);
+            }}
+          />
+        )}
+      </Modal>
+
+      <Modal open={!!ingredients} onClose={() => setIngredients(null)} title="Ingrédients" size="lg">
+        {liveCook && liveEntry && (
+          <MealIngredientsDialog
+            cook={liveCook}
+            entry={liveEntry}
+            onOpenCook={(date) => {
+              setIngredients(null);
+              app.goTo('calendar', date);
+            }}
+            onDone={() => setIngredients(null)}
+          />
+        )}
+      </Modal>
     </div>
   );
 }
 
-function MealHero({ entry, setEntries }: { entry?: PlanEntry; setEntries: (fn: (e: PlanEntry[]) => PlanEntry[]) => void }) {
-  const app = useApp();
-  const { data, today } = app;
-  const [open, setOpen] = useState(false);
-  const meal = mealOf(data, entry);
-
-  if (!entry) {
-    return (
-      <section className="hero hero-empty" aria-label="Repas du jour">
-        <p className="hero-title">Rien de prévu</p>
-        <MealPlanner
-          submitLabel="Cuisiner aujourd’hui"
-          onRecipe={(r, n) => setEntries((e) => planRecipe(e, today, r, n))}
-          onCustom={(t, n) => setEntries((e) => planCustom(e, today, t, n))}
-        />
-        <button type="button" className="text-button" onClick={() => setEntries((e) => markOut(e, today))}>
-          <Utensils size={15} aria-hidden /> Je mange dehors
-        </button>
-      </section>
-    );
-  }
-  if (entry.kind === 'out' || !meal) {
-    return (
-      <section className="hero hero-empty" aria-label="Repas du jour">
-        <span className="tag tag-out"><Utensils size={13} aria-hidden /> Dehors</span>
-        <p className="hero-title">Repas dehors</p>
-        <button type="button" className="secondary-button" onClick={() => setEntries((e) => unmarkOut(e, entry.id))}>
-          <X size={15} aria-hidden /> Finalement à la maison
-        </button>
-      </section>
-    );
-  }
-  const p = mealPortion(app.foods, meal, entry.eaten ?? 1);
-  const perMeal = app.targets.kcal * app.targets.mealShare;
-  const small = p.nutrients.kcal > 0 && p.nutrients.kcal < perMeal * 0.75;
-  const extra = entriesOn(data, today).filter((e) => e.id !== entry.id && e.kind !== 'out');
-  const rests = data.plan.entries.filter((e) => e.kind === 'leftover' && e.batchId === meal.cook.id && e.date > today);
-  const cover = meal.recipe ?? ({ id: 'maison', name: meal.name, dish: 'Plat', status: 'à découvrir', favorite: false, steps: [] } as Recipe);
-
-  return (
-    <section className={`hero ${entry.done ? 'is-done' : ''}`} aria-label="Repas du jour">
-      <div className={`hero-body ${meal.recipe?.cover ? 'has-cover' : ''}`}>
-        {meal.recipe?.cover && <Cover recipe={cover} ratio="photo" className="hero-cover" />}
-        <div className="hero-text">
-          <span className={`tag ${entry.kind === 'cook' ? 'tag-cook' : 'tag-left'}`}>
-            {entry.kind === 'cook' ? (
-              <>
-                <CookingPot size={13} aria-hidden /> {meal.portions > 1 ? `Cuisson · ${meal.portions} repas` : 'Cuisson'}
-              </>
-            ) : (
-              <>
-                <Refrigerator size={13} aria-hidden /> Reste du {formatShort(meal.cook.date)}
-              </>
-            )}
-          </span>
-          <h2 className="hero-title">{meal.name}</h2>
-          <p className="hero-facts num">
-            {meal.ingredients.length ? (
-              <>
-                {Math.round(p.nutrients.kcal)} kcal · {Math.round(p.nutrients.protein)} g de protéines · {Math.round(p.nutrients.fiber)} g de fibres
-              </>
-            ) : (
-              <span className="muted">Ingrédients à compléter</span>
-            )}
-          </p>
-          {rests.length > 0 && <p className="muted small">Reste {rests.map((r) => formatShort(r.date)).join(', ')}</p>}
-          {extra.length > 0 && (
-            <p className="muted small">
-              Aussi aujourd’hui : {extra.map((e) => mealOf(data, e)?.name ?? 'repas').join(', ')}
-              {' · '}
-              <button type="button" className="link small" onClick={() => app.goTo('calendar', today)}>voir</button>
-            </p>
-          )}
-          {small && entry.kind === 'cook' && (
-            <p className="hero-hint">
-              Portion un peu juste pour un repas principal : {Math.round(perMeal).toLocaleString('fr-FR')} kcal visées, {Math.round(p.nutrients.kcal).toLocaleString('fr-FR')} ici.{' '}
-              <button type="button" className="link small" onClick={() => setOpen(true)}>Ajuster la portion</button>
-            </p>
-          )}
-          <div className="hero-actions">
-            <button
-              type="button"
-              className={entry.done ? 'done-button' : 'primary-button'}
-              onClick={() => setEntries((e) => toggleDone(e, entry.id))}
-              aria-pressed={!!entry.done}
-              title={entry.done ? 'Décocher : le stock remonte' : 'Cocher sort les ingrédients du stock'}
-            >
-              <Check size={16} aria-hidden /> {entry.done ? 'Fait' : entry.kind === 'cook' ? 'C’est fait' : 'Mangé'}
-            </button>
-            {entry.kind === 'cook' && (
-              <button type="button" className="secondary-button" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
-                Ingrédients <ChevronDown size={15} className={`chev ${open ? 'up' : ''}`} aria-hidden />
-              </button>
-            )}
-            {meal.recipe && (
-              <button type="button" className="secondary-button" onClick={() => app.openRecipe(meal.recipe!.id)}>
-                <BookOpen size={15} aria-hidden /> Recette
-              </button>
-            )}
-            {!entry.done && (
-              <button type="button" className="text-button" onClick={() => setEntries((e) => markOut(e, today))} title="Le plan glisse d’un jour">
-                <Utensils size={15} aria-hidden /> Dehors
-              </button>
-            )}
-          </div>
-          {entry.kind === 'cook' && (
-            <PortionPrompt entry={entry} onPick={(k) => setEntries((e) => setEaten(e, entry.id, k))} />
-          )}
-        </div>
-      </div>
-      {open && entry.kind === 'cook' && (
-        <div className="hero-ingredients">
-          <MealEditor cook={entry} editable={!entry.done} />
-        </div>
-      )}
-    </section>
-  );
-}
-
 /**
- * Les repas passés qui attendent une réponse. Tant qu'ils ne sont pas cochés, rien ne sort
- * du stock : c'est la règle, elle est dite ici en clair. « Pas mangé » les clôt sans toucher au stock.
+ * Les repas passés qui attendent une réponse, en bas à droite.
+ * La notification ne prend aucune place dans la page et traite un repas à la fois ;
+ * « Pas mangé » clôt le repas sans toucher au stock.
  */
-function ToSettle({ setEntries }: { setEntries: (fn: (e: PlanEntry[]) => PlanEntry[]) => void }) {
+function PendingToast({ setEntries }: { setEntries: (fn: (e: PlanEntry[]) => PlanEntry[]) => void }) {
   const app = useApp();
   const { data, today } = app;
-  const pending = pendingPast(data.plan.entries, today, 7);
-  if (pending.length === 0) return null;
-  return (
-    <section className="settle" aria-label="Repas passés à régler">
-      <div className="settle-head">
-        <p className="settle-title">
-          {pending.length} repas {pending.length > 1 ? 'attendent' : 'attend'} une réponse
-        </p>
-        <p className="hint">Tant qu’un repas n’est pas coché, il ne sort rien du stock.</p>
-      </div>
-      <ul className="settle-list">
-        {pending.slice(0, 4).map((e) => {
-          const meal = mealOf(data, e);
-          return (
-            <li key={e.id} className="settle-row">
-              <span className="settle-when">
-                {e.date === addDays(today, -1) ? 'Hier' : <>{shortDay(e.date)} <span className="num">{Number(e.date.slice(8))}</span></>}
-              </span>
-              <span className="settle-name">{e.kind === 'leftover' ? `Reste · ${meal?.name ?? ''}` : (meal?.name ?? 'Repas')}</span>
-              <span className="settle-actions">
-                <button type="button" className="secondary-button is-sm" onClick={() => setEntries((x) => toggleDone(x, e.id))}>
-                  <Check size={14} aria-hidden /> Mangé
-                </button>
-                <button type="button" className="secondary-button is-sm" onClick={() => setEntries((x) => setSkipped(x, e.id))}>
-                  Pas mangé
-                </button>
-              </span>
-            </li>
-          );
-        })}
-      </ul>
-      {pending.length > 4 && (
-        <button type="button" className="link small" onClick={() => app.goTo('calendar', pending[4].date)}>
-          Voir les {pending.length - 4} autres
-        </button>
-      )}
-    </section>
-  );
-}
+  const [later, setLater] = useState<string[]>([]);
+  const pending = pendingPast(data.plan.entries, today, 7).filter((e) => !later.includes(e.id));
+  const entry = pending[0];
+  if (!entry) return null;
 
-function NextDays() {
-  const app = useApp();
-  const { data, today } = app;
-  const days = [1, 2, 3].map((i) => addDays(today, i));
-  if (!days.some((d) => data.plan.entries.some((e) => e.date === d))) return null;
+  const meal = mealOf(data, entry);
+  const when = entry.date === addDays(today, -1) ? 'Hier' : `${shortDay(entry.date)} ${Number(entry.date.slice(8))}`;
+  const name = entry.kind === 'leftover' ? `Reste · ${meal?.name ?? 'Repas'}` : meal?.name ?? 'Repas';
+
   return (
-    <Section title="Les prochains jours">
-      <ul className="next-days">
-        {days.map((d) => {
-          const e = data.plan.entries.find((x) => x.date === d);
-          const meal = mealOf(data, e);
-          return (
-            <li key={d}>
-              <button type="button" className="next-day" onClick={() => app.goTo('calendar', d)}>
-                <span className="next-date">{shortDay(d)} <span className="num">{Number(d.slice(8))}</span></span>
-                <span className="next-name">{e?.kind === 'out' ? 'Dehors' : meal?.name ?? 'Libre'}</span>
-                <span className="next-kind">
-                  {e?.kind === 'cook' && (
-                    <>
-                      <CookingPot size={12} aria-hidden /> cuisson
-                    </>
-                  )}
-                  {e?.kind === 'leftover' && (
-                    <>
-                      <Refrigerator size={12} aria-hidden /> reste
-                    </>
-                  )}
-                </span>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-    </Section>
+    <aside className="pending-card" role="status" aria-live="polite" aria-label="Repas en attente">
+      <div className="pending-head">
+        <p className="pending-kicker">{pending.length > 1 ? `${pending.length} repas en attente` : 'Repas en attente'}</p>
+        <button
+          type="button"
+          className="icon-button pending-close"
+          onClick={() => setLater((x) => [...x, entry.id])}
+          aria-label="Plus tard"
+          title="Plus tard"
+        >
+          <X size={14} aria-hidden />
+        </button>
+      </div>
+      <p className="pending-title">
+        <span className="pending-when">{when}</span> {name}
+      </p>
+      <p className="pending-question">Tu l’as mangé ?</p>
+      <div className="pending-actions">
+        <button type="button" className="primary-button is-sm" onClick={() => setEntries((x) => toggleDone(x, entry.id))}>
+          <Check size={14} aria-hidden /> Mangé
+        </button>
+        <button type="button" className="secondary-button is-sm" onClick={() => setEntries((x) => setSkipped(x, entry.id))}>
+          Pas mangé
+        </button>
+      </div>
+    </aside>
   );
 }
 
@@ -291,7 +229,14 @@ function Priorities({ setEntries }: { setEntries: (fn: (e: PlanEntry[]) => PlanE
   const idea = rescueSuggestions(app.priorities, 4).find((x) => !soon.has(x.recipe.id));
   const slot = nextSlot(data.plan.entries, addDays(today, 1));
   return (
-    <Section title="À utiliser vite" aside={<button type="button" className="link small" onClick={() => app.goTo('stock')}>Stock</button>}>
+    <MiniPanel
+      title="À utiliser vite"
+      aside={
+        <button type="button" className="link small" onClick={() => app.goTo('stock')}>
+          Stock
+        </button>
+      }
+    >
       <ul className="prio">
         {list.map((p) => (
           <li key={p.food.id} className="prio-row" title={p.nextUse ? `Prochain plat : ${formatShort(p.nextUse)}` : 'Aucun plat prévu'}>
@@ -305,13 +250,15 @@ function Priorities({ setEntries }: { setEntries: (fn: (e: PlanEntry[]) => PlanE
       </ul>
       {idea && (
         <div className="idea-line">
-          <button type="button" className="link" onClick={() => app.openRecipe(idea.recipe.id)}>{idea.recipe.name}</button>
+          <button type="button" className="link" onClick={() => app.openRecipe(idea.recipe.id)}>
+            {idea.recipe.name}
+          </button>
           <button type="button" className="secondary-button is-sm" onClick={() => setEntries((e) => planRecipe(e, slot, idea.recipe))} title="La suite du plan glisse d’autant">
-            Planifier {formatShort(slot)}
+            <Plus size={13} aria-hidden /> Planifier {formatShort(slot)}
           </button>
         </div>
       )}
-    </Section>
+    </MiniPanel>
   );
 }
 
@@ -320,7 +267,7 @@ function Fridge() {
   const items = leftoversInFridge(data.plan.entries, data.recipes, today);
   if (items.length === 0) return null;
   return (
-    <Section title="Au frigo">
+    <MiniPanel title="Au frigo">
       <ul className="plain">
         {items.map((it) => (
           <li key={it.cook.id} className="fridge-row">
@@ -331,7 +278,7 @@ function Fridge() {
           </li>
         ))}
       </ul>
-    </Section>
+    </MiniPanel>
   );
 }
 
@@ -346,17 +293,20 @@ function Attention() {
   ];
   if (items.length === 0) return null;
   return (
-    <Section title="À vérifier">
+    <MiniPanel title="À vérifier">
       <ul className="attention">
         {items.map((it) => (
           <li key={it.key}>
             <AlertTriangle size={14} aria-hidden />
             <span>
-              <button type="button" className="link" onClick={() => app.goTo('calendar', it.date)}>{capitalize(formatShort(it.date))}</button> · {it.text}
+              <button type="button" className="link" onClick={() => app.goTo('calendar', it.date)}>
+                {capitalize(formatShort(it.date))}
+              </button>{' '}
+              · {it.text}
             </span>
           </li>
         ))}
       </ul>
-    </Section>
+    </MiniPanel>
   );
 }

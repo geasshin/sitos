@@ -54,6 +54,8 @@ export const formatLong = (d: ISODate) => longFmt.format(toUTC(d));
 export const formatShort = (d: ISODate) => shortFmt.format(toUTC(d)).replace(/\./g, '');
 export const formatDayMonth = (d: ISODate) => dayMonthFmt.format(toUTC(d)).replace(/\./g, '');
 export const formatWeekday = (d: ISODate) => weekdayFmt.format(toUTC(d));
+/** « 16/11/26 » : la date courte des en-têtes. */
+export const formatNumeric = (d: ISODate) => `${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(2, 4)}`;
 
 /** « aujourd'hui », « demain », « dans 3 j », « il y a 2 j » */
 export function relative(from: ISODate, to: ISODate): string {

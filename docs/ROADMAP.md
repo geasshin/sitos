@@ -45,6 +45,10 @@ seulement ⌘Z, et une puce le rappelle quelques secondes après un changement.
 
 ### Aujourd'hui ✅ 0.3
 
+> Refonte du 16 novembre 2026 : barre basse à la place de la barre latérale ; le bloc « À régler » devient une
+> notification en bas à droite ; « Le soir » devient Compléments ; le bandeau de lecture et les compléments
+> deviennent un seul module **Note du jour** dans la colonne de droite.
+
 Garder : le plat du jour et « C'est fait », le bilan, « À utiliser vite ».
 Changer :
 - ✅ **En haut, « À régler »** : bandeau ambre, « Mangé » ou « Pas mangé », avec la règle du stock dite une fois.

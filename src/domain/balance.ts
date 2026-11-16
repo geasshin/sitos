@@ -1,6 +1,6 @@
-import { add, itemsNutrients, plantGrams, sugarsExLactose, type FoodIndex } from './nutrition';
+import { add, entriesOn, ingredientNutrients, itemsNutrients, mealOf, plantGrams, sugarsExLactose, type FoodIndex } from './nutrition';
 import type { Targets } from './targets';
-import type { Ingredient, Nutrients, SnackIdea } from './types';
+import type { Data, Ingredient, ISODate, Nutrients, SnackIdea } from './types';
 
 /**
  * Bilan d'une journée face aux objectifs, et ce qu'il faudrait ajouter pour la compléter.
@@ -176,4 +176,47 @@ export function recommendSides(
   if (n.fiber < t.fiber * 0.9) stillMissing.push(`${Math.round(t.fiber - n.fiber)} g de fibres`);
   if (plant < t.plantG * 0.9) stillMissing.push(`${Math.round(t.plantG - plant)} g de légumes et fruits`);
   return { picks, after: { nutrients: n, plantG: plant }, stillMissing };
+}
+
+export interface Contributor {
+  foodName: string;
+  /** Le repas ou le complément qui porte cet aliment. */
+  label: string;
+  value: number;
+  /** Cuisson d'origine, pour ouvrir ses ingrédients. */
+  cookId?: string;
+}
+
+/**
+ * L'aliment qui pèse le plus dans un plafond dépassé (graisses saturées, sucres, sel).
+ * Les quantités sont ramenées à la portion réellement mangée, pas à la recette entière.
+ */
+export function biggestContributor(
+  data: Data,
+  foods: FoodIndex,
+  date: ISODate,
+  key: 'satFat' | 'sugars' | 'salt',
+): Contributor | undefined {
+  const out: Contributor[] = [];
+  const valueOf = (n: Nutrients) => (key === 'sugars' ? sugarsExLactose(n) : n[key]);
+  for (const entry of entriesOn(data, date)) {
+    const meal = mealOf(data, entry);
+    if (!meal) continue;
+    const k = (entry.eaten ?? 1) / Math.max(1, meal.portions);
+    for (const ing of meal.ingredients) {
+      const food = foods.get(ing.foodId);
+      if (!food) continue;
+      const value = valueOf(ingredientNutrients(foods, ing)) * k;
+      if (value > 0.005) out.push({ foodName: food.name, label: meal.name, value, cookId: meal.cook.id });
+    }
+  }
+  for (const snack of data.journal.snacks.filter((s) => s.date === date)) {
+    for (const ing of snack.items) {
+      const food = foods.get(ing.foodId);
+      if (!food) continue;
+      const value = valueOf(ingredientNutrients(foods, ing));
+      if (value > 0.005) out.push({ foodName: food.name, label: snack.label, value });
+    }
+  }
+  return out.sort((a, b) => b.value - a.value)[0];
 }

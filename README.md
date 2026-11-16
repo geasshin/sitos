@@ -17,9 +17,16 @@ s'annoncent dans l'app (carte en bas à droite) et s'installent d'un clic.
 
 ## Ce qu'elle fait
 
-- **Aujourd'hui** : le plat du jour (cocher « C'est fait » retire les ingrédients du stock, décocher les remet),
-  ce qu'il faut utiliser vite, ce qui reste au frigo, le bilan du jour, les idées pour le soir.
-- **Calendrier** : un plat par jour. Glisser un plat le déplace avec ses restes. « Dehors » décale la suite.
+- **Aujourd'hui** : autant de repas que le réglage (1 à 3), chacun avec son plat, ses kcal, protéines et fibres
+  pour une portion, et un seul bouton pour le marquer mangé (le décocher remet le stock). Un repas unique ajoute
+  une assiette de composition (végétal, protéines, féculents, autres), le nombre d'ingrédients et leurs quantités
+  en pastilles ; un clic ouvre la fiche. La fiche ingrédients s'ouvre en fenêtre : les quantités se modifient à
+  gauche, les valeurs du repas suivent à droite. Le bilan du jour reste fixé sur les objectifs, et les compléments
+  comblent les manques. Un module **Note du jour** réunit la note (jauge, « Très bien », « Encore un peu juste » ou
+  « Trop d'énergie ») et les compléments : les manques sont chiffrés, puis « Déjà choisis », les deux suggestions
+  « Pour combler le manque », et « Parcourir le catalogue » ouvre le catalogue complet dans une fenêtre avec
+  recherche, ajout et création d'un complément.
+- **Calendrier** : un ou plusieurs plats par jour. Glisser un plat le déplace avec ses restes. « Dehors » décale la suite.
   On planifie une recette de la bibliothèque ou un « plat maison » (un nom, puis ses ingrédients). Chaque cuisson a
   ses propres ingrédients : changer le nombre de repas, une quantité, retirer ou ajouter un ingrédient ne touche que
   ce repas, jamais la fiche (« Revenir à la fiche » annule l'ajustement).
@@ -27,10 +34,10 @@ s'annoncent dans l'app (carte en bas à droite) et s'installent d'un clic.
 - **Nutrition** : « Mes objectifs », un questionnaire en quatre étapes (profil, activité, rythme des repas, objectif,
   façon de manger) qui calcule les cibles du jour selon les repères officiels, toutes retouchables. Puis la semaine :
   énergie par jour, moyenne face aux objectifs, répartition protéines / lipides / glucides, détail jour par jour.
-- **Bilan de la journée** (calendrier et Aujourd'hui) : repas + soir face aux objectifs (énergie, protéines, fibres,
-  légumes et fruits ; graisses saturées, sucres hors lactose, sel à limiter), et « Pour compléter » : les à-côtés qui
-  comblent le mieux les manques avec ce qui restera en stock ce jour-là, sans jamais prendre un ingrédient réservé à
-  un plat prévu.
+- **Bilan de la journée** (calendrier et Aujourd'hui) : repas + compléments face aux objectifs (énergie, protéines, fibres,
+  légumes et fruits ; graisses saturées, sucres hors lactose, sel à limiter), avec « reste » ou « dépassé » écrit
+  en clair. « Pour compléter » propose les à-côtés qui comblent le mieux les manques avec ce qui restera en stock
+  ce jour-là, sans jamais prendre un ingrédient réservé à un plat prévu.
 - **Recettes** : la bibliothèque. Statut (À tester, Testée, Maîtrisée), type de plat, coups de cœur, note.
   Une fiche avec des quantités chiffrées a aussi des valeurs nutritionnelles.
 - **Poids** : pesées et tendance lissée.
@@ -38,22 +45,21 @@ s'annoncent dans l'app (carte en bas à droite) et s'installent d'un clic.
 - **Paramètres** (⌘,) : version installée, recherche de mise à jour manuelle ou automatique, installation d'un clic ;
   objectifs nutritionnels, fruits par jour ; apparence (comme le Mac, clair, sombre) ; dossier des données et
   sauvegarde manuelle ; à propos et sources.
-- **Repas non coché** : rien ne sort du stock tant que le repas n'est pas coché. Aujourd'hui rappelle les repas passés
-  en attente (« N repas attendent une réponse ») : Mangé, ou Pas mangé (clos sans toucher au stock).
-- **Portion** : après « C'est fait », l'app demande si la portion était plus petite, comme prévu ou plus grosse.
-  Ça change le bilan de la journée, jamais la fiche ni le stock.
-- **Repas principaux par jour** (1 à 3) : règle la part de la journée que pèse un repas ; plusieurs repas peuvent être
-  posés le même jour. La grille du calendrier passera à plusieurs cases par jour en 0.4.
-- **Le soir** : un seul sélecteur, sous le plat du jour. Les à-côtés retenus (avec leurs kcal), puis ceux qui comblent
-  le mieux la journée (ce que chacun apporte), puis les autres idées possibles avec le stock, repliées. Un à-côté noté
-  pour un soir à venir (« Prévu le soir ») compte dans la projection du stock dès maintenant
-  et sort du stock ce jour-là.
+- **Repas non coché** : rien ne sort du stock tant que le repas n'est pas coché. Aujourd'hui le rappelle dans une
+  notification en bas à droite, un repas à la fois : Mangé, ou Pas mangé (clos sans toucher au stock).
+- **Portion** : dans le panneau du jour du calendrier, après « C'est fait », l'app demande si la portion était
+  plus petite, comme prévu ou plus grosse. Ça change le bilan de la journée, jamais la fiche ni le stock.
+- **Repas principaux par jour** (1 à 3) : Aujourd'hui affiche autant de cartes que ce réglage, et le calendrier
+  accepte plusieurs repas le même jour sans décaler les autres. La part de la journée que pèse un repas suit le réglage.
+- **Compléments** : dans le module Note du jour, un catalogue chiffré (un skyr, une banane, 10 g d'amandes…),
+  les suggestions qui comblent le mieux la journée, la recherche, et la création d'un complément ou d'un aliment
+  à la main. Ajouter un complément met le bilan et la note à jour et sort les quantités du stock.
 
 - **Recettes** : bibliothèque héritée de Sylloge. Le filtre « Réalisables maintenant » ne montre que ce que le stock
   permet ; les fiches sans quantités se relient au stock en une minute (l'app propose produit et quantité par ligne).
   Mode cuisine pour les étapes en grand, photos gardées sur le Mac au premier affichage.
-- **Cinq onglets** : Aujourd'hui · Semaine · Recettes · Stock · Nutrition. Le Poids est une section de Nutrition
-  (et reste joignable par l'adresse `#/weight`).
+- **Barre basse** : Aujourd'hui · Semaine · Recettes · Stock · Nutrition, avec Paramètres à droite. Le Poids est
+  une section de Nutrition (et reste joignable par l'adresse `#/weight`). Toute la largeur de la fenêtre sert au contenu.
 - **Nutrition** : trois chiffres de la semaine face aux objectifs avec une phrase, un graphique cliquable qui ouvre
   le bilan du jour, « Cette semaine, essaie » avec deux ou trois gestes concrets, les objectifs (repliés une fois
   définis) et le poids.
@@ -79,9 +85,9 @@ Un fichier JSON lisible par collection, dans `~/Library/Application Support/com.
 | `stock.json` | achats : quantité, date de réception, date limite si connue, origine |
 | `recipes.json` | bibliothèque ; si la fiche est chiffrée : `ingredients`, `portions` (repas), `fridgeDays` |
 | `plan.json` | le plan : cuisson (`cook`, avec `ingredients` et `title` propres à ce repas si ajustés), reste (`leftover`), dehors (`out`) |
-| `journal.json` | grignotages du soir, ajustements de stock, pesées |
+| `journal.json` | compléments du jour, ajustements de stock, pesées |
 | `settings.json` | profil et objectifs nutritionnels validés, fruits nature par jour |
-| `snackIdeas.json` | idées pour le soir |
+| `snackIdeas.json` | compléments personnels : un nom, une portion chiffrée |
 
 Le stock affiché n'est jamais enregistré : il est recalculé (achats moins plats cochés, grignotages et ajustements).
 Chaque écriture passe par un fichier temporaire, et la version précédente part dans `data/.sauvegardes/`

@@ -1561,5 +1561,215 @@
     "storage": "placard",
     "shelfLifeDays": 365,
     "source": "Ciqual 2020 18100"
+  },
+  {
+    "id": "amandes",
+    "name": "Amandes",
+    "category": "épicerie",
+    "unit": "g",
+    "per100": {
+      "kcal": 579,
+      "protein": 22.6,
+      "carbs": 21.6,
+      "sugars": 4.4,
+      "lactose": 0.0,
+      "fat": 49.9,
+      "satFat": 3.8,
+      "fiber": 12.5,
+      "salt": 0.01
+    },
+    "storage": "placard",
+    "shelfLifeDays": 180,
+    "source": "Ciqual 2020"
+  },
+  {
+    "id": "noix",
+    "name": "Noix",
+    "category": "épicerie",
+    "unit": "g",
+    "per100": {
+      "kcal": 700,
+      "protein": 15.2,
+      "carbs": 13.7,
+      "sugars": 2.6,
+      "lactose": 0.0,
+      "fat": 65.2,
+      "satFat": 6.1,
+      "fiber": 6.7,
+      "salt": 0.01
+    },
+    "storage": "placard",
+    "shelfLifeDays": 180,
+    "source": "Ciqual 2020"
+  },
+  {
+    "id": "noisettes",
+    "name": "Noisettes",
+    "category": "épicerie",
+    "unit": "g",
+    "per100": {
+      "kcal": 622,
+      "protein": 17.0,
+      "carbs": 7.16,
+      "sugars": 4.9,
+      "lactose": 0.0,
+      "fat": 56.9,
+      "satFat": 4.75,
+      "fiber": 11.6,
+      "salt": 0.01
+    },
+    "storage": "placard",
+    "shelfLifeDays": 180,
+    "source": "Ciqual 2020"
+  },
+  {
+    "id": "yaourt",
+    "name": "Yaourt nature",
+    "category": "laitiers",
+    "unit": "pièce",
+    "piece": [
+      "yaourt",
+      "yaourts"
+    ],
+    "gramsPerUnit": 125,
+    "per100": {
+      "kcal": 61,
+      "protein": 3.5,
+      "carbs": 4.7,
+      "sugars": 4.7,
+      "lactose": 4.7,
+      "fat": 3.3,
+      "satFat": 2.1,
+      "fiber": 0,
+      "salt": 0.04
+    },
+    "storage": "frigo",
+    "shelfLifeDays": 14,
+    "source": "Ciqual 2020"
+  },
+  {
+    "id": "fromage-blanc",
+    "name": "Fromage blanc 3 %",
+    "category": "laitiers",
+    "unit": "g",
+    "per100": {
+      "kcal": 74,
+      "protein": 7.5,
+      "carbs": 4.0,
+      "sugars": 4.0,
+      "lactose": 4.0,
+      "fat": 3.2,
+      "satFat": 2.1,
+      "fiber": 0,
+      "salt": 0.05
+    },
+    "storage": "frigo",
+    "shelfLifeDays": 10,
+    "source": "Ciqual 2020"
+  },
+  {
+    "id": "pain-complet",
+    "name": "Pain complet",
+    "category": "féculents",
+    "unit": "pièce",
+    "piece": [
+      "tranche",
+      "tranches"
+    ],
+    "gramsPerUnit": 40,
+    "per100": {
+      "kcal": 265,
+      "protein": 9.0,
+      "carbs": 49.0,
+      "sugars": 3.0,
+      "lactose": 0.0,
+      "fat": 3.2,
+      "satFat": 0.7,
+      "fiber": 6.5,
+      "salt": 1.2
+    },
+    "storage": "placard",
+    "shelfLifeDays": 7,
+    "source": "Ciqual 2020"
+  },
+  {
+    "id": "houmous",
+    "name": "Houmous",
+    "category": "épicerie",
+    "unit": "g",
+    "per100": {
+      "kcal": 306,
+      "protein": 7.9,
+      "carbs": 14.9,
+      "sugars": 1.0,
+      "lactose": 0.0,
+      "fat": 24.2,
+      "satFat": 3.4,
+      "fiber": 6.0,
+      "salt": 1.0
+    },
+    "storage": "frigo",
+    "shelfLifeDays": 5,
+    "source": "Ciqual 2020"
+  },
+  {
+    "id": "abricots-secs",
+    "name": "Abricots secs",
+    "category": "fruits",
+    "unit": "g",
+    "per100": {
+      "kcal": 241,
+      "protein": 3.4,
+      "carbs": 62.6,
+      "sugars": 53.4,
+      "lactose": 0.0,
+      "fat": 0.5,
+      "satFat": 0.1,
+      "fiber": 7.3,
+      "salt": 0.02
+    },
+    "storage": "placard",
+    "shelfLifeDays": 180,
+    "source": "Ciqual 2020"
+  },
+  {
+    "id": "raisins-secs",
+    "name": "Raisins secs",
+    "category": "fruits",
+    "unit": "g",
+    "per100": {
+      "kcal": 299,
+      "protein": 3.1,
+      "carbs": 79.2,
+      "sugars": 79.2,
+      "lactose": 0.0,
+      "fat": 0.5,
+      "satFat": 0.1,
+      "fiber": 3.7,
+      "salt": 0.03
+    },
+    "storage": "placard",
+    "shelfLifeDays": 180,
+    "source": "Ciqual 2020"
+  },
+  {
+    "id": "chocolat-noir",
+    "name": "Chocolat noir 70 %",
+    "category": "sucré",
+    "unit": "g",
+    "per100": {
+      "kcal": 598,
+      "protein": 7.8,
+      "carbs": 45.9,
+      "sugars": 15.0,
+      "lactose": 0.0,
+      "fat": 42.6,
+      "satFat": 25.4,
+      "fiber": 10.9,
+      "salt": 0.02
+    },
+    "storage": "placard",
+    "shelfLifeDays": 365,
+    "source": "Ciqual 2020"
   }
 ]

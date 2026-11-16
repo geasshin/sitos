@@ -111,8 +111,8 @@ export function SettingsView() {
             <p className="setting-label">Repas principaux par jour</p>
             <p className="hint">
               {meals === 1
-                ? 'Un seul repas principal ; le soir reste léger.'
-                : `Les objectifs se partagent entre les ${meals} repas. La grille du calendrier garde un repas par jour jusqu’à la version 0.4.`}
+                ? 'Un seul repas principal ; les compléments complètent la journée.'
+                : `Les objectifs se partagent entre les ${meals} repas. Aujourd’hui affiche ${meals} cartes ; le calendrier accepte plusieurs repas le même jour.`}
             </p>
           </div>
           <div className="seg-group" role="radiogroup" aria-label="Repas principaux par jour">

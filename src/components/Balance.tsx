@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { ChevronDown, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useApp } from '../context';
 import { assessDay, recommendSides, sideCandidates, type BalanceRow, type DayBalance } from '../domain/balance';
+import { mergeComplements } from '../domain/complements';
 import { dayNutrition, mealOf } from '../domain/nutrition';
 import { newId } from '../domain/plan';
 import { availableOn } from '../domain/stock';
@@ -11,49 +11,68 @@ import { Meter } from './ui';
 
 const fr = (v: number) => Math.round(v).toLocaleString('fr-FR');
 const dec = (v: number) => (Math.round(v * 10) / 10).toLocaleString('fr-FR');
+const show = (r: BalanceRow, v: number) => (r.key === 'salt' ? dec(v) : fr(v));
 
 /**
- * Un seul code de couleur partout : ce qui manque est ambre, ce qui est atteint est neutre,
- * ce qui dépasse une limite est rouge, et une limite à moins de 10 % du plafond est ambre.
+ * Un seul code de couleur : ambre quand il manque quelque chose, rouge au-delà d'un plafond,
+ * encre quand c'est atteint. Les mots le disent aussi, pour ne pas dépendre de la couleur.
  */
 function rowTone(r: BalanceRow): 'ink' | 'saffron' | 'tomato' {
   if (r.kind === 'max') {
     if (r.status === 'haut') return 'tomato';
     return r.target > 0 && r.value >= r.target * 0.9 ? 'saffron' : 'ink';
   }
-  if (r.kind === 'band') return r.status === 'haut' ? 'saffron' : 'ink';
+  if (r.kind === 'band') return r.status === 'haut' ? 'tomato' : r.status === 'bas' ? 'saffron' : 'ink';
   return r.status === 'bas' ? 'saffron' : 'ink';
 }
 
-export function BalanceRows({ rows, compact }: { rows: BalanceRow[]; compact?: boolean }) {
-  const goals = rows.filter((r) => r.kind !== 'max');
-  const caps = rows.filter((r) => r.kind === 'max');
-  const one = (r: BalanceRow) => (
-    <div className={`nutrient is-${r.status}`} key={r.key}>
-      <dt>{r.label}</dt>
+/** La barre reste neutre ; seul un plafond dépassé la passe au rouge. */
+function barTone(r: BalanceRow): 'ink' | 'tomato' {
+  return r.status === 'haut' && (r.kind === 'max' || r.kind === 'band') ? 'tomato' : 'ink';
+}
+
+function statusText(r: BalanceRow): string {
+  const gap = r.target - r.value;
+  if (r.kind === 'max') {
+    if (r.status === 'haut') return `dépassé de ${show(r, Math.abs(gap))} ${r.unit}`;
+    return `reste ${show(r, Math.max(0, gap))} ${r.unit}`;
+  }
+  if (r.kind === 'band') {
+    if (r.status === 'haut') return `dépassé de ${show(r, Math.abs(gap))} ${r.unit}`;
+    if (r.status === 'bas') return `reste ${show(r, Math.max(0, gap))} ${r.unit}`;
+    return 'dans la cible';
+  }
+  return r.status === 'bas' ? `reste ${show(r, Math.max(0, gap))} ${r.unit}` : 'objectif atteint';
+}
+
+function Row({ row }: { row: BalanceRow }) {
+  const tone = rowTone(row);
+  return (
+    <div className={`nutrient tone-${tone} is-${row.status}`}>
+      <dt>
+        <span>{row.label}</span>
+        <span className="nutrient-status">{statusText(row)}</span>
+      </dt>
       <dd>
-        <span className="num">{r.key === 'salt' ? dec(r.value) : fr(r.value)}</span>
-        <span className="muted">
+        <b className="num">{show(row, row.value)}</b>
+        <span className="nutrient-target">
           {' '}
-          {r.kind === 'max' ? 'max.' : '/'} {r.key === 'salt' ? dec(r.target) : fr(r.target)} {r.unit}
-          {r.kind !== 'max' && r.target > 0 && r.value > r.target * 1.15 && (
-            <span className="over-tag" title="Part de l’objectif atteinte"> · {Math.round((r.value / r.target) * 100)} %</span>
-          )}
+          / {show(row, row.target)} {row.unit}
+          {row.kind === 'max' ? ' max.' : row.kind === 'min' ? ' min.' : ''}
         </span>
       </dd>
-      <Meter value={r.value} target={r.target} tone={rowTone(r)} label={r.label} />
+      <Meter value={row.value} target={row.target} tone={barTone(row)} label={row.label} />
     </div>
   );
+}
+
+export function BalanceRows({ rows, compact }: { rows: BalanceRow[]; compact?: boolean }) {
   return (
-    <div className={`balance ${compact ? 'balance-compact' : ''}`}>
-      <dl className="nutrients">{goals.map(one)}</dl>
-      {caps.length > 0 && (
-        <>
-          <p className="balance-sub">À limiter</p>
-          <dl className="nutrients nutrients-caps">{caps.map(one)}</dl>
-        </>
-      )}
-    </div>
+    <dl className={`nutrients ${compact ? 'nutrients-compact' : ''}`}>
+      {rows.map((row) => (
+        <Row key={row.key} row={row} />
+      ))}
+    </dl>
   );
 }
 
@@ -72,11 +91,13 @@ export function SplitBar({ balance, targets }: { balance: DayBalance; targets: T
         ))}
       </div>
       <ul className="split-legend">
+        <li className="split-label">Répartition</li>
         {parts.map((p) => (
           <li key={p.key} className={`is-${balance.splitStatus![p.key]}`}>
             <i className={`sw seg-${p.key}`} aria-hidden />
-            {p.label} <span className="num">{Math.round(balance.split![p.key])} %</span>
+            {p.label} <b className="num">{Math.round(balance.split![p.key])} %</b>
             <span className="muted"> ({p.range[0]}–{p.range[1]})</span>
+            {balance.splitStatus![p.key] !== 'ok' && <span className="split-out">hors cible</span>}
           </li>
         ))}
       </ul>
@@ -84,15 +105,60 @@ export function SplitBar({ balance, targets }: { balance: DayBalance; targets: T
   );
 }
 
-/**
- * Le bilan d'une journée : repas + soir face aux objectifs, la répartition, et ce qu'on peut
- * ajouter avec ce qui restera en stock ce jour-là.
- */
-export function DayBalanceCard({ date, compact, mode = 'full' }: { date: ISODate; compact?: boolean; mode?: 'full' | 'today' }) {
-  const [detail, setDetail] = useState(false);
+/** Le bilan de la page Aujourd'hui : énergie en tête, puis ce qui reste à atteindre et à limiter. */
+export function TodayBalanceCard() {
   const app = useApp();
-  const { data, today, targets, store } = app;
-  const day = dayNutrition(data, app.foods, date);
+  const { data, foods, targets, today } = app;
+  const day = dayNutrition(data, foods, today);
+  const balance = assessDay(day.total, day.plantG, targets);
+  const energy = balance.rows.find((r) => r.key === 'kcal')!;
+  const goals = balance.rows.filter((r) => r.kind !== 'max' && r.key !== 'kcal');
+  const caps = balance.rows.filter((r) => r.kind === 'max');
+
+  return (
+    <section className="panel balance-panel" aria-labelledby="balance-title">
+      <header className="panel-head">
+        <h2 id="balance-title" className="panel-title">
+          Bilan du jour
+        </h2>
+        <span className="panel-meta num">Objectif {fr(targets.kcal)} kcal</span>
+      </header>
+
+      <div className={`balance-energy is-${energy.status}`}>
+        <div className="balance-energy-line">
+          <p className="balance-energy-value">
+            <b className="num">{fr(energy.value)}</b>
+            <span> / {fr(energy.target)} kcal</span>
+          </p>
+          <span className="balance-energy-note">{statusText(energy)}</span>
+        </div>
+        <Meter value={energy.value} target={energy.target} tone={barTone(energy)} label="Énergie" />
+      </div>
+
+      <div className="balance-columns">
+        <div className="balance-group">
+          <p className="balance-sub">À atteindre</p>
+          <BalanceRows rows={goals} compact />
+        </div>
+        <div className="balance-group">
+          <p className="balance-sub">À limiter</p>
+          <BalanceRows rows={caps} compact />
+        </div>
+      </div>
+
+      <SplitBar balance={balance} targets={targets} />
+    </section>
+  );
+}
+
+/**
+ * Le bilan d'une journée hors Aujourd'hui : repas + compléments face aux objectifs,
+ * la répartition, et ce qu'on peut encore ajouter avec le stock de ce jour-là.
+ */
+export function DayBalanceCard({ date, compact }: { date: ISODate; compact?: boolean }) {
+  const app = useApp();
+  const { data, foods, targets, store, today } = app;
+  const day = dayNutrition(data, foods, date);
   if (day.out) return <p className="muted">Repas dehors : pas de bilan ce jour-là.</p>;
   const meal = mealOf(data, data.plan.entries.find((e) => e.date === date));
   if (!day.meal && day.snacks.nutrients.kcal === 0) {
@@ -100,47 +166,14 @@ export function DayBalanceCard({ date, compact, mode = 'full' }: { date: ISODate
   }
 
   const balance = assessDay(day.total, day.plantG, targets);
-  const candidates = sideCandidates(data.snackIdeas, app.foods, availableOn(data, app.stock, today, date));
-  const reco = recommendSides({ nutrients: day.total, plantG: day.plantG }, targets, candidates, app.foods);
+  const goals = balance.rows.filter((r) => r.kind !== 'max');
+  const caps = balance.rows.filter((r) => r.kind === 'max');
+  const candidates = sideCandidates(mergeComplements(data.snackIdeas), foods, availableOn(data, app.stock, today, date));
+  const reco = recommendSides({ nutrients: day.total, plantG: day.plantG }, targets, candidates, foods);
   const mealKcal = day.meal?.nutrients.kcal ?? 0;
   const mealGoal = targets.kcal * targets.mealShare;
   const smallMeal = day.meal && mealKcal < mealGoal * 0.75;
   const future = date > today;
-
-  const goals = balance.rows.filter((r) => r.kind !== 'max');
-  const caps = balance.rows.filter((r) => r.kind === 'max');
-  const missing = goals
-    .filter((r) => r.status === 'bas')
-    .sort((a, b) => (b.target - b.value) / b.target - (a.target - a.value) / a.target);
-  const over = caps.filter((r) => r.status === 'haut');
-  const label = (key: BalanceRow['key']) =>
-    key === 'protein' ? 'des protéines' : key === 'fiber' ? 'des fibres' : key === 'plant' ? 'des légumes et des fruits' : 'de l’énergie';
-  const sentence = (() => {
-    const parts: string[] = [];
-    if (missing.length === 1) parts.push(`il manque surtout ${label(missing[0].key)}`);
-    else if (missing.length > 1) parts.push(`il manque surtout ${label(missing[0].key)} et ${label(missing[1].key)}`);
-    if (over.length) parts.push(`au-dessus du plafond : ${over.map((r) => r.label.toLowerCase()).join(', ')}`);
-    if (parts.length === 0) return 'La journée est bien couverte.';
-    return `${parts[0].charAt(0).toUpperCase()}${parts[0].slice(1)}${parts[1] ? ` ; ${parts[1]}` : ''}.`;
-  })();
-
-  if (mode === 'today') {
-    return (
-      <div className="day-balance">
-        <BalanceRows rows={goals} compact />
-        <p className="balance-sentence">{sentence}</p>
-        <button type="button" className="link small" aria-expanded={detail} onClick={() => setDetail((v) => !v)}>
-          {detail ? 'Moins de détail' : 'Le détail'} <ChevronDown size={13} className={`chev ${detail ? 'up' : ''}`} aria-hidden />
-        </button>
-        {detail && (
-          <>
-            <BalanceRows rows={caps} compact />
-            <SplitBar balance={balance} targets={targets} />
-          </>
-        )}
-      </div>
-    );
-  }
 
   return (
     <div className="day-balance">
@@ -148,11 +181,21 @@ export function DayBalanceCard({ date, compact, mode = 'full' }: { date: ISODate
         <p className={`meal-vs ${smallMeal ? 'is-low' : ''}`}>
           {targets.mealsPerDay > 1 ? 'Repas du jour' : 'Repas'} <span className="num">{fr(mealKcal)}</span> kcal
           <span className="muted">
-            {' '}· {targets.mealsPerDay > 1 ? 'par repas visé' : 'repas principal visé'} ≈ {fr(Math.round(mealGoal / 25) * 25)}
+            {' '}
+            · {targets.mealsPerDay > 1 ? 'par repas visé' : 'repas principal visé'} ≈ {fr(Math.round(mealGoal / 25) * 25)}
           </span>
         </p>
       )}
-      <BalanceRows rows={balance.rows} compact={compact} />
+      <div className="balance-columns is-single">
+        <div className="balance-group">
+          <p className="balance-sub">À atteindre</p>
+          <BalanceRows rows={goals} compact={compact} />
+        </div>
+        <div className="balance-group">
+          <p className="balance-sub">À limiter</p>
+          <BalanceRows rows={caps} compact={compact} />
+        </div>
+      </div>
       {!compact && <SplitBar balance={balance} targets={targets} />}
 
       <div className="complete">
@@ -169,8 +212,8 @@ export function DayBalanceCard({ date, compact, mode = 'full' }: { date: ISODate
                   <button
                     type="button"
                     className="icon-button"
-                    aria-label={`${future ? 'Prévoir' : 'Noter'} « ${p.candidate.label} » pour le soir`}
-                    title={future ? 'Prévoir pour ce soir-là (sort du stock ce jour-là)' : 'Noter pour ce soir'}
+                    aria-label={`${future ? 'Prévoir' : 'Ajouter'} « ${p.candidate.label} »`}
+                    title={future ? 'Prévoir pour ce jour-là (sort du stock ce jour-là)' : 'Ajouter à cette journée'}
                     onClick={() =>
                       store.update('journal', (j) => ({ ...j, snacks: [...j.snacks, { id: newId('s'), date, label: p.candidate.label, items: p.candidate.items }] }))
                     }

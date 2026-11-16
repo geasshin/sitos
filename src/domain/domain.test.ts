@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addDays, diffDays, startOfWeek, weekday } from './dates';
+import { addDays, diffDays, formatNumeric, startOfWeek, weekday } from './dates';
 import { dayNutrition, indexFoods, mealOf, recipePortion, ZERO } from './nutrition';
 import { closeGaps, markOut, moveBlock, pendingPast, planCustom, planRecipe, removeEntry, setEaten, setIngredients, setPortions, setSkipped, swapBlock, toggleDone, validatePlan } from './plan';
 import { availableOn, computeStock, forecast, priorities } from './stock';
@@ -54,6 +54,7 @@ describe('dates', () => {
     expect(diffDays('2026-10-24', '2026-10-26')).toBe(2);
     expect(weekday('2026-11-16')).toBe(0); // lundi
     expect(startOfWeek('2026-11-14')).toBe('2026-11-09');
+    expect(formatNumeric('2026-11-16')).toBe('16/11/26');
   });
 });
 

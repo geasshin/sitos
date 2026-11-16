@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CalendarDays, ChartColumn, ChefHat, Package, RotateCcw, Settings, Sun } from 'lucide-react';
 import { AppContext, useDerived, type Route, type View } from './context';
-import { formatLong, todayISO } from './domain/dates';
+import { todayISO } from './domain/dates';
 import type { ISODate } from './domain/types';
 import { useStore } from './store';
 import { UpdateNotice } from './components/UpdateNotice';
@@ -19,7 +19,7 @@ import { SettingsView } from './views/Settings';
 import { useUpdates } from './updates';
 
 const NAV: { id: View; label: string; Icon: typeof Sun }[] = [
-  { id: 'today', label: "Aujourd'hui", Icon: Sun },
+  { id: 'today', label: 'Aujourd’hui', Icon: Sun },
   { id: 'calendar', label: 'Semaine', Icon: CalendarDays },
   { id: 'recipes', label: 'Recettes', Icon: ChefHat },
   { id: 'stock', label: 'Stock', Icon: Package },
@@ -72,10 +72,14 @@ export function App() {
         {isNative ? (
           <p className="muted">
             Tes fichiers n’ont pas été modifiés.{' '}
-            <button type="button" className="link" onClick={() => void openDataFolder()}>Ouvrir le dossier des données</button>
+            <button type="button" className="link" onClick={() => void openDataFolder()}>
+              Ouvrir le dossier des données
+            </button>
           </p>
         ) : (
-          <p className="muted">Dans un terminal : <code>npm run dev</code></p>
+          <p className="muted">
+            Dans un terminal : <code>npm run dev</code>
+          </p>
         )}
       </div>
     );
@@ -141,7 +145,6 @@ function Loaded({
 
   const alerts = derived.priorities.length;
   const urgent = derived.priorities.some((p) => p.daysLeft <= 2);
-  const simulated = today !== todayISO();
 
   let page;
   if (route.view === 'recipes' && route.recipeId) {
@@ -158,77 +161,24 @@ function Loaded({
     }[route.view];
   }
 
+  const active = (id: View) => route.view === id || (id === 'nutrition' && route.view === 'weight');
+
   return (
     <AppContext.Provider value={ctx}>
       <div className="shell">
-        <aside className="island" aria-label="Navigation">
-          <div className="island-surface">
-            <div className="brand">
-              <span className="brand-mark is-logo" aria-hidden>
-                <img src={logo} alt="" />
-              </span>
-              <span className="brand-name">Sitos</span>
-            </div>
-            <nav aria-label="Sections">
-              {NAV.map(({ id, label, Icon }) => (
-                <a
-                  key={id}
-                  href={`#/${id}`}
-                  className={`nav-item ${route.view === id ? 'is-active' : ''}`}
-                  aria-current={route.view === id ? 'page' : undefined}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    ctx.goTo(id);
-                  }}
-                >
-                  <Icon size={19} strokeWidth={1.6} aria-hidden />
-                  <span className="nav-label">{label}</span>
-                  {id === 'recipes' && <span className="nav-count num">{data.recipes.length}</span>}
-                  {id === 'stock' && alerts > 0 && (
-                    <span
-                      className={`nav-count num is-alert ${urgent ? 'is-urgent' : ''}`}
-                      aria-label={`${alerts} produits à surveiller`}
-                      title={`${alerts} produits à surveiller`}
-                    >
-                      {alerts}
-                    </span>
-                  )}
-                </a>
-              ))}
-            </nav>
-            <div className="island-bottom">
-              <a
-                href="#/settings"
-                className={`nav-item ${route.view === 'settings' ? 'is-active' : ''}`}
-                aria-current={route.view === 'settings' ? 'page' : undefined}
-                title="Paramètres (⌘,)"
-                onClick={(e) => {
-                  e.preventDefault();
-                  ctx.goTo('settings');
-                }}
-              >
-                <Settings size={19} strokeWidth={1.6} aria-hidden />
-                <span className="nav-label">Paramètres</span>
-                {updates.phase === 'available' ? (
-                  <span className="nav-dot" aria-label="Mise à jour disponible" title="Mise à jour disponible" />
-                ) : (
-                  <kbd className="nav-key">⌘,</kbd>
-                )}
-              </a>
-            </div>
-          </div>
-        </aside>
-
-        <main className="main">
-          {(data.settings.demo || simulated) && (
+        <main className="main" id="contenu">
+          {data.settings.demo && (
             <div className="banner" role="note">
-              {data.settings.demo && <span><strong>Données de démo.</strong> Ta vraie commande les remplacera.</span>}
-              {simulated && <span><strong>Date simulée :</strong> {formatLong(today)}.</span>}
+              <span>
+                <strong>Données de démo.</strong> Ta vraie commande les remplacera.
+              </span>
             </div>
           )}
           {store.saveState === 'erreur' && (
             <div className="banner is-error" role="alert">
-              <span><strong>L’enregistrement a échoué.</strong> La dernière modification n’est pas encore sur le disque.</span>
+              <span>
+                <strong>L’enregistrement a échoué.</strong> La dernière modification n’est pas encore sur le disque.
+              </span>
               <button type="button" className="link" onClick={store.retry}>
                 Réessayer
               </button>
@@ -236,7 +186,65 @@ function Loaded({
           )}
           {page}
         </main>
+
+        <nav className="dock" aria-label="Navigation principale">
+          <a
+            href="#/today"
+            className="dock-brand"
+            aria-label="Sitos, revenir à aujourd’hui"
+            onClick={(e) => {
+              e.preventDefault();
+              ctx.goTo('today');
+            }}
+          >
+            <img src={logo} alt="" />
+            <span>Sitos</span>
+          </a>
+          <span className="dock-sep" aria-hidden />
+          {NAV.map(({ id, label, Icon }) => (
+            <a
+              key={id}
+              href={`#/${id}`}
+              className={`dock-item ${active(id) ? 'is-active' : ''}`}
+              aria-current={active(id) ? 'page' : undefined}
+              aria-label={label}
+              onClick={(e) => {
+                e.preventDefault();
+                ctx.goTo(id);
+              }}
+            >
+              <Icon size={18} strokeWidth={1.7} aria-hidden />
+              <span className="dock-label">{label}</span>
+              {id === 'stock' && alerts > 0 && (
+                <span
+                  className={`dock-count num ${urgent ? 'is-urgent' : ''}`}
+                  aria-label={`${alerts} produits à surveiller`}
+                  title={`${alerts} produits à surveiller`}
+                >
+                  {alerts}
+                </span>
+              )}
+            </a>
+          ))}
+          <span className="dock-sep" aria-hidden />
+          <a
+            href="#/settings"
+            className={`dock-item ${route.view === 'settings' ? 'is-active' : ''}`}
+            aria-current={route.view === 'settings' ? 'page' : undefined}
+            aria-label="Paramètres"
+            title="Paramètres (⌘,)"
+            onClick={(e) => {
+              e.preventDefault();
+              ctx.goTo('settings');
+            }}
+          >
+            <Settings size={18} strokeWidth={1.7} aria-hidden />
+            <span className="dock-label">Paramètres</span>
+            {updates.phase === 'available' && <span className="dock-dot" aria-label="Mise à jour disponible" title="Mise à jour disponible" />}
+          </a>
+        </nav>
       </div>
+
       {undoVisible && store.canUndo && (
         <div className="undo-chip" role="status">
           <RotateCcw size={14} aria-hidden />
