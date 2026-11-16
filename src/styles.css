@@ -1128,12 +1128,13 @@ code.path { display: block; width: fit-content; max-width: 100%; overflow-wrap: 
 .meal-card.is-single .meal-card-main { justify-content: flex-start; }
 .meal-main-body { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .meal-action-bar {
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  display: grid; grid-template-columns: minmax(0, 1fr) 162px; align-items: end; gap: 10px 12px;
   grid-column: 1 / -1; padding-top: 14px; margin-top: 2px;
   border-top: 1px solid var(--color-hairline);
 }
+.meal-secondary-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; }
 .meal-action-bar .secondary-button { border-color: var(--color-border-strong); font-weight: 600; }
-.meal-action-bar .primary-button { margin-left: auto; }
+.meal-action-bar .meal-eat { width: 162px; }
 .meal-plate-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 0 0 auto; }
 .meal-plate { display: block; width: 104px; height: 104px; }
 .meal-plate-rim { fill: var(--color-surface); stroke: var(--color-border); stroke-width: 1; }
@@ -1612,6 +1613,8 @@ button.comp-row:hover .comp-name { text-decoration: underline; text-underline-of
   .meal-content-row { flex-direction: column; gap: 14px; }
   .meal-visual { width: 100%; flex: 1 1 auto; }
   .meal-visual-media { width: 96px; flex: 0 0 96px; }
+  .meal-action-bar { grid-template-columns: 1fr; }
+  .meal-action-bar .meal-eat { width: 100%; }
   .meal-stats { gap: 6px; }
   .meal-stat dd b { font-size: 17px; }
   .panel { padding: 16px; border-radius: 16px; }

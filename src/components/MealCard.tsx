@@ -175,21 +175,27 @@ export function MealCard({
       </div>
 
       <div className="meal-action-bar">
-        <button type="button" className="secondary-button is-sm" onClick={() => onIngredients(meal.cook, entry, editable)}>
-          Modifier les ingrédients
-        </button>
-        {meal.recipe && (
-          <button type="button" className="secondary-button is-sm" onClick={() => onRecipe(meal.recipe!.id)}>
-            <BookOpen size={14} aria-hidden /> Voir la recette
+        <div className="meal-secondary-actions">
+          <button type="button" className="secondary-button is-sm" onClick={() => onIngredients(meal.cook, entry, editable)}>
+            Modifier les ingrédients
           </button>
-        )}
-        {showOut && (
-          <button type="button" className="secondary-button is-sm" onClick={onOut}>
-            <Utensils size={14} aria-hidden /> Je mange dehors
-          </button>
-        )}
+          {meal.recipe && (
+            <button type="button" className="secondary-button is-sm" onClick={() => onRecipe(meal.recipe!.id)}>
+              <BookOpen size={14} aria-hidden /> Voir la recette
+            </button>
+          )}
+          {showOut && (
+            <button type="button" className="secondary-button is-sm" onClick={onOut}>
+              <Utensils size={14} aria-hidden /> Je mange dehors
+            </button>
+          )}
+        </div>
         {done ? (
-          <button type="button" className="text-button is-sm" onClick={() => setEntries((e) => toggleDone(e, entry.id))}>
+          <button
+            type="button"
+            className="secondary-button is-sm meal-eat"
+            onClick={() => setEntries((e) => toggleDone(e, entry.id))}
+          >
             Je n’ai pas mangé
           </button>
         ) : (
