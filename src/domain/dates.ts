@@ -36,6 +36,19 @@ export function startOfWeek(d: ISODate): ISODate {
   return addDays(d, -weekday(d));
 }
 
+export function startOfMonth(d: ISODate): ISODate {
+  return `${d.slice(0, 7)}-01`;
+}
+
+export function addMonths(d: ISODate, n: number): ISODate {
+  const [y, m, day] = d.split('-').map(Number);
+  const total = y * 12 + m - 1 + n;
+  const ny = Math.floor(total / 12);
+  const nm = (total % 12 + 12) % 12 + 1;
+  const lastDay = new Date(Date.UTC(ny, nm, 0)).getUTCDate();
+  return `${ny}-${String(nm).padStart(2, '0')}-${String(Math.min(day, lastDay)).padStart(2, '0')}`;
+}
+
 export function range(from: ISODate, to: ISODate): ISODate[] {
   const out: ISODate[] = [];
   for (let d = from; d <= to; d = addDays(d, 1)) out.push(d);
@@ -49,11 +62,13 @@ const longFmt = fmt({ weekday: 'long', day: 'numeric', month: 'long' });
 const shortFmt = fmt({ weekday: 'short', day: 'numeric', month: 'short' });
 const dayMonthFmt = fmt({ day: 'numeric', month: 'short' });
 const weekdayFmt = fmt({ weekday: 'long' });
+const monthFmt = fmt({ month: 'long', year: 'numeric' });
 
 export const formatLong = (d: ISODate) => longFmt.format(toUTC(d));
 export const formatShort = (d: ISODate) => shortFmt.format(toUTC(d)).replace(/\./g, '');
 export const formatDayMonth = (d: ISODate) => dayMonthFmt.format(toUTC(d)).replace(/\./g, '');
 export const formatWeekday = (d: ISODate) => weekdayFmt.format(toUTC(d));
+export const formatMonth = (d: ISODate) => monthFmt.format(toUTC(d));
 /** « 16/11/26 » : la date courte des en-têtes. */
 export const formatNumeric = (d: ISODate) => `${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(2, 4)}`;
 

@@ -71,10 +71,11 @@ s'annoncent dans l'app (carte en bas à droite) et s'installent d'un clic.
   commande » accepte un texte collé (« 2 courgettes », « 1 kg de riz ») et propose ce qu'il a compris avant
   d'enregistrer. La liste de courses réunit ce qui manque pour le plan, ce qui va finir et les produits de base,
   se coche et se copie.
-- **Semaine** : deux semaines à l'écran, navigation par quinzaine. Une cuisson et ses restes forment un seul ruban
-  qui se glisse d'un bloc. Le panneau du jour a deux onglets, Repas et Bilan. Pour un jour vide, les recettes sont
-  groupées par « ce qui fait passer le stock », plats, puis accompagnements, et le nombre de jours occupés par les
-  restes est annoncé avant de valider. En bas, le bilan de la quinzaine : moyenne, jours à remplir, produits à risque.
+- **Semaine** : le mois complet sur six semaines, avec les jours du mois précédent et suivant pour voir le passé
+  récent et les jours à venir. Les flèches du haut changent de mois ; « Aujourd’hui » revient au mois courant. Une
+  cuisson et ses restes forment un seul ruban qui se glisse d’un bloc. Le panneau du jour montre le repas et le bilan
+  ensemble, sans onglets. Pour un jour vide, les recettes sont groupées par « ce qui fait passer le stock », plats,
+  puis accompagnements, et le nombre de jours occupés par les restes est annoncé avant de valider.
 
 ⌘Z défait la dernière modification ; une puce « Modifié · Annuler » apparaît quelques secondes après un changement,
 puis s'efface.

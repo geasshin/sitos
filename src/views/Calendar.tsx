@@ -19,8 +19,8 @@ import {
   X,
 } from 'lucide-react';
 import { useApp } from '../context';
-import { addDays, formatDayMonth, formatLong, formatShort, range, startOfWeek } from '../domain/dates';
-import { dayNutrition, entriesOn, mealOf, type Meal } from '../domain/nutrition';
+import { addDays, addMonths, formatDayMonth, formatLong, formatMonth, formatShort, range, startOfMonth, weekday } from '../domain/dates';
+import { entriesOn, mealOf, type Meal } from '../domain/nutrition';
 import {
   addCustomOn,
   addMealOn,
@@ -45,23 +45,25 @@ import { PortionPrompt } from '../components/PortionPrompt';
 import { capitalize } from './Today';
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-const SPAN = 14;
+const GRID_WEEKS = 6;
 
 export function CalendarView({ focusDate }: { focusDate?: ISODate }) {
   const app = useApp();
   const { data, today, store } = app;
-  const [anchor, setAnchor] = useState<ISODate>(startOfWeek(focusDate ?? today));
+  const [anchor, setAnchor] = useState<ISODate>(() => startOfMonth(focusDate ?? today));
   const [selected, setSelected] = useState<ISODate>(focusDate ?? today);
   const [dragId, setDragId] = useState<string | null>(null);
   const [over, setOver] = useState<ISODate | null>(null);
   useEffect(() => {
     if (!focusDate) return;
     setSelected(focusDate);
-    setAnchor(startOfWeek(focusDate));
+    setAnchor(startOfMonth(focusDate));
   }, [focusDate]);
 
   const setEntries = (fn: (e: PlanEntry[]) => PlanEntry[]) => store.update('plan', (p) => ({ ...p, entries: fn(p.entries) }));
-  const days = range(anchor, addDays(anchor, SPAN - 1));
+  const firstOfMonth = startOfMonth(anchor);
+  const gridStart = addDays(firstOfMonth, -weekday(firstOfMonth));
+  const days = range(gridStart, addDays(gridStart, GRID_WEEKS * 7 - 1));
   const entriesByDate = new Map<ISODate, PlanEntry[]>();
   for (const e of data.plan.entries) entriesByDate.set(e.date, [...(entriesByDate.get(e.date) ?? []), e]);
   const eveningDates = new Set(data.journal.snacks.map((s) => s.date));
@@ -78,26 +80,26 @@ export function CalendarView({ focusDate }: { focusDate?: ISODate }) {
   // Un trou, c'est un jour vide AVANT le dernier plat prévu : la fin du plan n'en est pas un.
   const lastPlanned = data.plan.entries.reduce((m, e) => (e.date > m ? e.date : m), '');
   const gaps = days.filter((d) => d >= planFrom && d < lastPlanned && !entriesByDate.has(d)).length;
-  const label = `${formatDayMonth(anchor)} – ${formatDayMonth(addDays(anchor, SPAN - 1))}`;
-  const thisWeek = startOfWeek(today);
+  const label = formatMonth(firstOfMonth);
+  const currentMonth = startOfMonth(today);
 
   return (
     <div className="page page-wide">
       <header className="page-head page-head-row">
         <div>
           <h1 className="display-title">Semaine</h1>
-          <p className="page-subtitle">Glisse un plat pour le déplacer avec ses restes.</p>
+          <p className="page-subtitle">Le mois complet, avec les jours passés et à venir. Glisse un plat pour le déplacer.</p>
         </div>
-        <div className="week-nav" role="group" aria-label="Semaines">
-          <button type="button" className="icon-button" onClick={() => setAnchor(addDays(anchor, -7))} aria-label="Deux semaines plus tôt">
+        <div className="month-nav" role="group" aria-label="Mois">
+          <button type="button" className="icon-button" onClick={() => setAnchor((m) => addMonths(m, -1))} aria-label="Mois précédent">
             <ChevronLeft size={18} aria-hidden />
           </button>
-          <span className="week-label">{label}</span>
-          <button type="button" className="icon-button" onClick={() => setAnchor(addDays(anchor, 7))} aria-label="Deux semaines plus tard">
+          <span className="month-label">{capitalize(label)}</span>
+          <button type="button" className="icon-button" onClick={() => setAnchor((m) => addMonths(m, 1))} aria-label="Mois suivant">
             <ChevronRight size={18} aria-hidden />
           </button>
-          {anchor !== thisWeek && (
-            <button type="button" className="text-button is-sm" onClick={() => { setAnchor(thisWeek); setSelected(today); }}>
+          {firstOfMonth !== currentMonth && (
+            <button type="button" className="text-button is-sm" onClick={() => { setAnchor(currentMonth); setSelected(today); }}>
               Aujourd’hui
             </button>
           )}
@@ -133,6 +135,7 @@ export function CalendarView({ focusDate }: { focusDate?: ISODate }) {
                 const idle = !first;
                 const cls = [
                   'cal-day',
+                  d.slice(0, 7) !== firstOfMonth.slice(0, 7) && 'is-outside',
                   d < today && 'is-past',
                   d === today && 'is-today',
                   d === selected && 'is-selected',
@@ -226,8 +229,6 @@ export function CalendarView({ focusDate }: { focusDate?: ISODate }) {
 
         <DayPanel key={selected} date={selected} issues={[...new Set(issues.get(selected) ?? [])]} setEntries={setEntries} onSelect={setSelected} />
       </div>
-
-      <WeekSummary days={days} />
     </div>
   );
 }
@@ -239,59 +240,6 @@ function subtitleOf(kind: 'cook' | 'leftover' | undefined, meal: Meal | undefine
   if (kind === 'cook') return meal && meal.portions > 1 ? `${meal.portions} repas` : null;
   if (kind === 'leftover') return 'reste';
   return null;
-}
-
-/** Ligne de fin de quinzaine : ce que ça donne, ce qui reste à remplir, ce qui va se perdre. */
-function WeekSummary({ days }: { days: ISODate[] }) {
-  const app = useApp();
-  const { data, today } = app;
-  const planned = days.map((d) => dayNutrition(data, app.foods, d)).filter((d) => d.meals.length > 0);
-  const empties = days.filter((d) => d >= today && !data.plan.entries.some((e) => e.date === d)).length;
-  const losses = app.forecast.losses.filter((l) => l.expiry >= days[0] && l.expiry <= days[days.length - 1]);
-  const avgKcal = planned.length ? planned.reduce((s, d) => s + d.total.kcal, 0) / planned.length : 0;
-  const avgProtein = planned.length ? planned.reduce((s, d) => s + d.total.protein, 0) / planned.length : 0;
-  const fr = (v: number) => Math.round(v).toLocaleString('fr-FR');
-  return (
-    <div className="week-summary">
-      <div>
-        <p className="balance-sub">Ces deux semaines</p>
-        <p>
-          {planned.length} jour{planned.length > 1 ? 's' : ''} prévu{planned.length > 1 ? 's' : ''}
-          {planned.length > 0 && (
-            <>
-              {' · '}
-              <span className="num">{fr(avgKcal)}</span> kcal et <span className="num">{fr(avgProtein)}</span> g de protéines par jour en moyenne
-            </>
-          )}
-        </p>
-      </div>
-      <div>
-        <p className="balance-sub">Reste à remplir</p>
-        <p>{empties === 0 ? 'Aucun jour vide.' : `${empties} jour${empties > 1 ? 's' : ''} sans repas.`}</p>
-      </div>
-      <div>
-        <p className="balance-sub">Risque de perte</p>
-        <p>
-          {losses.length === 0 ? (
-            'Rien ne se perd.'
-          ) : (
-            <>
-              {losses.length} produit{losses.length > 1 ? 's' : ''} :{' '}
-              {losses
-                .slice(0, 3)
-                .map((l) => app.foods.get(l.foodId)?.name ?? l.foodId)
-                .join(', ')}
-              {losses.length > 3 && ` et ${losses.length - 3} autre${losses.length - 3 > 1 ? 's' : ''}`}
-              {' · '}
-              <button type="button" className="link small" onClick={() => app.goTo('stock')}>
-                voir le stock
-              </button>
-            </>
-          )}
-        </p>
-      </div>
-    </div>
-  );
 }
 
 function DayPanel({
@@ -307,7 +255,6 @@ function DayPanel({
 }) {
   const app = useApp();
   const { data, today } = app;
-  const [tab, setTab] = useState<'repas' | 'bilan'>('repas');
   const [replacing, setReplacing] = useState(false);
   const [showIngredients, setShowIngredients] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -333,15 +280,6 @@ function DayPanel({
         </button>
       </header>
 
-      <div className="seg-group panel-tabs" role="tablist" aria-label="Vue du jour">
-        <button type="button" role="tab" aria-selected={tab === 'repas'} className={`seg-pill ${tab === 'repas' ? 'on' : ''}`} onClick={() => setTab('repas')}>
-          Repas
-        </button>
-        <button type="button" role="tab" aria-selected={tab === 'bilan'} className={`seg-pill ${tab === 'bilan' ? 'on' : ''}`} onClick={() => setTab('bilan')}>
-          Bilan
-        </button>
-      </div>
-
       {issues.length > 0 && (
         <ul className="attention">
           {issues.map((i) => (
@@ -352,17 +290,8 @@ function DayPanel({
         </ul>
       )}
 
-      {tab === 'bilan' ? (
-        <>
-          <EveningList date={date} />
-          <section className="panel-balance" aria-label="Bilan de la journée">
-            <p className="balance-title">Bilan de la journée</p>
-            <DayBalanceCard date={date} />
-          </section>
-        </>
-      ) : (
-        <>
-          {others.length > 0 && (
+      <>
+        {others.length > 0 && (
             <div>
               <p className="balance-sub">Aussi ce jour-là</p>
               <ul className="picks">
@@ -540,8 +469,13 @@ function DayPanel({
               )}
             </>
           )}
+
+          <section className="panel-balance" aria-label="Bilan de la journée">
+            <p className="balance-title">Bilan de la journée</p>
+            <DayBalanceCard date={date} />
+          </section>
+          <EveningList date={date} />
         </>
-      )}
     </aside>
   );
 }
