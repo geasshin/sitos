@@ -1,5 +1,5 @@
 import { parseOrder, type ParsedLine } from './order';
-import { missingFor, type FoodStock } from './stock';
+import { amount, missingFor, type FoodStock } from './stock';
 import { isPlannable, type Food, type Ingredient, type Recipe } from './types';
 
 /**
@@ -54,4 +54,53 @@ export function mergeIngredients(rows: { foodId?: string; qty?: number }[]): Ing
     by.set(r.foodId, (by.get(r.foodId) ?? 0) + r.qty);
   }
   return [...by.entries()].map(([foodId, qty]) => ({ foodId, qty: Math.round(qty * 100) / 100 }));
+}
+
+const slugify = (s: string) =>
+  s
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/œ/g, 'oe')
+    .replace(/æ/g, 'ae')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 48) || 'recette';
+
+/** Identifiant lisible et libre pour une nouvelle fiche : « riz-saute », puis « riz-saute-2 »… */
+export function newRecipeId(name: string, recipes: Recipe[]): string {
+  const base = slugify(name);
+  let id = base;
+  for (let i = 2; recipes.some((r) => r.id === id); i++) id = `${base}-${i}`;
+  return id;
+}
+
+/**
+ * Un plat maison du calendrier devient une fiche de la bibliothèque : son nom, ses quantités
+ * pour le nombre de repas cuisinés, et une liste écrite en clair pour la page de la recette.
+ */
+export function recipeFromMeal(
+  meal: { title: string; portions: number; ingredients: Ingredient[] },
+  foods: Map<string, Food>,
+  recipes: Recipe[],
+  now = new Date(),
+): Recipe {
+  const name = meal.title.trim() || 'Plat maison';
+  const portions = Math.max(1, Math.round(meal.portions));
+  return {
+    id: newRecipeId(name, recipes),
+    name,
+    status: 'à découvrir',
+    dish: 'Plat',
+    favorite: false,
+    steps: [],
+    createdAt: now.toISOString(),
+    portions,
+    servings: `${portions} repas`,
+    ingredients: meal.ingredients.map((i) => ({ ...i })),
+    ingredientsText: meal.ingredients.map((i) => {
+      const text = amount(foods.get(i.foodId), i.qty);
+      return text.charAt(0).toUpperCase() + text.slice(1);
+    }),
+  };
 }

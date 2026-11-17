@@ -3,15 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useApp } from '../context';
 import { DISHES, type Recipe, type RecipeStatus } from '../domain/types';
 import { Cover, STATUS_LABEL, STATUSES } from '../components/recipe';
-
-const slugify = (s: string) =>
-  s
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 48) || 'recette';
+import { newRecipeId } from '../domain/recipes';
 
 const lines = (s: string) => s.split('\n').map((l) => l.trim()).filter(Boolean);
 
@@ -58,8 +50,7 @@ export function RecipeEditor({ id }: { id: string }) {
       store.update('recipes', (list) => list.map((r) => (r.id === existing.id ? { ...r, ...fields } : r)));
       app.openRecipe(existing.id);
     } else {
-      let rid = slugify(name);
-      for (let i = 2; data.recipes.some((r) => r.id === rid); i++) rid = `${slugify(name)}-${i}`;
+      const rid = newRecipeId(name, data.recipes);
       const recipe: Recipe = { id: rid, favorite: false, steps: [], createdAt: new Date().toISOString(), ...fields } as Recipe;
       store.update('recipes', (list) => [...list, recipe]);
       app.openRecipe(rid);

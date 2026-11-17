@@ -31,9 +31,11 @@ s'annoncent dans l'app (carte en bas à droite) et s'installent d'un clic.
   Autour : « À utiliser vite » (périmations et lots entamés), « Demain » (icône du plat), « Poids » et
   « Dépense énergétique », ces deux derniers verrouillés en attendant une connexion à des applications de suivi.
 - **Calendrier** : un ou plusieurs plats par jour. Glisser un plat le déplace avec ses restes. « Dehors » décale la suite.
-  On planifie une recette de la bibliothèque ou un « plat maison » (un nom, puis ses ingrédients). Chaque cuisson a
-  ses propres ingrédients : changer le nombre de repas, une quantité, retirer ou ajouter un ingrédient ne touche que
-  ce repas, jamais la fiche (« Revenir à la fiche » annule l'ajustement).
+  Une seule fenêtre, « Composer le repas », sert à choisir une recette de la bibliothèque ou à composer un plat maison
+  (un nom, des ingrédients tapés au clavier, les valeurs calculées en direct avec la journée telle qu'elle sera).
+  Chaque cuisson a ses propres ingrédients : changer le nombre de repas, une quantité, retirer ou ajouter un ingrédient
+  ne touche que ce repas, jamais la fiche (« Revenir à la fiche » annule l'ajustement). Un plat maison peut être
+  enregistré dans les recettes au passage.
 - **Stock** : ce qui reste, jusqu'à quand ça se garde, ce qui risque de se perdre avec le plan actuel.
 - **Nutrition** : « Mes objectifs », un questionnaire en quatre étapes (profil, activité, rythme des repas, objectif,
   façon de manger) qui calcule les cibles du jour selon les repères officiels, toutes retouchables. Puis la semaine :
@@ -71,11 +73,12 @@ s'annoncent dans l'app (carte en bas à droite) et s'installent d'un clic.
   commande » accepte un texte collé (« 2 courgettes », « 1 kg de riz ») et propose ce qu'il a compris avant
   d'enregistrer. La liste de courses réunit ce qui manque pour le plan, ce qui va finir et les produits de base,
   se coche et se copie.
-- **Semaine** : le mois complet sur six semaines, avec les jours du mois précédent et suivant pour voir le passé
-  récent et les jours à venir. Les flèches du haut changent de mois ; « Aujourd’hui » revient au mois courant. Une
-  cuisson et ses restes forment un seul ruban qui se glisse d’un bloc. Le panneau du jour montre le repas et le bilan
-  ensemble, sans onglets. Pour un jour vide, les recettes sont groupées par « ce qui fait passer le stock », plats,
-  puis accompagnements, et le nombre de jours occupés par les restes est annoncé avant de valider.
+- **Semaine** : un calendrier qui défile d'un seul tenant (deux mois en arrière, quatre devant et tout le plan) ; la
+  page, elle, ne bouge pas. Le mois affiché dans l'en-tête suit le défilement, les jours des autres mois s'atténuent,
+  « Aujourd’hui » y ramène. Un « + » au survol d'un jour ouvre « Composer le repas ». Une cuisson et ses restes forment
+  un seul ruban qui se glisse d’un bloc. Le panneau du jour montre une carte par repas (« Modifier le repas » et
+  « J’ai mangé », les actions rares derrière « … ») puis le bilan. Dans la fenêtre, les recettes sont groupées par
+  « ce qui fait passer le stock », plats, puis accompagnements, et les jours occupés par les restes sont annoncés.
 
 ⌘Z défait la dernière modification ; une puce « Modifié · Annuler » apparaît quelques secondes après un changement,
 puis s'efface.

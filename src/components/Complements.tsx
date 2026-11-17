@@ -12,7 +12,7 @@ import { Modal } from './Modal';
 const fr = (v: number) => Math.round(v).toLocaleString('fr-FR');
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const byName = (a: Food, b: Food) => a.name.localeCompare(b.name, 'fr');
-const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
+const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().replace(/œ/g, 'oe').replace(/æ/g, 'ae').trim();
 type PortionIdea = { id: string; items: Ingredient[]; name?: string; label?: string };
 const ideaName = (idea: PortionIdea) => idea.name ?? idea.label ?? '';
 

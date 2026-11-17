@@ -3,12 +3,12 @@ import { AlertTriangle, Check, Plus, Utensils, X } from 'lucide-react';
 import { useApp } from '../context';
 import { addDays, formatDayMonth, formatNumeric, formatShort, todayISO } from '../domain/dates';
 import { entriesOn, mealOf } from '../domain/nutrition';
-import { addCustomOn, addMealOn, leftoversInFridge, markOut, nextSlot, pendingPast, planCustom, planRecipe, setSkipped, toggleDone, unmarkOut } from '../domain/plan';
+import { leftoversInFridge, markOut, nextSlot, pendingPast, planRecipe, setSkipped, toggleDone, unmarkOut } from '../domain/plan';
 import { amount, shortQty, rescueSuggestions } from '../domain/stock';
 import type { PlanEntry } from '../domain/types';
-import { MealPlanner } from '../components/MealPlanner';
 import { NutritionPanel } from '../components/NutritionPanel';
-import { MealCard, MealIngredientsDialog } from '../components/MealCard';
+import { MealCard } from '../components/MealCard';
+import { MealComposer } from '../components/MealComposer';
 import { ExpensePanel, TomorrowPanel, WeightPanel } from '../components/TodayExtras';
 import { Modal } from '../components/Modal';
 import { MiniPanel } from '../components/ui';
@@ -29,21 +29,8 @@ export function TodayView() {
   const slots = Math.max(targets.mealsPerDay, meals.length);
   const simulated = today !== todayISO();
   const [addOpen, setAddOpen] = useState(false);
-  const [ingredients, setIngredients] = useState<{ cookId: string; entryId: string } | null>(null);
+  const [editing, setEditing] = useState<{ cookId: string; entryId: string } | null>(null);
   const setEntries = (fn: (e: PlanEntry[]) => PlanEntry[]) => store.update('plan', (p) => ({ ...p, entries: fn(p.entries) }));
-
-  // La modale suit les entrées vivantes du plan : une quantité modifiée s'y reflète tout de suite.
-  const liveCook = ingredients ? data.plan.entries.find((e) => e.id === ingredients.cookId) : undefined;
-  const liveEntry = ingredients ? data.plan.entries.find((e) => e.id === ingredients.entryId) ?? liveCook : undefined;
-
-  const addMeal = (recipe?: Parameters<typeof planRecipe>[2], portions = 1, title?: string) => {
-    if (title !== undefined) {
-      setEntries((e) => (planned.length > 0 ? addCustomOn(e, today, title) : planCustom(e, today, title, portions)));
-      return;
-    }
-    if (!recipe) return;
-    setEntries((e) => (planned.length > 0 ? addMealOn(e, today, recipe) : planRecipe(e, today, recipe, portions)));
-  };
 
   const resetSimulation = () => {
     const url = new URL(window.location.href);
@@ -111,7 +98,7 @@ export function TodayView() {
                 index={i}
                 single={slots === 1}
                 onAdd={() => setAddOpen(true)}
-                onIngredients={(cook, entry) => setIngredients({ cookId: cook.id, entryId: entry.id })}
+                onIngredients={(cook, entry) => setEditing({ cookId: cook.id, entryId: entry.id })}
                 onRecipe={app.openRecipe}
                 onOut={() => setEntries((e) => markOut(e, today))}
                 showOut={i === 0}
@@ -137,36 +124,12 @@ export function TodayView() {
 
       <PendingToast setEntries={setEntries} />
 
-      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Ajouter un repas" size="md">
-        {addOpen && (
-          <MealPlanner
-            submitLabel={planned.length > 0 ? 'Ajouter ce repas' : 'Planifier ce repas'}
-            date={today}
-            fixedPortions={planned.length > 0 ? 1 : undefined}
-            onRecipe={(r, n) => {
-              addMeal(r, n);
-              setAddOpen(false);
-            }}
-            onCustom={(t, n) => {
-              addMeal(undefined, n, t);
-              setAddOpen(false);
-            }}
-          />
-        )}
+      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Ajouter un repas" size="lg">
+        {addOpen && <MealComposer date={today} sameDay={planned.length > 0} onClose={() => setAddOpen(false)} />}
       </Modal>
 
-      <Modal open={!!ingredients} onClose={() => setIngredients(null)} title="Ingrédients" size="lg">
-        {liveCook && liveEntry && (
-          <MealIngredientsDialog
-            cook={liveCook}
-            entry={liveEntry}
-            onOpenCook={(date) => {
-              setIngredients(null);
-              app.goTo('calendar', date);
-            }}
-            onDone={() => setIngredients(null)}
-          />
-        )}
+      <Modal open={!!editing} onClose={() => setEditing(null)} title="Modifier le repas" size="lg">
+        {editing && <MealComposer date={today} target={editing} onClose={() => setEditing(null)} />}
       </Modal>
     </div>
   );

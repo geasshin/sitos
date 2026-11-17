@@ -173,6 +173,23 @@ export function dayNutrition(data: Data, foods: FoodIndex, date: ISODate): DayNu
   };
 }
 
+/**
+ * La journée telle qu'elle serait avec un repas en cours de composition : les autres repas du jour
+ * (sans `skipEntryId`, le repas qu'on modifie), les compléments, et la portion du brouillon.
+ */
+export function dayTotalWith(data: Data, foods: FoodIndex, date: ISODate, skipEntryId: string | undefined, draft: PortionInfo): PortionInfo {
+  const others = entriesOn(data, date)
+    .filter((e) => e.id !== skipEntryId)
+    .map((entry) => {
+      const m = mealOf(data, entry);
+      return m && m.ingredients.length > 0 ? mealPortion(foods, m, entry.eaten ?? 1) : undefined;
+    })
+    .filter((p): p is PortionInfo => !!p);
+  const snackItems = data.journal.snacks.filter((s) => s.date === date).flatMap((s) => s.items);
+  const start: PortionInfo = { nutrients: add(itemsNutrients(foods, snackItems), draft.nutrients), plantG: plantGrams(foods, snackItems) + draft.plantG };
+  return others.reduce((acc, p) => ({ nutrients: add(acc.nutrients, p.nutrients), plantG: acc.plantG + p.plantG }), start);
+}
+
 export function average(days: DayNutrition[]): { nutrients: Nutrients; plantG: number; count: number } {
   const counted = days.filter((d) => d.meal);
   if (counted.length === 0) return { nutrients: ZERO, plantG: 0, count: 0 };

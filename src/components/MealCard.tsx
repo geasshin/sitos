@@ -1,14 +1,12 @@
 import { BookOpen, Check, Plus, Refrigerator, Utensils } from 'lucide-react';
 import { useApp } from '../context';
 import { formatShort } from '../domain/dates';
-import { mealOf, mealOfCook, mealPortion } from '../domain/nutrition';
+import { mealOf, mealPortion } from '../domain/nutrition';
 import { toggleDone } from '../domain/plan';
 import { splitAmount } from '../domain/stock';
 import type { PlanEntry } from '../domain/types';
-import { MealEditor } from './MealEditor';
 import { MealPlate } from './MealPlate';
 import { Cover } from './recipe';
-import { Meter } from './ui';
 
 const fr = (v: number) => Math.round(v).toLocaleString('fr-FR');
 const targetLabel = (kcal: number) => Math.round(kcal / 25) * 25;
@@ -211,108 +209,5 @@ export function MealCard({
         )}
       </div>
     </article>
-  );
-}
-
-/**
- * La fiche d'ingrédients d'un repas : à gauche les quantités, à droite les valeurs qui suivent
- * en direct. Les modifications restent sur ce repas, jamais sur la fiche de la bibliothèque.
- */
-export function MealIngredientsDialog({
-  cook,
-  entry,
-  onOpenCook,
-  onDone,
-}: {
-  cook: PlanEntry;
-  entry: PlanEntry;
-  onOpenCook: (date: string) => void;
-  onDone: () => void;
-}) {
-  const app = useApp();
-  const { data, targets, foods } = app;
-  const meal = mealOfCook(data.recipes, cook);
-  const portion = mealPortion(foods, meal, entry.eaten ?? 1);
-  const perMeal = targets.kcal * targets.mealShare;
-  const editable = entry.kind === 'cook';
-  const n = portion.nutrients;
-
-  return (
-    <div className="ingredients-dialog">
-      <div className="ingredients-main">
-        <div className="dialog-headline">
-          <p className="dialog-kicker">{meal.recipe ? 'Recette' : 'Plat maison'}</p>
-          <h3 className="dialog-dish">{meal.name}</h3>
-          {entry.done && <p className="hint">Repas déjà validé : modifier les quantités ajuste le stock.</p>}
-          {entry.kind === 'leftover' && (
-            <p className="hint">
-              Ce reste vient de la cuisson du {formatShort(meal.cook.date)}. Les quantités se modifient sur la cuisson d’origine.{' '}
-              <button type="button" className="link" onClick={() => onOpenCook(meal.cook.date)}>
-                Voir la cuisson
-              </button>
-            </p>
-          )}
-        </div>
-        <MealEditor cook={cook} editable={editable} />
-      </div>
-
-      <aside className="ingredients-preview" aria-label="Valeurs nutritionnelles du repas">
-        <p className="dialog-kicker">Ce repas</p>
-        <p className="preview-kcal">
-          <b className="num">{fr(n.kcal)}</b> <span>kcal</span>
-        </p>
-        <p className="preview-target num">cible repas · {fr(targetLabel(perMeal))} kcal</p>
-
-        <dl className="preview-grid">
-          <div>
-            <dt>Protéines</dt>
-            <dd className="num">{fr(n.protein)} g</dd>
-          </div>
-          <div>
-            <dt>Fibres</dt>
-            <dd className="num">{fr(n.fiber)} g</dd>
-          </div>
-          <div>
-            <dt>Glucides</dt>
-            <dd className="num">{fr(n.carbs)} g</dd>
-          </div>
-          <div>
-            <dt>Lipides</dt>
-            <dd className="num">{fr(n.fat)} g</dd>
-          </div>
-          <div>
-            <dt>Graisses sat.</dt>
-            <dd className="num">{fr(n.satFat)} g</dd>
-          </div>
-          <div>
-            <dt>Sel</dt>
-            <dd className="num">{Math.round(n.salt * 10) / 10} g</dd>
-          </div>
-        </dl>
-
-        <div className="preview-bars">
-          <div>
-            <span>Énergie</span>
-            <Meter value={n.kcal} target={perMeal} tone="ink" label="Énergie du repas" />
-          </div>
-          <div>
-            <span>Protéines</span>
-            <Meter value={n.protein} target={targets.protein * targets.mealShare} tone="ink" label="Protéines du repas" />
-          </div>
-          <div>
-            <span>Fibres</span>
-            <Meter value={n.fiber} target={targets.fiber * targets.mealShare} tone="ink" label="Fibres du repas" />
-          </div>
-        </div>
-
-        <p className="hint">Le bilan du jour se met à jour à chaque modification.</p>
-      </aside>
-
-      <div className="modal-foot">
-        <button type="button" className="primary-button" onClick={onDone}>
-          Terminé
-        </button>
-      </div>
-    </div>
   );
 }

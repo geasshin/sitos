@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { addDays, addMonths, diffDays, formatMonth, formatNumeric, startOfMonth, startOfWeek, weekday } from './dates';
-import { dayNutrition, indexFoods, mealOf, recipePortion, ZERO } from './nutrition';
-import { closeGaps, markOut, moveBlock, pendingPast, planCustom, planRecipe, removeEntry, setEaten, setIngredients, setPortions, setSkipped, swapBlock, toggleDone, validatePlan } from './plan';
+import { dayNutrition, dayTotalWith, indexFoods, mealOf, mealPortion, recipePortion, ZERO } from './nutrition';
+import { closeGaps, linkCookToRecipe, markOut, moveBlock, pendingPast, placeMeal, planCustom, planRecipe, removeEntry, sameIngredients, setEaten, setIngredients, setPortions, setSkipped, swapBlock, toggleDone, validatePlan } from './plan';
+import { newRecipeId, recipeFromMeal } from './recipes';
 import { availableOn, computeStock, forecast, priorities } from './stock';
 import type { Data, Food, PlanEntry, Recipe } from './types';
 import { weeklyRate, weightTrend } from './weight';
@@ -317,5 +318,94 @@ describe('validation du plan', () => {
     const one = validatePlan(entries, recipes, '2026-11-16', 1);
     expect(one.filter((w) => w.message.includes('même jour'))).toHaveLength(1);
     expect(validatePlan(entries, recipes, '2026-11-16', 2).filter((w) => w.message.includes('même jour'))).toHaveLength(0);
+  });
+});
+
+describe('composer un repas', () => {
+  const fiche = [{ foodId: 'riz', qty: 200 }, { foodId: 'courgette', qty: 2 }];
+
+  it('compare des listes sans tenir compte de l’ordre', () => {
+    expect(sameIngredients(fiche, [{ foodId: 'courgette', qty: 2 }, { foodId: 'riz', qty: 200.004 }])).toBe(true);
+    expect(sameIngredients(fiche, [{ foodId: 'riz', qty: 150 }, { foodId: 'courgette', qty: 2 }])).toBe(false);
+    expect(sameIngredients(fiche, [{ foodId: 'riz', qty: 200 }])).toBe(false);
+  });
+
+  it('une fiche posée telle quelle ne garde pas de copie de ses ingrédients', () => {
+    const out = placeMeal([], recipes, '2026-11-14', { recipeId: 'riz-courgette', portions: 2, ingredients: fiche });
+    const c = out.find((e) => e.kind === 'cook')!;
+    expect(c.ingredients).toBeUndefined();
+    expect(out.filter((e) => e.kind === 'leftover')).toHaveLength(1);
+  });
+
+  it('50 g de riz en moins restent sur ce repas : la fiche ne change pas', () => {
+    const out = placeMeal([], recipes, '2026-11-14', { recipeId: 'riz-courgette', portions: 2, ingredients: [{ foodId: 'riz', qty: 150 }, { foodId: 'courgette', qty: 2 }] });
+    expect(out[0].ingredients).toEqual([{ foodId: 'riz', qty: 150 }, { foodId: 'courgette', qty: 2 }]);
+    expect(recipes[0].ingredients).toEqual(fiche);
+  });
+
+  it('un plat maison garde son nom et ses ingrédients, et compte dans le bilan', () => {
+    const out = placeMeal([], recipes, '2026-11-14', { title: '  Riz sauté ', portions: 1, ingredients: [{ foodId: 'riz', qty: 150 }] });
+    expect(out).toHaveLength(1);
+    expect(out[0]).toMatchObject({ kind: 'cook', title: 'Riz sauté', ingredients: [{ foodId: 'riz', qty: 150 }] });
+    expect(dayNutrition(makeData(out), indexFoods(foods), '2026-11-14').total.kcal).toBeCloseTo(525);
+  });
+
+  it('un deuxième repas le même jour ne décale rien et ne fait qu’une portion', () => {
+    const start = [cook('a', '2026-11-14', 'riz-seul', 1), cook('b', '2026-11-15', 'riz-seul', 1)];
+    const out = placeMeal(start, recipes, '2026-11-14', { recipeId: 'riz-courgette', portions: 2, ingredients: [{ foodId: 'riz', qty: 100 }, { foodId: 'courgette', qty: 1 }] }, { sameDay: true });
+    expect(out.filter((e) => e.date === '2026-11-14')).toHaveLength(2);
+    expect(out.find((e) => e.id === 'b')!.date).toBe('2026-11-15');
+    const added = out.find((e) => e.recipeId === 'riz-courgette')!;
+    expect(added.portions).toBe(1);
+    expect(added.ingredients).toBeUndefined();
+  });
+
+  it('modifier la même fiche met à jour la cuisson sur place, restes compris', () => {
+    const start = [cook('c1', '2026-11-14'), left('r1', '2026-11-15', 'c1'), cook('b', '2026-11-16', 'riz-seul', 1)];
+    const out = placeMeal(start, recipes, '2026-11-14', { recipeId: 'riz-courgette', portions: 3, ingredients: [{ foodId: 'riz', qty: 300 }, { foodId: 'courgette', qty: 2 }] }, { cookId: 'c1' });
+    const c = out.find((e) => e.id === 'c1')!;
+    expect(c).toMatchObject({ portions: 3, ingredients: [{ foodId: 'riz', qty: 300 }, { foodId: 'courgette', qty: 2 }] });
+    expect(out.filter((e) => e.batchId === 'c1')).toHaveLength(2);
+    expect(out.find((e) => e.id === 'b')!.date).toBe('2026-11-17');
+  });
+
+  it('revenir aux quantités de la fiche efface l’ajustement', () => {
+    const start = [{ ...cook('c1', '2026-11-14'), ingredients: [{ foodId: 'riz', qty: 120 }] }, left('r1', '2026-11-15', 'c1')];
+    const out = placeMeal(start, recipes, '2026-11-14', { recipeId: 'riz-courgette', portions: 2, ingredients: fiche }, { cookId: 'c1' });
+    expect(out.find((e) => e.id === 'c1')!.ingredients).toBeUndefined();
+  });
+
+  it('une autre fiche remplace la cuisson et ses restes au même jour', () => {
+    const start = [cook('c1', '2026-11-14'), left('r1', '2026-11-15', 'c1'), cook('b', '2026-11-16', 'riz-seul', 1)];
+    const out = placeMeal(start, recipes, '2026-11-14', { recipeId: 'riz-seul', portions: 1, ingredients: [{ foodId: 'riz', qty: 100 }] }, { cookId: 'c1' });
+    expect(out.find((e) => e.id === 'c1')).toBeUndefined();
+    expect(out.find((e) => e.id === 'r1')).toBeUndefined();
+    expect(out.filter((e) => e.date === '2026-11-14')).toMatchObject([{ kind: 'cook', recipeId: 'riz-seul' }]);
+    expect(out.find((e) => e.id === 'b')!.date).toBe('2026-11-16');
+  });
+
+  it('un plat maison devient une fiche : nom libre, quantités et liste écrite', () => {
+    const idx = indexFoods(foods);
+    const r = recipeFromMeal({ title: 'Riz courgette', portions: 2, ingredients: [{ foodId: 'riz', qty: 150 }, { foodId: 'courgette', qty: 1 }] }, idx, recipes, new Date('2026-11-17T12:00:00Z'));
+    expect(r.id).toBe('riz-courgette-2');
+    expect(r).toMatchObject({ name: 'Riz courgette', portions: 2, dish: 'Plat', status: 'à découvrir' });
+    expect(r.ingredientsText).toEqual(['150 g de riz', '1 courgette']);
+    expect(newRecipeId('Œufs brouillés', recipes)).toBe('oeufs-brouilles');
+  });
+
+  it('un plat maison déjà cuisiné passe à la fiche sans perdre ses restes ni sa coche', () => {
+    const start: PlanEntry[] = [{ id: 'c1', date: '2026-11-14', kind: 'cook', title: 'Riz sauté', portions: 2, ingredients: [{ foodId: 'riz', qty: 300 }], done: true }, left('r1', '2026-11-15', 'c1')];
+    const out = linkCookToRecipe(start, 'c1', 'riz-saute');
+    expect(out[0]).toEqual({ id: 'c1', date: '2026-11-14', kind: 'cook', recipeId: 'riz-saute', portions: 2, done: true });
+    expect(out[1]).toEqual(start[1]);
+  });
+
+  it('le bilan simulé remplace le repas modifié et garde le reste de la journée', () => {
+    const idx = indexFoods(foods);
+    const entries = [cook('a', '2026-11-14', 'riz-seul', 1), cook('b', '2026-11-14', 'riz-seul', 1)];
+    const data = makeData(entries, { journal: { snacks: [{ id: 's', date: '2026-11-14', label: 'Pomme', items: [{ foodId: 'pomme', qty: 1 }] }], adjustments: [], weights: [] } });
+    const draft = mealPortion(idx, { cook: entries[0], name: 'x', portions: 1, ingredients: [{ foodId: 'riz', qty: 200 }], fridgeDays: 1, custom: true, adjusted: false });
+    // repas b (350) + pomme (75) + brouillon (700) ; le repas a (350) est remplacé
+    expect(dayTotalWith(data, idx, '2026-11-14', 'a', draft).nutrients.kcal).toBeCloseTo(1125);
   });
 });

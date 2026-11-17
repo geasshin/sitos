@@ -74,6 +74,12 @@ Changer :
 ### Calendrier → Semaine ✅ 0.4
 
 Le plus gros chantier de composition.
+- ✅ **Évolution 0.9** : le calendrier défile seul (plus de flèches de mois, la page ne défile plus), le mois de
+  l'en-tête suit la vue. Une seule fenêtre « Composer le repas » remplace « Une recette / Sans fiche » et la liste
+  d'ingrédients dépliée : choisir une recette ou composer un plat maison, ajuster les quantités pour ce jour, voir
+  le repas et la journée en direct, enregistrer le plat maison dans les recettes. Le panneau du jour garde une carte
+  par repas ; « Plus tôt / Plus tard / Dehors / Retirer » passent dans le menu « … ». Aujourd'hui utilise la même
+  fenêtre pour ajouter ou modifier un repas.
 - ✅ **Évolution 0.8** : grille mensuelle sur six semaines, jours du mois voisin atténués, flèches de mois dans
   l'en-tête et retour « Aujourd'hui ». Bilan de quinzaine supprimé ; le panneau du jour montre repas et bilan ensemble.
 - ✅ **Deux semaines** (celle en cours et la suivante), cases plus hautes, navigation par quinzaine et retour

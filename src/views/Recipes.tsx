@@ -20,7 +20,7 @@ interface Filters {
 const KEY = 'cuisine-recettes-filtres';
 const DEFAULTS: Filters = { q: '', status: 'tous', dish: 'tous', linked: false, ready: true, sort: 'titre' };
 
-const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().replace(/œ/g, 'oe').replace(/æ/g, 'ae');
 
 export function RecipesView() {
   const app = useApp();

@@ -1,5 +1,5 @@
 import { addDays, diffDays } from './dates';
-import { mealOfCook } from './nutrition';
+import { cookIngredients, mealOfCook } from './nutrition';
 import { portionsOf, type Ingredient, type ISODate, type PlanEntry, type Recipe } from './types';
 
 export const newId = (prefix = 'e') => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
@@ -292,4 +292,105 @@ export function addMealOn(entries: PlanEntry[], at: ISODate, recipe: Recipe): Pl
 /** Un plat maison de plus le même jour. */
 export function addCustomOn(entries: PlanEntry[], at: ISODate, title: string): PlanEntry[] {
   return [...entries, { id: newId('c'), date: at, kind: 'cook' as const, title, portions: 1, ingredients: [] }].sort(byDate);
+}
+
+/**
+ * Un repas tel qu'il sort de la fenêtre « Composer le repas » : une fiche de la bibliothèque
+ * (recipeId) ou un plat maison (title), le nombre de repas cuisinés et les ingrédients de CE repas.
+ */
+export interface MealDraft {
+  recipeId?: string;
+  title?: string;
+  portions: number;
+  ingredients: Ingredient[];
+}
+
+/** Mêmes aliments, mêmes quantités (à un centième près), dans n'importe quel ordre. */
+export function sameIngredients(a: Ingredient[], b: Ingredient[]): boolean {
+  if (a.length !== b.length) return false;
+  const key = (list: Ingredient[]) => {
+    const m = new Map<string, number>();
+    for (const i of list) m.set(i.foodId, (m.get(i.foodId) ?? 0) + i.qty);
+    return m;
+  };
+  const ka = key(a);
+  const kb = key(b);
+  if (ka.size !== kb.size) return false;
+  for (const [id, q] of ka) {
+    const other = kb.get(id);
+    if (other === undefined || Math.abs(other - q) > 0.01) return false;
+  }
+  return true;
+}
+
+/**
+ * Ce que la cuisson garde en propre : rien quand les quantités sont celles de la fiche
+ * (la fiche reste la référence), sinon la liste du repas. Un plat maison garde toujours la sienne.
+ */
+function ownIngredients(recipes: Recipe[], draft: MealDraft): Ingredient[] | undefined {
+  const recipe = draft.recipeId ? recipes.find((r) => r.id === draft.recipeId) : undefined;
+  if (recipe && recipe.ingredients?.length && sameIngredients(draft.ingredients, cookIngredients(recipe, draft.portions))) return undefined;
+  return draft.ingredients.map((i) => ({ ...i }));
+}
+
+function cookFields(recipes: Recipe[], draft: MealDraft): Omit<PlanEntry, 'id' | 'date' | 'kind'> {
+  const ingredients = ownIngredients(recipes, draft);
+  return {
+    ...(draft.recipeId ? { recipeId: draft.recipeId } : { title: draft.title?.trim() || 'Plat maison' }),
+    ...(ingredients ? { ingredients } : {}),
+  };
+}
+
+/**
+ * Pose un repas composé.
+ * - Sans `cookId` : nouveau repas. `sameDay` l'ajoute au jour sans rien décaler (deuxième ou
+ *   troisième repas, une portion) ; sinon la cuisson et ses restes s'insèrent comme `planRecipe`.
+ * - Avec `cookId` : la même fiche (ou le même plat maison) est mise à jour sur place, restes compris ;
+ *   une autre fiche remplace la cuisson au même jour. La fiche de la bibliothèque n'est jamais touchée.
+ */
+export function placeMeal(
+  entries: PlanEntry[],
+  recipes: Recipe[],
+  date: ISODate,
+  draft: MealDraft,
+  opts: { cookId?: string; sameDay?: boolean } = {},
+): PlanEntry[] {
+  const current = opts.cookId ? entries.find((e) => e.id === opts.cookId && e.kind === 'cook') : undefined;
+  const at = current?.date ?? date;
+  // Un repas ajouté à un jour qui en porte déjà un reste à une portion : il ne décale rien.
+  const single = current
+    ? entries.some((e) => e.date === at && e.id !== current.id && e.kind !== 'out')
+    : !!opts.sameDay;
+  const portions = single && !(current && sameCook(current, draft)) ? 1 : Math.max(1, Math.round(draft.portions));
+  const fields = cookFields(recipes, { ...draft, portions });
+
+  if (current && sameCook(current, draft)) {
+    const out = setPortions(entries, recipes, current.id, portions).map((e) => {
+      if (e.id !== current.id) return e;
+      const { ingredients: _i, title: _t, recipeId: _r, ...rest } = e;
+      return { ...rest, ...fields };
+    });
+    return out.sort(byDate);
+  }
+  // Une autre fiche remplace la cuisson (et ses restes non mangés) au même jour.
+  const base = current ? removeEntry(entries, current.id) : entries;
+  if (single) return [...base, { id: newId('c'), date: at, kind: 'cook' as const, ...fields, portions: 1 }].sort(byDate);
+  return insertBlock(base, makeBlock(fields, portions), at);
+}
+
+/** Même fiche, ou plat maison des deux côtés : on met à jour au lieu de remplacer. */
+function sameCook(cook: PlanEntry, draft: MealDraft): boolean {
+  return draft.recipeId ? cook.recipeId === draft.recipeId : !cook.recipeId;
+}
+
+/**
+ * Un plat maison enregistré dans la bibliothèque : la cuisson pointe désormais vers la fiche,
+ * qui porte exactement ses ingrédients. Restes, coche et portion mangée ne bougent pas.
+ */
+export function linkCookToRecipe(entries: PlanEntry[], cookId: string, recipeId: string): PlanEntry[] {
+  return entries.map((e) => {
+    if (e.id !== cookId || e.kind !== 'cook') return e;
+    const { title: _t, ingredients: _i, ...rest } = e;
+    return { ...rest, recipeId };
+  });
 }
