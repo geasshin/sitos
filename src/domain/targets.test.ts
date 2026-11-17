@@ -125,6 +125,13 @@ describe('à-côtés', () => {
   it('dit ce qui manquera encore', () => {
     const r = recommendSides({ nutrients: n({ kcal: 700, protein: 20, fiber: 8 }), plantG: 100 }, t, [], fx);
     expect(r.stillMissing[0]).toBe('1600 kcal');
+    expect(r.missing.map((g) => g.key)).toEqual(['kcal', 'protein', 'fiber', 'plant']);
+    expect(r.missing[1].amount).toBe(t.protein - 20);
+  });
+
+  it('ne signale pas un manque dans la marge (énergie à 90 %, protéines à 95 %)', () => {
+    const r = recommendSides({ nutrients: n({ kcal: t.kcal * 0.9, protein: t.protein * 0.95, fiber: t.fiber }), plantG: t.plantG }, t, [], fx);
+    expect(r.missing).toEqual([]);
   });
 });
 

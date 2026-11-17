@@ -53,8 +53,8 @@ s'annoncent dans l'app (carte en bas à droite) et s'installent d'un clic.
   sauvegarde manuelle ; à propos et sources.
 - **Repas non coché** : rien ne sort du stock tant que le repas n'est pas coché. Aujourd'hui le rappelle dans une
   notification en bas à droite, un repas à la fois : Mangé, ou Pas mangé (clos sans toucher au stock).
-- **Portion** : dans le panneau du jour du calendrier, après « C'est fait », l'app demande si la portion était
-  plus petite, comme prévu ou plus grosse. Ça change le bilan de la journée, jamais la fiche ni le stock.
+- **Portion** : la question « La portion était… » a été retirée (jugée inutile). Une portion déjà notée (`eaten`)
+  compte toujours dans le bilan de la journée, jamais dans la fiche ni le stock.
 - **Repas principaux par jour** (1 à 3) : Aujourd'hui affiche autant de cartes que ce réglage, et le calendrier
   accepte plusieurs repas le même jour sans décaler les autres. La part de la journée que pèse un repas suit le réglage.
 - **Compléments** : dans le module Note du jour, un catalogue chiffré (un skyr, une banane, 10 g d'amandes…),
@@ -77,7 +77,8 @@ s'annoncent dans l'app (carte en bas à droite) et s'installent d'un clic.
   page, elle, ne bouge pas. Le mois affiché dans l'en-tête suit le défilement, les jours des autres mois s'atténuent,
   « Aujourd’hui » y ramène. Un « + » au survol d'un jour ouvre « Composer le repas ». Une cuisson et ses restes forment
   un seul ruban qui se glisse d’un bloc. Le panneau du jour montre une carte par repas (« Modifier le repas » et
-  « J’ai mangé », les actions rares derrière « … ») puis le bilan. Dans la fenêtre, les recettes sont groupées par
+  « J’ai mangé », les actions rares derrière « … »), le bilan, puis « Pour compléter » : les compléments déjà
+  ajoutés, ceux qui comblent le mieux la journée avec le stock, et ce qui manquera encore, en pastilles. Dans la fenêtre, les recettes sont groupées par
   « ce qui fait passer le stock », plats, puis accompagnements, et les jours occupés par les restes sont annoncés.
 
 ⌘Z défait la dernière modification ; une puce « Modifié · Annuler » apparaît quelques secondes après un changement,

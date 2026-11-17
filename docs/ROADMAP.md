@@ -25,7 +25,7 @@ passés non cochés et les portions jamais calibrées.
 | # | Constat | Effet visible | Proposition |
 |---|---|---|---|
 | L1 ✅ 0.2 | Un plat passé non coché n'est ni consommé ni prévu | Le Stock annonce « non prévu » pour des aliments déjà mangés | Bloc « N repas attendent une réponse » sur Aujourd'hui (Mangé / Pas mangé), règle dite en clair, même rappel dans le panneau du jour. Rien ne sort du stock sans case cochée |
-| L2 ✅ 0.2 | Les portions sont des estimations jamais vérifiées | Les repas sortent à 900–1 100 kcal pour un repas principal visé à 1 700 | Après « C'est fait » : « La portion était… » (0,75 · 1 · 1,25). Le bilan suit, le stock ne bouge pas (le plat a bien été cuit entier). Reste à faire : proposer une correction de la fiche au bout de plusieurs réponses |
+| L2 ✅ 0.2 | Les portions sont des estimations jamais vérifiées | Les repas sortent à 900–1 100 kcal pour un repas principal visé à 1 700 | Après « C'est fait » : « La portion était… » (0,75 · 1 · 1,25). Le bilan suit, le stock ne bouge pas (le plat a bien été cuit entier). Question retirée le 17 novembre 2026 (jugée inutile) ; les réponses déjà données comptent toujours |
 | L3 | Deux chemins pour noter le soir : les puces « Le soir » et « Pour compléter » | Les mêmes à-côtés apparaissent deux fois sur Aujourd'hui | Un seul sélecteur du soir, trié par ce qui comble le mieux la journée, avec ce qui est en stock |
 | L4 ✅ 0.2 | Les kcal d'une recette changent selon l'écran | 964 kcal dans la liste, 1 128 dans le calendrier | La liste dit « par portion », le bilan dit « repas du jour » ou « par repas visé » |
 | L5 ✅ 0.2 | Le poids du profil et les pesées étaient séparés | Les objectifs ne suivaient pas le poids réel | Bandeau dans Nutrition dès 2 kg d'écart, avec « Recalculer avec cette pesée » (jamais automatique) |
@@ -80,6 +80,9 @@ Le plus gros chantier de composition.
   le repas et la journée en direct, enregistrer le plat maison dans les recettes. Le panneau du jour garde une carte
   par repas ; « Plus tôt / Plus tard / Dehors / Retirer » passent dans le menu « … ». Aujourd'hui utilise la même
   fenêtre pour ajouter ou modifier un repas.
+- ✅ **Suite 0.9** : le panneau du jour remonte en haut de la page, « Aujourd’hui » se colle au mois. « Pour compléter »
+  devient un bloc titré : compléments ajoutés en pastilles, suggestions en lignes avec « + », manques restants en
+  pastilles (plus de phrase « Même ainsi… »). Question de portion retirée. Flèches du clavier dans la grille.
 - ✅ **Évolution 0.8** : grille mensuelle sur six semaines, jours du mois voisin atténués, flèches de mois dans
   l'en-tête et retour « Aujourd'hui ». Bilan de quinzaine supprimé ; le panneau du jour montre repas et bilan ensemble.
 - ✅ **Deux semaines** (celle en cours et la suivante), cases plus hautes, navigation par quinzaine et retour

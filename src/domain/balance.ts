@@ -103,7 +103,31 @@ export interface Recommendation {
   after: { nutrients: Nutrients; plantG: number };
   /** Ce qui manquera encore, en clair. */
   stillMissing: string[];
+  /** Les mêmes manques, chiffrés, pour un affichage court. */
+  missing: Gap[];
 }
+
+export interface Gap {
+  key: 'kcal' | 'protein' | 'fiber' | 'plant';
+  amount: number;
+}
+
+/** Un manque n'est signalé qu'au-delà d'une marge : 15 % pour l'énergie, 10 % pour le reste. */
+export function gapsOf(n: Nutrients, plantG: number, t: Targets): Gap[] {
+  const out: Gap[] = [];
+  if (n.kcal < t.kcal * 0.85) out.push({ key: 'kcal', amount: Math.round(t.kcal - n.kcal) });
+  if (n.protein < t.protein * 0.9) out.push({ key: 'protein', amount: Math.round(t.protein - n.protein) });
+  if (n.fiber < t.fiber * 0.9) out.push({ key: 'fiber', amount: Math.round(t.fiber - n.fiber) });
+  if (plantG < t.plantG * 0.9) out.push({ key: 'plant', amount: Math.round(t.plantG - plantG) });
+  return out;
+}
+
+const GAP_TEXT: Record<Gap['key'], (v: number) => string> = {
+  kcal: (v) => `${v} kcal`,
+  protein: (v) => `${v} g de protéines`,
+  fiber: (v) => `${v} g de fibres`,
+  plant: (v) => `${v} g de légumes et fruits`,
+};
 
 const WEIGHTS = { protein: 1.2, fiber: 0.8, plant: 1.0, kcal: 0.6 };
 
@@ -174,12 +198,8 @@ export function recommendSides(
     plant += best.plantG;
   }
 
-  const stillMissing: string[] = [];
-  if (n.kcal < t.kcal * 0.85) stillMissing.push(`${Math.round(t.kcal - n.kcal)} kcal`);
-  if (n.protein < t.protein * 0.9) stillMissing.push(`${Math.round(t.protein - n.protein)} g de protéines`);
-  if (n.fiber < t.fiber * 0.9) stillMissing.push(`${Math.round(t.fiber - n.fiber)} g de fibres`);
-  if (plant < t.plantG * 0.9) stillMissing.push(`${Math.round(t.plantG - plant)} g de légumes et fruits`);
-  return { picks, after: { nutrients: n, plantG: plant }, stillMissing };
+  const missing = gapsOf(n, plant, t);
+  return { picks, after: { nutrients: n, plantG: plant }, stillMissing: missing.map((g) => GAP_TEXT[g.key](g.amount)), missing };
 }
 
 export interface Contributor {

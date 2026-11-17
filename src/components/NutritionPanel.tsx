@@ -44,7 +44,7 @@ function scoreOf(
 const statusText = (row: BalanceRow): string => {
   const gap = row.target - row.value;
   if (row.kind === 'max') {
-    if (row.status === 'haut') return `dépassé de ${fr(Math.abs(gap))} ${row.unit}`;
+    if (row.status === 'haut') return Math.round(Math.abs(gap)) === 0 ? 'à la limite' : `dépassé de ${fr(Math.abs(gap))} ${row.unit}`;
     return `reste ${fr(Math.max(0, gap))} ${row.unit}`;
   }
   return row.status === 'bas' ? `reste ${fr(Math.max(0, gap))} ${row.unit}` : 'objectif atteint';

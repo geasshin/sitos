@@ -21,13 +21,12 @@ import {
 import { useApp } from '../context';
 import { addDays, formatLong, formatMonth, formatShort, range, startOfMonth, startOfWeek } from '../domain/dates';
 import { entriesOn, mealOf, mealPortion, type Meal } from '../domain/nutrition';
-import { closeGaps, markOut, moveBlock, removeEntry, setEaten, setSkipped, swapBlock, toggleDone, unmarkOut } from '../domain/plan';
+import { closeGaps, markOut, moveBlock, removeEntry, setSkipped, swapBlock, toggleDone, unmarkOut } from '../domain/plan';
 import { amount } from '../domain/stock';
 import type { ISODate, PlanEntry } from '../domain/types';
 import { MealComposer, type ComposerTarget } from '../components/MealComposer';
 import { Modal } from '../components/Modal';
 import { DayBalanceCard } from '../components/Balance';
-import { PortionPrompt } from '../components/PortionPrompt';
 import { capitalize } from './Today';
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
@@ -157,162 +156,172 @@ export function CalendarView({ focusDate }: { focusDate?: ISODate }) {
 
   return (
     <div className="page page-wide week-page">
-      <header className="week-head">
-        <div className="week-headline">
-          <h1 className="display-title">Semaine</h1>
-          <span className="week-month" aria-live="polite">
-            {capitalize(formatMonth(visibleMonth))}
-          </span>
-        </div>
-        <div className="week-head-actions">
-          {gaps > 0 && (
-            <button type="button" className="text-button is-sm" onClick={() => setEntries((e) => closeGaps(e, planFrom))} title="Supprime les jours vides du plan">
-              <Rows3 size={15} aria-hidden /> Resserrer ({gaps} jour{gaps > 1 ? 's' : ''} vide{gaps > 1 ? 's' : ''})
-            </button>
-          )}
-          <button type="button" className="secondary-button is-sm" onClick={goToday}>
-            Aujourd’hui
-          </button>
-        </div>
-      </header>
-
       <div className="week-layout">
-        <div className="week-cal" ref={scroller} onScroll={onScroll} role="grid" aria-label="Plan des repas">
-          <div className="cal-row cal-head" role="row" ref={head}>
-            {WEEKDAYS.map((w) => (
-              <div key={w} role="columnheader" className="cal-wd">
-                {w}
+        <div className="week-main">
+          <header className="week-head">
+            <h1 className="display-title">Semaine</h1>
+            <div className="week-nav">
+              <span className="week-month" aria-live="polite">
+                {capitalize(formatMonth(visibleMonth))}
+              </span>
+              <button type="button" className="secondary-button is-sm" onClick={goToday}>
+                Aujourd’hui
+              </button>
+            </div>
+            {gaps > 0 && (
+              <button type="button" className="text-button is-sm week-tighten" onClick={() => setEntries((e) => closeGaps(e, planFrom))} title="Supprime les jours vides du plan">
+                <Rows3 size={15} aria-hidden /> Resserrer ({gaps} jour{gaps > 1 ? 's' : ''} vide{gaps > 1 ? 's' : ''})
+              </button>
+            )}
+          </header>
+          <div className="week-cal" ref={scroller} onScroll={onScroll} role="grid" aria-label="Plan des repas">
+            <div className="cal-row cal-head" role="row" ref={head}>
+              {WEEKDAYS.map((w) => (
+                <div key={w} role="columnheader" className="cal-wd">
+                  {w}
+                </div>
+              ))}
+            </div>
+            {weeks.map((week) => (
+              <div className="cal-row" role="row" key={week[0]} data-week={week[0]}>
+                {week.map((d, i) => {
+                  const list = [...(entriesByDate.get(d) ?? [])].sort((a, b) => kindRank(a) - kindRank(b));
+                  const meals = list.filter((e) => e.kind !== 'out');
+                  const out = list.some((e) => e.kind === 'out');
+                  const first = list[0];
+                  const movable = !!first && !first.done && d >= today;
+                  const problems = issues.get(d) ?? [];
+                  const done = meals.length > 0 && meals.every((e) => e.done);
+                  // Une cuisson et ses restes forment un seul ruban qui traverse les jours.
+                  const leftover = first?.kind === 'leftover';
+                  const sameBefore = leftover && i > 0 && (entriesByDate.get(week[i - 1]) ?? []).some((e) => e.kind === 'leftover' && e.batchId === first.batchId);
+                  const sameAfter = leftover && i < 6 && (entriesByDate.get(week[i + 1]) ?? []).some((e) => e.kind === 'leftover' && e.batchId === first.batchId);
+                  const idle = list.length === 0;
+                  const canAdd = d >= today && !out && meals.length < targets.mealsPerDay;
+                  const cls = [
+                    'cal-day',
+                    d.slice(0, 7) !== visibleMonth.slice(0, 7) && 'is-outside',
+                    d < today && 'is-past',
+                    d === today && 'is-today',
+                    d === selected && 'is-selected',
+                    done && 'is-done',
+                    first && `kind-${first.kind}`,
+                    leftover && 'is-leftover',
+                    sameBefore && 'run-mid',
+                    leftover && !sameBefore && sameAfter && 'run-start',
+                    leftover && sameBefore && !sameAfter && 'run-end',
+                    over === d && dragId && 'is-over',
+                    idle && d >= planFrom && d < lastPlanned && 'is-gap',
+                  ]
+                    .filter(Boolean)
+                    .join(' ');
+                  const names = meals.map((e) => mealOf(data, e)?.name ?? 'Repas');
+                  const sub = meals.length === 1 ? subtitleOf(meals[0], mealOf(data, meals[0])) : null;
+                  const aria = `${formatLong(d)}${out ? ', dehors' : names.length ? `, ${names.join(', ')}` : ', libre'}`;
+                  return (
+                    <div
+                      key={d}
+                      role="gridcell"
+                      className={cls}
+                      data-date={d}
+                      tabIndex={d === selected ? 0 : -1}
+                      aria-selected={d === selected}
+                      aria-label={aria}
+                      onClick={() => setSelected(d)}
+                      onKeyDown={(ev) => {
+                        if (ev.target !== ev.currentTarget) return;
+                        // Les flèches promènent la sélection d'un jour ou d'une semaine ; Entrée compose le repas d'un jour libre.
+                        const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[ev.key];
+                        if (step) {
+                          ev.preventDefault();
+                          const next = addDays(d, step);
+                          setSelected(next);
+                          requestAnimationFrame(() => scroller.current?.querySelector<HTMLElement>(`[data-date="${next}"]`)?.focus());
+                        } else if (ev.key === 'Enter' && canAdd && meals.length === 0) {
+                          ev.preventDefault();
+                          openAdd(d);
+                        } else if (ev.key === 'Enter' || ev.key === ' ') {
+                          ev.preventDefault();
+                          setSelected(d);
+                        }
+                      }}
+                      draggable={movable}
+                      onDragStart={(ev) => {
+                        if (!first) return;
+                        setDragId(first.id);
+                        ev.dataTransfer.effectAllowed = 'move';
+                        ev.dataTransfer.setData('text/plain', first.id);
+                      }}
+                      onDragEnd={() => {
+                        setDragId(null);
+                        setOver(null);
+                      }}
+                      onDragOver={(ev) => {
+                        if (!dragId || d < today) return;
+                        ev.preventDefault();
+                        setOver(d);
+                      }}
+                      onDragLeave={() => setOver((o) => (o === d ? null : o))}
+                      onDrop={(ev) => {
+                        ev.preventDefault();
+                        const id = ev.dataTransfer.getData('text/plain') || dragId;
+                        if (id && d >= today) {
+                          setEntries((all) => moveBlock(all, id, d));
+                          setSelected(d);
+                        }
+                        setDragId(null);
+                        setOver(null);
+                      }}
+                    >
+                      <div className="cal-date">
+                        <span className="num">{Number(d.slice(8))}</span>
+                        {d.slice(8) === '01' && <span className="cal-month">{monthShort.format(new Date(`${d}T00:00:00Z`)).replace('.', '')}</span>}
+                        {done && <Check size={13} className="cal-check" aria-label="mangé" />}
+                        {snackDates.has(d) && <Moon size={11} className="cal-evening" aria-label="compléments prévus" />}
+                        {problems.length > 0 && (
+                          <span className="cal-alert" title={problems.join('\n')}>
+                            <AlertTriangle size={12} aria-label={problems.join(' ; ')} />
+                          </span>
+                        )}
+                      </div>
+                      {out && (
+                        <div className="cal-meal">
+                          <Utensils size={13} aria-hidden /> Dehors
+                        </div>
+                      )}
+                      {meals.length > 0 && (
+                        <div className={`cal-meals is-${Math.min(meals.length, 3)}`}>
+                          {meals.slice(0, 3).map((e, k) => (
+                            <div key={e.id} className={`cal-meal ${e.kind === 'leftover' ? 'is-left' : ''}`}>
+                              {e.kind === 'leftover' && <Refrigerator size={11} aria-hidden className="cal-left-icon" />}
+                              {names[k]}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {sub && <div className="cal-sub">{sub}</div>}
+                      {canAdd && (
+                        <button
+                          type="button"
+                          className="cal-add"
+                          aria-label={`Ajouter un plat le ${formatLong(d)}`}
+                          title="Ajouter un plat"
+                          onClick={(ev) => {
+                            ev.stopPropagation();
+                            setSelected(d);
+                            openAdd(d);
+                          }}
+                        >
+                          <Plus size={14} aria-hidden />
+                        </button>
+                      )}
+                      {movable && <GripVertical size={14} className="cal-grip" aria-hidden />}
+                    </div>
+                  );
+                })}
               </div>
             ))}
           </div>
-          {weeks.map((week) => (
-            <div className="cal-row" role="row" key={week[0]} data-week={week[0]}>
-              {week.map((d, i) => {
-                const list = [...(entriesByDate.get(d) ?? [])].sort((a, b) => kindRank(a) - kindRank(b));
-                const meals = list.filter((e) => e.kind !== 'out');
-                const out = list.some((e) => e.kind === 'out');
-                const first = list[0];
-                const movable = !!first && !first.done && d >= today;
-                const problems = issues.get(d) ?? [];
-                const done = meals.length > 0 && meals.every((e) => e.done);
-                // Une cuisson et ses restes forment un seul ruban qui traverse les jours.
-                const leftover = first?.kind === 'leftover';
-                const sameBefore = leftover && i > 0 && (entriesByDate.get(week[i - 1]) ?? []).some((e) => e.kind === 'leftover' && e.batchId === first.batchId);
-                const sameAfter = leftover && i < 6 && (entriesByDate.get(week[i + 1]) ?? []).some((e) => e.kind === 'leftover' && e.batchId === first.batchId);
-                const idle = list.length === 0;
-                const canAdd = d >= today && !out && meals.length < targets.mealsPerDay;
-                const cls = [
-                  'cal-day',
-                  d.slice(0, 7) !== visibleMonth.slice(0, 7) && 'is-outside',
-                  d < today && 'is-past',
-                  d === today && 'is-today',
-                  d === selected && 'is-selected',
-                  done && 'is-done',
-                  first && `kind-${first.kind}`,
-                  leftover && 'is-leftover',
-                  sameBefore && 'run-mid',
-                  leftover && !sameBefore && sameAfter && 'run-start',
-                  leftover && sameBefore && !sameAfter && 'run-end',
-                  over === d && dragId && 'is-over',
-                  idle && d >= planFrom && d < lastPlanned && 'is-gap',
-                ]
-                  .filter(Boolean)
-                  .join(' ');
-                const names = meals.map((e) => mealOf(data, e)?.name ?? 'Repas');
-                const sub = meals.length === 1 ? subtitleOf(meals[0], mealOf(data, meals[0])) : null;
-                const aria = `${formatLong(d)}${out ? ', dehors' : names.length ? `, ${names.join(', ')}` : ', libre'}`;
-                return (
-                  <div
-                    key={d}
-                    role="gridcell"
-                    className={cls}
-                    tabIndex={0}
-                    aria-selected={d === selected}
-                    aria-label={aria}
-                    onClick={() => setSelected(d)}
-                    onKeyDown={(ev) => {
-                      if (ev.target !== ev.currentTarget) return;
-                      if (ev.key === 'Enter' || ev.key === ' ') {
-                        ev.preventDefault();
-                        setSelected(d);
-                      }
-                    }}
-                    draggable={movable}
-                    onDragStart={(ev) => {
-                      if (!first) return;
-                      setDragId(first.id);
-                      ev.dataTransfer.effectAllowed = 'move';
-                      ev.dataTransfer.setData('text/plain', first.id);
-                    }}
-                    onDragEnd={() => {
-                      setDragId(null);
-                      setOver(null);
-                    }}
-                    onDragOver={(ev) => {
-                      if (!dragId || d < today) return;
-                      ev.preventDefault();
-                      setOver(d);
-                    }}
-                    onDragLeave={() => setOver((o) => (o === d ? null : o))}
-                    onDrop={(ev) => {
-                      ev.preventDefault();
-                      const id = ev.dataTransfer.getData('text/plain') || dragId;
-                      if (id && d >= today) {
-                        setEntries((all) => moveBlock(all, id, d));
-                        setSelected(d);
-                      }
-                      setDragId(null);
-                      setOver(null);
-                    }}
-                  >
-                    <div className="cal-date">
-                      <span className="num">{Number(d.slice(8))}</span>
-                      {d.slice(8) === '01' && <span className="cal-month">{monthShort.format(new Date(`${d}T00:00:00Z`)).replace('.', '')}</span>}
-                      {done && <Check size={13} className="cal-check" aria-label="mangé" />}
-                      {snackDates.has(d) && <Moon size={11} className="cal-evening" aria-label="compléments prévus" />}
-                      {problems.length > 0 && (
-                        <span className="cal-alert" title={problems.join('\n')}>
-                          <AlertTriangle size={12} aria-label={problems.join(' ; ')} />
-                        </span>
-                      )}
-                    </div>
-                    {out && (
-                      <div className="cal-meal">
-                        <Utensils size={13} aria-hidden /> Dehors
-                      </div>
-                    )}
-                    {meals.length > 0 && (
-                      <div className={`cal-meals is-${Math.min(meals.length, 3)}`}>
-                        {meals.slice(0, 3).map((e, k) => (
-                          <div key={e.id} className={`cal-meal ${e.kind === 'leftover' ? 'is-left' : ''}`}>
-                            {e.kind === 'leftover' && <Refrigerator size={11} aria-hidden className="cal-left-icon" />}
-                            {names[k]}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {sub && <div className="cal-sub">{sub}</div>}
-                    {canAdd && (
-                      <button
-                        type="button"
-                        className="cal-add"
-                        aria-label={`Ajouter un plat le ${formatLong(d)}`}
-                        title="Ajouter un plat"
-                        onClick={(ev) => {
-                          ev.stopPropagation();
-                          setSelected(d);
-                          openAdd(d);
-                        }}
-                      >
-                        <Plus size={14} aria-hidden />
-                      </button>
-                    )}
-                    {movable && <GripVertical size={14} className="cal-grip" aria-hidden />}
-                  </div>
-                );
-              })}
-            </div>
-          ))}
         </div>
 
         <DayPanel
@@ -450,10 +459,9 @@ function DayPanel({
       {!out && (
         <section className="panel-balance" aria-label="Bilan de la journée">
           <p className="balance-title">Bilan de la journée</p>
-          <DayBalanceCard date={date} />
+          <DayBalanceCard date={date} showMeal={false} />
         </section>
       )}
-      <SnackList date={date} />
     </aside>
   );
 }
@@ -532,7 +540,6 @@ function DayMeal({
         </button>
         <EatAction entry={entry} date={date} empty={empty} setEntries={setEntries} />
       </div>
-      <PortionPrompt entry={entry} onPick={(k) => setEntries((e) => setEaten(e, entry.id, k))} />
       {date < today && !entry.done && !entry.skipped && <p className="hint">Tant qu’il n’est pas coché, ce repas ne sort rien du stock.</p>}
     </article>
   );
@@ -637,31 +644,4 @@ function chunk<T>(arr: T[], n: number): T[][] {
   const out: T[][] = [];
   for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n));
   return out;
-}
-
-/** Les compléments notés ou prévus ce jour-là, seulement s'il y en a. */
-function SnackList({ date }: { date: ISODate }) {
-  const { data, store, today } = useApp();
-  const items = data.journal.snacks.filter((s) => s.date === date);
-  if (items.length === 0) return null;
-  return (
-    <div className="evening">
-      <p className="balance-sub">{date > today ? 'Compléments prévus' : 'Compléments'}</p>
-      <ul className="picks">
-        {items.map((s) => (
-          <li key={s.id} className="pick-row">
-            <span className="pick-label">{s.label}</span>
-            <button
-              type="button"
-              className="icon-button"
-              aria-label={`Retirer ${s.label}`}
-              onClick={() => store.update('journal', (j) => ({ ...j, snacks: j.snacks.filter((x) => x.id !== s.id) }))}
-            >
-              <X size={14} aria-hidden />
-            </button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
 }
