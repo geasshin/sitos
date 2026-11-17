@@ -3,7 +3,7 @@ import { LockKeyhole, Soup } from 'lucide-react';
 import { useApp } from '../context';
 import { addDays, formatShort } from '../domain/dates';
 import { entriesOn, mealOf } from '../domain/nutrition';
-import { MiniPanel } from './ui';
+import { MiniPanel, PanelLink } from './ui';
 
 function Locked({ children }: { children: ReactNode }) {
   return (
@@ -28,14 +28,7 @@ export function TomorrowPanel() {
   });
 
   return (
-    <MiniPanel
-      title="Demain"
-      aside={
-        <button type="button" className="link small" onClick={() => app.goTo('calendar', date)}>
-          Voir
-        </button>
-      }
-    >
+    <MiniPanel title="Demain" aside={<PanelLink onClick={() => app.goTo('calendar', date)}>Semaine</PanelLink>}>
       {names.length === 0 ? (
         <p className="hint">Rien de prévu pour {formatShort(date)}.</p>
       ) : (
@@ -44,7 +37,11 @@ export function TomorrowPanel() {
             <Soup size={34} strokeWidth={1.5} />
           </span>
           <p className="tomorrow-name">{names[0]}</p>
-          {names.length > 1 && <p className="muted small num">+ {names.length - 1} autre{names.length > 2 ? 's' : ''}</p>}
+          {names.length > 1 && (
+            <p className="muted small num">
+              + {names.length - 1} autre{names.length > 2 ? 's' : ''}
+            </p>
+          )}
         </div>
       )}
     </MiniPanel>

@@ -59,7 +59,7 @@ export function OrderImport({ onDone }: { onDone: () => void }) {
   };
 
   return (
-    <div className="panel-form order-import">
+    <div className="form-stack order-import">
       <label className="field">
         <span>Colle ta commande, une ligne par produit</span>
         <textarea
@@ -72,7 +72,7 @@ export function OrderImport({ onDone }: { onDone: () => void }) {
           placeholder={'2 courgettes\n1 kg de riz\n500 g de tomates cerises\n6 œufs'}
         />
       </label>
-      <div className="panel-actions">
+      <div className="form-row">
         <button type="button" className="secondary-button" onClick={analyze} disabled={!text.trim()}>
           <ClipboardPaste size={15} aria-hidden /> Analyser
         </button>
@@ -92,16 +92,13 @@ export function OrderImport({ onDone }: { onDone: () => void }) {
               const food = data.foods.find((f) => f.id === d.foodId);
               return (
                 <li key={d.key} className={`order-line ${d.include ? '' : 'is-off'}`}>
-                  <input
-                    type="checkbox"
-                    checked={d.include}
-                    onChange={(e) => patch(d.key, { include: e.target.checked })}
-                    aria-label={`Prendre ${d.line}`}
-                  />
+                  <input type="checkbox" checked={d.include} onChange={(e) => patch(d.key, { include: e.target.checked })} aria-label={`Prendre ${d.line}`} />
                   <select value={d.foodId} onChange={(e) => patch(d.key, { foodId: e.target.value, include: true })} aria-label={`Produit pour « ${d.line} »`}>
                     <option value="">Produit ?</option>
                     {foods.map((f) => (
-                      <option key={f.id} value={f.id}>{f.name}</option>
+                      <option key={f.id} value={f.id}>
+                        {f.name}
+                      </option>
                     ))}
                   </select>
                   <input
@@ -120,25 +117,28 @@ export function OrderImport({ onDone }: { onDone: () => void }) {
               );
             })}
           </ul>
-          <div className="panel-actions">
-            <button type="button" className="primary-button" onClick={save} disabled={ready.length === 0}>
-              <Plus size={15} aria-hidden /> Enregistrer {ready.length} achat{ready.length > 1 ? 's' : ''}
-            </button>
-            <button type="button" className="secondary-button" onClick={onDone}>Annuler</button>
-          </div>
           <p className="hint">
-            {ready.length > 0 && `Les quantités sont dans l’unité de chaque produit : ${ready
-              .slice(0, 3)
-              .map((d) => {
-                const f = data.foods.find((x) => x.id === d.foodId)!;
-                return formatQty(f, Number(d.qty.replace(',', '.')));
-              })
-              .join(', ')}${ready.length > 3 ? '…' : ''}.`}{' '}
+            {ready.length > 0 &&
+              `Les quantités sont dans l’unité de chaque produit : ${ready
+                .slice(0, 3)
+                .map((d) => {
+                  const f = data.foods.find((x) => x.id === d.foodId)!;
+                  return formatQty(f, Number(d.qty.replace(',', '.')));
+                })
+                .join(', ')}${ready.length > 3 ? '…' : ''}.`}{' '}
             Un produit inconnu se rattache ici, ou s’ajoute depuis « Un achat ».
           </p>
         </>
       )}
       {drafts && drafts.length === 0 && <p className="hint">Rien à lire dans ce texte.</p>}
+      <div className="modal-foot">
+        <button type="button" className="text-button" onClick={onDone}>
+          Annuler
+        </button>
+        <button type="button" className="primary-button" onClick={save} disabled={ready.length === 0}>
+          <Plus size={15} aria-hidden /> Enregistrer {ready.length > 0 ? `${ready.length} achat${ready.length > 1 ? 's' : ''}` : 'les achats'}
+        </button>
+      </div>
     </div>
   );
 }

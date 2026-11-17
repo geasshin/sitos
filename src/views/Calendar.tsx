@@ -27,6 +27,7 @@ import type { ISODate, PlanEntry } from '../domain/types';
 import { MealComposer, type ComposerTarget } from '../components/MealComposer';
 import { Modal } from '../components/Modal';
 import { DayBalanceCard } from '../components/Balance';
+import { PageHeader } from '../components/ui';
 import { capitalize } from './Today';
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
@@ -38,7 +39,10 @@ const MAX_WEEKS_BACK = 26;
 const fr = (v: number) => Math.round(v).toLocaleString('fr-FR');
 const minDate = (a: ISODate, b: ISODate) => (a < b ? a : b);
 const maxDate = (a: ISODate, b: ISODate) => (a > b ? a : b);
-const monthShort = new Intl.DateTimeFormat('fr-FR', { month: 'short', timeZone: 'UTC' });
+const monthShort = new Intl.DateTimeFormat('fr-FR', {
+  month: 'short',
+  timeZone: 'UTC',
+});
 
 type SetEntries = (fn: (e: PlanEntry[]) => PlanEntry[]) => void;
 interface ComposerState {
@@ -158,22 +162,27 @@ export function CalendarView({ focusDate }: { focusDate?: ISODate }) {
     <div className="page page-wide week-page">
       <div className="week-layout">
         <div className="week-main">
-          <header className="week-head">
-            <h1 className="display-title">Semaine</h1>
-            <div className="week-nav">
-              <span className="week-month" aria-live="polite">
-                {capitalize(formatMonth(visibleMonth))}
-              </span>
-              <button type="button" className="secondary-button is-sm" onClick={goToday}>
-                Aujourd’hui
-              </button>
-            </div>
-            {gaps > 0 && (
-              <button type="button" className="text-button is-sm week-tighten" onClick={() => setEntries((e) => closeGaps(e, planFrom))} title="Supprime les jours vides du plan">
-                <Rows3 size={15} aria-hidden /> Resserrer ({gaps} jour{gaps > 1 ? 's' : ''} vide{gaps > 1 ? 's' : ''})
-              </button>
-            )}
-          </header>
+          <PageHeader
+            title="Semaine"
+            context={capitalize(formatMonth(visibleMonth))}
+            actions={
+              gaps > 0 && (
+                <button
+                  type="button"
+                  className="text-button is-sm"
+                  onClick={() => setEntries((e) => closeGaps(e, planFrom))}
+                  title="Supprime les jours vides du plan"
+                >
+                  <Rows3 size={15} aria-hidden /> Resserrer ({gaps} jour
+                  {gaps > 1 ? 's' : ''} vide{gaps > 1 ? 's' : ''})
+                </button>
+              )
+            }
+          >
+            <button type="button" className="secondary-button is-sm" onClick={goToday}>
+              Aujourd’hui
+            </button>
+          </PageHeader>
           <div className="week-cal" ref={scroller} onScroll={onScroll} role="grid" aria-label="Plan des repas">
             <div className="cal-row cal-head" role="row" ref={head}>
               {WEEKDAYS.map((w) => (
@@ -194,8 +203,10 @@ export function CalendarView({ focusDate }: { focusDate?: ISODate }) {
                   const done = meals.length > 0 && meals.every((e) => e.done);
                   // Une cuisson et ses restes forment un seul ruban qui traverse les jours.
                   const leftover = first?.kind === 'leftover';
-                  const sameBefore = leftover && i > 0 && (entriesByDate.get(week[i - 1]) ?? []).some((e) => e.kind === 'leftover' && e.batchId === first.batchId);
-                  const sameAfter = leftover && i < 6 && (entriesByDate.get(week[i + 1]) ?? []).some((e) => e.kind === 'leftover' && e.batchId === first.batchId);
+                  const sameBefore =
+                    leftover && i > 0 && (entriesByDate.get(week[i - 1]) ?? []).some((e) => e.kind === 'leftover' && e.batchId === first.batchId);
+                  const sameAfter =
+                    leftover && i < 6 && (entriesByDate.get(week[i + 1]) ?? []).some((e) => e.kind === 'leftover' && e.batchId === first.batchId);
                   const idle = list.length === 0;
                   const canAdd = d >= today && !out && meals.length < targets.mealsPerDay;
                   const cls = [
@@ -231,7 +242,12 @@ export function CalendarView({ focusDate }: { focusDate?: ISODate }) {
                       onKeyDown={(ev) => {
                         if (ev.target !== ev.currentTarget) return;
                         // Les flèches promènent la sélection d'un jour ou d'une semaine ; Entrée compose le repas d'un jour libre.
-                        const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[ev.key];
+                        const step = {
+                          ArrowLeft: -1,
+                          ArrowRight: 1,
+                          ArrowUp: -7,
+                          ArrowDown: 7,
+                        }[ev.key];
                         if (step) {
                           ev.preventDefault();
                           const next = addDays(d, step);
@@ -497,13 +513,45 @@ function DayMeal({
       : `${meal.recipe ? 'Recette' : 'Plat maison'}${rests.length ? ` · restes jusqu’au ${formatShort(rests[rests.length - 1].date)}` : ''}`;
 
   const menu: MenuItem[] = [
-    ...(meal.recipe ? [{ label: 'Voir la recette', icon: BookOpen, run: () => app.openRecipe(meal.recipe!.id) }] : []),
-    ...(entry.kind === 'leftover' ? [{ label: `Aller à la cuisson du ${formatShort(meal.cook.date)}`, icon: ArrowRight, run: () => onSelect(meal.cook.date) }] : []),
+    ...(meal.recipe
+      ? [
+          {
+            label: 'Voir la recette',
+            icon: BookOpen,
+            run: () => app.openRecipe(meal.recipe!.id),
+          },
+        ]
+      : []),
+    ...(entry.kind === 'leftover'
+      ? [
+          {
+            label: `Aller à la cuisson du ${formatShort(meal.cook.date)}`,
+            icon: ArrowRight,
+            run: () => onSelect(meal.cook.date),
+          },
+        ]
+      : []),
     ...(editable
       ? [
-          { label: 'Échanger avec le plat d’avant', icon: ArrowLeft, run: () => setEntries((e) => swapBlock(e, entry.id, -1, today)) },
-          { label: 'Échanger avec le plat suivant', icon: ArrowRight, run: () => setEntries((e) => swapBlock(e, entry.id, 1, today)) },
-          ...(index === 0 ? [{ label: 'Je mange dehors ce jour-là', icon: Utensils, run: () => setEntries((e) => markOut(e, date)) }] : []),
+          {
+            label: 'Échanger avec le plat d’avant',
+            icon: ArrowLeft,
+            run: () => setEntries((e) => swapBlock(e, entry.id, -1, today)),
+          },
+          {
+            label: 'Échanger avec le plat suivant',
+            icon: ArrowRight,
+            run: () => setEntries((e) => swapBlock(e, entry.id, 1, today)),
+          },
+          ...(index === 0
+            ? [
+                {
+                  label: 'Je mange dehors ce jour-là',
+                  icon: Utensils,
+                  run: () => setEntries((e) => markOut(e, date)),
+                },
+              ]
+            : []),
           {
             label: entry.kind === 'cook' && rests.length ? 'Retirer, avec ses restes' : 'Retirer du plan',
             icon: Trash2,
@@ -575,7 +623,12 @@ function EatAction({ entry, date, empty, setEntries }: { entry: PlanEntry; date:
   return (
     <span className="week-eat">
       {date < today && (
-        <button type="button" className="text-button is-sm" onClick={() => setEntries((e) => setSkipped(e, entry.id))} title="Ne sort rien du stock et ne redemande plus">
+        <button
+          type="button"
+          className="text-button is-sm"
+          onClick={() => setEntries((e) => setSkipped(e, entry.id))}
+          title="Ne sort rien du stock et ne redemande plus"
+        >
           Pas mangé
         </button>
       )}

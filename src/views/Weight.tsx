@@ -3,7 +3,7 @@ import { Trash2 } from 'lucide-react';
 import { useApp } from '../context';
 import { diffDays, formatDayMonth, formatShort } from '../domain/dates';
 import { weeklyRate, weightTrend, type TrendPoint } from '../domain/weight';
-import { Empty, Section } from '../components/ui';
+import { PageHeader, Panel } from '../components/ui';
 import { capitalize } from './Today';
 
 const fmtKg = (n: number) => n.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -17,9 +17,10 @@ export function WeightSection() {
   const last = points[points.length - 1];
 
   return (
-    <>
-      <div className="two-col">
-        <Section title="Nouvelle pesée">
+    <div className="weight">
+      <div className="weight-top">
+        <div className="weight-block">
+          <p className="balance-sub">Nouvelle pesée</p>
           <form
             className="weight-form"
             onSubmit={(e) => {
@@ -35,51 +36,76 @@ export function WeightSection() {
               <input type="date" value={date} max={today} onChange={(e) => setDate(e.target.value)} />
             </label>
             <label className="field">
-              <span>Poids (kg)</span>
-              <input inputMode="decimal" placeholder="79,4" value={kg} onChange={(e) => setKg(e.target.value)} required />
+              <span>Poids</span>
+              <span className="qty-input">
+                <input inputMode="decimal" placeholder={last ? fmtKg(last.kg) : ''} value={kg} onChange={(e) => setKg(e.target.value)} required />
+                <span className="unit">kg</span>
+              </span>
             </label>
-            <button type="submit" className="primary-button">Enregistrer</button>
+            <button type="submit" className="primary-button">
+              Enregistrer
+            </button>
           </form>
           <p className="hint">Le matin, à jeun, deux ou trois fois par semaine.</p>
-        </Section>
-        <Section title="Où tu en es">
+        </div>
+        <div className="weight-block">
+          <p className="balance-sub">Où tu en es</p>
           {last ? (
             <dl className="stats">
-              <div><dt>Tendance</dt><dd className="num big">{fmtKg(last.trend)} kg</dd></div>
+              <div>
+                <dt>Tendance</dt>
+                <dd className="num big">{fmtKg(last.trend)} kg</dd>
+              </div>
               <div>
                 <dt>Par semaine</dt>
                 <dd className="num big">{rate === undefined ? '—' : `${rate > 0 ? '+' : rate < 0 ? '−' : ''}${fmtKg(Math.abs(rate))} kg`}</dd>
               </div>
-              <div><dt>Dernière pesée</dt><dd className="num">{fmtKg(last.kg)} kg, {formatShort(last.date)}</dd></div>
+              <div>
+                <dt>Dernière pesée</dt>
+                <dd className="num">
+                  {fmtKg(last.kg)} kg, {formatShort(last.date)}
+                </dd>
+              </div>
             </dl>
           ) : (
-            <p className="muted">Pas encore de pesée.</p>
+            <p className="hint">Pas encore de pesée. La courbe apparaît à la deuxième.</p>
           )}
-          {rate === undefined && points.length > 0 && <p className="muted small">La vitesse s’affiche après une semaine de pesées.</p>}
-          {rate !== undefined && rate < -0.8 && <p className="small warn">Plus de 0,8 kg par semaine : c’est rapide, mange un peu plus le soir.</p>}
-        </Section>
+          {rate === undefined && points.length > 0 && <p className="hint">La vitesse s’affiche après une semaine de pesées.</p>}
+          {rate !== undefined && rate < -0.8 && <p className="small warn">Plus de 0,8 kg par semaine : c’est rapide, mange un peu plus.</p>}
+        </div>
       </div>
 
-      <Section title="Courbe">
-        {points.length < 2 ? <Empty title="La courbe apparaîtra à la deuxième pesée" /> : <WeightChart points={points} />}
-      </Section>
+      {points.length >= 2 && (
+        <div className="weight-block">
+          <p className="balance-sub">Courbe</p>
+          <WeightChart points={points} />
+        </div>
+      )}
 
       {points.length > 0 && (
-        <Section title="Pesées">
+        <div className="weight-block">
+          <p className="balance-sub">Pesées</p>
           <ul className="logged">
             {[...points].reverse().map((p) => (
               <li key={p.date}>
                 <span>{capitalize(formatShort(p.date))}</span>
-                <span className="num">{fmtKg(p.kg)} kg <span className="muted">· tendance {fmtKg(p.trend)}</span></span>
-                <button type="button" className="icon-button" aria-label={`Supprimer la pesée du ${formatShort(p.date)}`} onClick={() => store.update('journal', (j) => ({ ...j, weights: j.weights.filter((w) => w.date !== p.date) }))}>
+                <span className="num">
+                  {fmtKg(p.kg)} kg <span className="muted">· tendance {fmtKg(p.trend)}</span>
+                </span>
+                <button
+                  type="button"
+                  className="icon-button"
+                  aria-label={`Supprimer la pesée du ${formatShort(p.date)}`}
+                  onClick={() => store.update('journal', (j) => ({ ...j, weights: j.weights.filter((w) => w.date !== p.date) }))}
+                >
                   <Trash2 size={15} aria-hidden />
                 </button>
               </li>
             ))}
           </ul>
-        </Section>
+        </div>
       )}
-    </>
+    </div>
   );
 }
 
@@ -87,18 +113,17 @@ export function WeightSection() {
 export function WeightView() {
   return (
     <div className="page">
-      <header className="page-head">
-        <h1 className="display-title">Poids</h1>
-        <p className="page-subtitle">La tendance lisse les variations d’un jour à l’autre : c’est elle qu’il faut regarder.</p>
-      </header>
-      <WeightSection />
+      <PageHeader title="Poids" />
+      <Panel title="Poids" meta="La tendance lisse les écarts d’un jour à l’autre.">
+        <WeightSection />
+      </Panel>
     </div>
   );
 }
 
 function WeightChart({ points }: { points: TrendPoint[] }) {
-  const W = 700;
-  const H = 220;
+  const W = 1100;
+  const H = 200;
   const pad = 30;
   const first = points[0].date;
   const span = Math.max(1, diffDays(first, points[points.length - 1].date));
@@ -115,15 +140,21 @@ function WeightChart({ points }: { points: TrendPoint[] }) {
         {ticks.map((t) => (
           <g key={t}>
             <line x1={pad} x2={W - pad} y1={y(t)} y2={y(t)} className="chart-grid" />
-            <text x={pad - 6} y={y(t) + 4} textAnchor="end" className="chart-label">{t}</text>
+            <text x={pad - 6} y={y(t) + 4} textAnchor="end" className="chart-label">
+              {t}
+            </text>
           </g>
         ))}
         <path d={trendPath} className="trend-line" />
         {points.map((p) => (
           <circle key={p.date} cx={x(p.date)} cy={y(p.kg)} r="3.5" className="weight-dot" />
         ))}
-        <text x={pad} y={H + 16} className="chart-label">{formatDayMonth(first)}</text>
-        <text x={W - pad} y={H + 16} textAnchor="end" className="chart-label">{formatDayMonth(points[points.length - 1].date)}</text>
+        <text x={pad} y={H + 16} className="chart-label">
+          {formatDayMonth(first)}
+        </text>
+        <text x={W - pad} y={H + 16} textAnchor="end" className="chart-label">
+          {formatDayMonth(points[points.length - 1].date)}
+        </text>
       </svg>
     </div>
   );

@@ -72,7 +72,6 @@ export function Cover({ recipe, ratio = 'square', className = '' }: { recipe: Re
       ) : (
         <div className="poster-fallback">
           <Icon size={28} strokeWidth={1.4} aria-hidden />
-          <span>Sans photo</span>
         </div>
       )}
     </div>

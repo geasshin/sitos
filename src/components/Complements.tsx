@@ -12,7 +12,14 @@ import { Modal } from './Modal';
 const fr = (v: number) => Math.round(v).toLocaleString('fr-FR');
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const byName = (a: Food, b: Food) => a.name.localeCompare(b.name, 'fr');
-const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().replace(/œ/g, 'oe').replace(/æ/g, 'ae').trim();
+const norm = (s: string) =>
+  s
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+    .replace(/œ/g, 'oe')
+    .replace(/æ/g, 'ae')
+    .trim();
 type PortionIdea = { id: string; items: Ingredient[]; name?: string; label?: string };
 const ideaName = (idea: PortionIdea) => idea.name ?? idea.label ?? '';
 
@@ -61,13 +68,12 @@ export function Complements({ date }: { date: ISODate }) {
   const candidates = useMemo(
     () =>
       sideCandidates(mergeComplements(data.snackIdeas), foods, avail).filter(
-        (c) =>
-          !chosenLabels.has(c.label) &&
-          !c.items.some((i) => i.foodId !== 'huile-olive' && chosenFoods.has(i.foodId)),
+        (c) => !chosenLabels.has(c.label) && !c.items.some((i) => i.foodId !== 'huile-olive' && chosenFoods.has(i.foodId)),
       ),
     [data.snackIdeas, foods, avail, chosenLabels, chosenFoods],
   );
-  const picks = recommendSides({ nutrients: day.total, plantG: day.plantG }, targets, candidates, foods, 2).picks;
+  const reco = recommendSides({ nutrients: day.total, plantG: day.plantG }, targets, candidates, foods, 2);
+  const picks = reco.picks;
 
   const catalogList = useMemo(() => {
     const list = searchComplements(known, query);
@@ -80,8 +86,7 @@ export function Complements({ date }: { date: ISODate }) {
     });
   }, [known, query, avail, chosenLabels]);
 
-  const add = (label: string, items: Ingredient[]) =>
-    store.update('journal', (j) => ({ ...j, snacks: [...j.snacks, { id: newId('s'), date, label, items }] }));
+  const add = (label: string, items: Ingredient[]) => store.update('journal', (j) => ({ ...j, snacks: [...j.snacks, { id: newId('s'), date, label, items }] }));
   const remove = (id: string) => store.update('journal', (j) => ({ ...j, snacks: j.snacks.filter((s) => s.id !== id) }));
 
   const create = (label: string, items: Ingredient[], keep: boolean) => {
@@ -106,69 +111,62 @@ export function Complements({ date }: { date: ISODate }) {
   };
 
   return (
-    <div className="complements-body" aria-labelledby="complements-title">
+    <div className="complements-body complete" aria-labelledby="complements-title">
       <div className="day-subhead">
-        <h2 id="complements-title" className="day-subtitle">
-          Compléments
+        <h2 id="complements-title" className="complete-title">
+          <Plus size={14} className="module-title-icon" aria-hidden /> Pour compléter
         </h2>
-        <span className="day-submeta num">{total > 0 ? `${fr(total)} kcal` : '0 kcal'}</span>
+        {total > 0 && <span className="day-submeta num">+{fr(total)} kcal</span>}
       </div>
 
-      {chosen.length > 0 ? (
-        <>
-          <p className="comp-sub">Déjà choisis</p>
-          <ul className="comp-list is-chosen" aria-label="Compléments choisis">
-            {chosen.map((s) => (
-              <li key={s.id} className="comp-row is-chosen">
-                <span className="comp-name">{s.label}</span>
-                <span className="comp-facts num">{facts(foods, s.items)}</span>
-                <button type="button" className="icon-button" onClick={() => remove(s.id)} aria-label={`Retirer ${s.label}`}>
-                  <X size={14} aria-hidden />
-                </button>
-              </li>
-            ))}
-          </ul>
-        </>
-      ) : (
-        <p className="hint">Rien de choisi pour l’instant.</p>
+      {chosen.length > 0 && (
+        <ul className="complete-added" aria-label="Compléments choisis">
+          {chosen.map((s) => (
+            <li key={s.id} className="complete-chip" title={facts(foods, s.items)}>
+              <Check size={13} aria-hidden /> {s.label}
+              <button type="button" onClick={() => remove(s.id)} aria-label={`Retirer ${s.label}`}>
+                <X size={13} aria-hidden />
+              </button>
+            </li>
+          ))}
+        </ul>
       )}
 
-      {picks.length > 0 && (
-        <>
-          <p className="comp-sub">Pour combler le manque</p>
-          <ul className="comp-list is-picks">
-            {picks.map((p) => {
-              const idea = p.candidate;
-              const value = amountOf(idea);
-              const scaled = scaledItems(idea, value);
-              const n = itemsNutrients(foods, scaled);
-              return (
-                <li key={idea.id}>
-                  <div className={`comp-row is-pick ${avail(idea.items[0].foodId) + 1e-6 >= value ? '' : 'is-off'}`}>
-                    <span className="comp-name">{ideaName(idea)}</span>
-                    <span className="comp-facts num">{fr(n.kcal)} kcal · {fr(n.protein)} g prot.</span>
-                    <span className="comp-add">
-                      <input
-                        className="comp-qty-input num"
-                        type="number"
-                        min={stepOf(idea)}
-                        step={stepOf(idea)}
-                        value={value}
-                        onChange={(e) => setAmountFor(idea, Number(e.target.value))}
-                        aria-label={`Quantité de ${ideaName(idea)} en ${unitOf(idea)}`}
-                        title="Nombre de pièces ou grammes à ajouter"
-                      />
-                      <span className="comp-unit">{unitOf(idea)}</span>
-                      <button type="button" className="comp-plus" onClick={() => addIdea(idea)} aria-label={`Ajouter ${ideaName(idea)}`}>
-                        <Plus size={15} aria-hidden />
-                      </button>
-                    </span>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </>
+      {picks.length > 0 ? (
+        <ul className="complete-list">
+          {picks.map((p) => {
+            const idea = p.candidate;
+            const value = amountOf(idea);
+            const scaled = scaledItems(idea, value);
+            const n = itemsNutrients(foods, scaled);
+            return (
+              <li key={idea.id} className={`complete-row has-qty ${avail(idea.items[0].foodId) + 1e-6 >= value ? '' : 'is-off'}`}>
+                <span className="complete-name">{ideaName(idea)}</span>
+                <span className="complete-facts num">
+                  +{fr(n.protein)} g prot. · {fr(n.kcal)} kcal
+                </span>
+                <span className="comp-add">
+                  <input
+                    className="comp-qty-input num"
+                    type="number"
+                    min={stepOf(idea)}
+                    step={stepOf(idea)}
+                    value={value}
+                    onChange={(e) => setAmountFor(idea, Number(e.target.value))}
+                    aria-label={`Quantité de ${ideaName(idea)} en ${unitOf(idea)}`}
+                    title="Nombre de pièces ou grammes à ajouter"
+                  />
+                  <span className="comp-unit">{unitOf(idea)}</span>
+                  <button type="button" className="complete-add" onClick={() => addIdea(idea)} aria-label={`Ajouter ${ideaName(idea)}`}>
+                    <Plus size={15} aria-hidden />
+                  </button>
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <p className="complete-done">{reco.missing.length === 0 ? 'La journée est complète.' : 'Rien dans le stock ne comble ce qui manque.'}</p>
       )}
 
       <button type="button" className="secondary-button comp-open-catalog" onClick={openCatalog}>
@@ -249,9 +247,7 @@ export function Complements({ date }: { date: ISODate }) {
               })}
             </ul>
 
-            {catalogList.length === 0 && (
-              <p className="hint">Aucun complément trouvé pour « {query.trim()} ».</p>
-            )}
+            {catalogList.length === 0 && <p className="hint">Aucun complément trouvé pour « {query.trim()} ».</p>}
 
             <div className="modal-foot">
               <button type="button" className="secondary-button is-sm" onClick={openCreate}>
@@ -416,7 +412,10 @@ function CreateComplement({
       {!creating && food && (
         <p className="create-preview">
           <span className="num">{computed || 'Choisis une quantité'}</span>
-          <span className="num muted"> · {fr(n.kcal)} kcal · {fr(n.protein)} g prot. · {fr(n.fiber)} g fibres</span>
+          <span className="num muted">
+            {' '}
+            · {fr(n.kcal)} kcal · {fr(n.protein)} g prot. · {fr(n.fiber)} g fibres
+          </span>
         </p>
       )}
 

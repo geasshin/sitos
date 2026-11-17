@@ -6,7 +6,7 @@ import { nextSlot, planRecipe } from '../domain/plan';
 import { amount, splitAmount } from '../domain/stock';
 import { isPlannable, portionsOf, type Recipe } from '../domain/types';
 import { Cover, HeartToggle, STATUS_LABEL, STATUSES, Stars, isUrl, sourceLabel } from '../components/recipe';
-import { Empty } from '../components/ui';
+import { Empty, Panel, PanelLink } from '../components/ui';
 import { CookMode } from '../components/CookMode';
 import { LinkIngredients } from '../components/LinkIngredients';
 import { BalanceRows } from '../components/Balance';
@@ -20,7 +20,14 @@ export function RecipeDetail({ id }: { id: string }) {
   if (!r) {
     return (
       <div className="page">
-        <Empty title="Recette introuvable" action={<button type="button" className="secondary-button" onClick={() => app.goTo('recipes')}>Retour aux recettes</button>} />
+        <Empty
+          title="Recette introuvable"
+          action={
+            <button type="button" className="secondary-button" onClick={() => app.goTo('recipes')}>
+              Retour aux recettes
+            </button>
+          }
+        />
       </div>
     );
   }
@@ -32,11 +39,23 @@ export function RecipeDetail({ id }: { id: string }) {
   const ingredientsText = r.ingredientsText ?? [];
   const facts: [string, React.ReactNode][] = [
     ['Type', r.origin === 'assemblage' ? 'Repas assemblé' : r.dish],
-    ...(r.source ? [['Source', isUrl(r.source) ? <a href={r.source} target="_blank" rel="noreferrer">{sourceLabel(r.source)} <ExternalLink size={12} aria-hidden /></a> : r.source] as [string, React.ReactNode]] : []),
+    ...(r.source
+      ? [
+          [
+            'Source',
+            isUrl(r.source) ? (
+              <a href={r.source} target="_blank" rel="noreferrer">
+                {sourceLabel(r.source)} <ExternalLink size={12} aria-hidden />
+              </a>
+            ) : (
+              r.source
+            ),
+          ] as [string, React.ReactNode],
+        ]
+      : []),
     ...(r.prepTime ? [['Préparation', r.prepTime] as [string, React.ReactNode]] : []),
     ...(r.servings ? [['Portions', r.servings] as [string, React.ReactNode]] : []),
     ...(isPlannable(r) ? [['Repas', `${portionsOf(r)} · se garde ${r.fridgeDays ?? 3} j au frigo`] as [string, React.ReactNode]] : []),
-    ['Étapes', String(r.steps?.length ?? 0)],
   ];
 
   return (
@@ -62,7 +81,10 @@ export function RecipeDetail({ id }: { id: string }) {
             onClick={() => {
               const inPlan = planned.length ? ` Elle est prévue ${planned.length} fois au calendrier : ces jours seront vidés.` : '';
               if (!window.confirm(`Supprimer « ${r.name} » de ta bibliothèque ?${inPlan}`)) return;
-              store.update('plan', (p) => ({ ...p, entries: p.entries.filter((e) => e.recipeId !== r.id && !(e.kind === 'leftover' && planned.some((c) => c.id === e.batchId))) }));
+              store.update('plan', (p) => ({
+                ...p,
+                entries: p.entries.filter((e) => e.recipeId !== r.id && !(e.kind === 'leftover' && planned.some((c) => c.id === e.batchId))),
+              }));
               store.update('recipes', (list) => list.filter((x) => x.id !== r.id));
               app.goTo('recipes');
             }}
@@ -85,21 +107,27 @@ export function RecipeDetail({ id }: { id: string }) {
             </div>
             <div className="seg-group" role="radiogroup" aria-label="Statut">
               {STATUSES.map((s) => (
-                <button key={s} type="button" role="radio" aria-checked={r.status === s} className={`seg-pill ${r.status === s ? 'on' : ''}`} onClick={() => patch({ status: s })}>
+                <button
+                  key={s}
+                  type="button"
+                  role="radio"
+                  aria-checked={r.status === s}
+                  className={`seg-pill ${r.status === s ? 'on' : ''}`}
+                  onClick={() => patch({ status: s })}
+                >
                   {STATUS_LABEL[s]}
                 </button>
               ))}
             </div>
           </div>
           {ingredientsText.length > 0 && (
-            <section className="detail-ingredients">
-              <h2 className="section-label">Ingrédients</h2>
+            <Panel title="Ingrédients" className="detail-ingredients">
               <ul>
                 {ingredientsText.map((l, i) => (
                   <li key={i}>{l}</li>
                 ))}
               </ul>
-            </section>
+            </Panel>
           )}
         </div>
 
@@ -120,7 +148,9 @@ export function RecipeDetail({ id }: { id: string }) {
               {r.parts.map((pid, i) => (
                 <span key={pid}>
                   {i > 0 && ', '}
-                  <button type="button" className="link" onClick={() => app.openRecipe(pid)}>{app.recipe(pid)?.name ?? pid}</button>
+                  <button type="button" className="link" onClick={() => app.openRecipe(pid)}>
+                    {app.recipe(pid)?.name ?? pid}
+                  </button>
                 </span>
               ))}
               .
@@ -132,7 +162,9 @@ export function RecipeDetail({ id }: { id: string }) {
               {usedIn.map((u, i) => (
                 <span key={u.id}>
                   {i > 0 && ', '}
-                  <button type="button" className="link" onClick={() => app.openRecipe(u.id)}>{u.name}</button>
+                  <button type="button" className="link" onClick={() => app.openRecipe(u.id)}>
+                    {u.name}
+                  </button>
                 </span>
               ))}
               .
@@ -140,23 +172,24 @@ export function RecipeDetail({ id }: { id: string }) {
           )}
 
           {r.steps?.length > 0 && (
-            <ol className="steps">
-              {r.steps.map((s, i) => (
-                <li key={i}>
-                  <span className="step-num num">{String(i + 1).padStart(2, '0')}</span>
-                  <p>{s}</p>
-                </li>
-              ))}
-            </ol>
+            <Panel title="Préparation" meta={`${r.steps.length} étape${r.steps.length > 1 ? 's' : ''}${r.prepTime ? ` · ${r.prepTime}` : ''}`}>
+              <ol className="steps">
+                {r.steps.map((s, i) => (
+                  <li key={i}>
+                    <span className="step-num num">{String(i + 1).padStart(2, '0')}</span>
+                    <p>{s}</p>
+                  </li>
+                ))}
+              </ol>
+            </Panel>
           )}
 
           {r.note && (
-            <section className="notes-box">
-              <h2 className="section-label">Notes</h2>
+            <Panel title="Notes" className="notes-box">
               {r.note.split('\n').map((l, i) => (
                 <p key={i}>{l}</p>
               ))}
-            </section>
+            </Panel>
           )}
 
           <MenuBlock r={r} planned={planned.map((p) => p.date)} today={today} onLink={() => setLinking(true)} />
@@ -193,9 +226,13 @@ function MenuBlock({ r, planned, today, onLink }: { r: Recipe; planned: string[]
         <div className="field">
           <span id={`rep-${r.id}`}>Repas</span>
           <div className="stepper" role="group" aria-labelledby={`rep-${r.id}`}>
-            <button type="button" className="icon-button" onClick={() => setPortions((x) => Math.max(1, x - 1))} aria-label="Un repas de moins"><Minus size={15} aria-hidden /></button>
+            <button type="button" className="icon-button" onClick={() => setPortions((x) => Math.max(1, x - 1))} aria-label="Un repas de moins">
+              <Minus size={15} aria-hidden />
+            </button>
             <span className="num">{portions}</span>
-            <button type="button" className="icon-button" onClick={() => setPortions((x) => Math.min(6, x + 1))} aria-label="Un repas de plus"><Plus size={15} aria-hidden /></button>
+            <button type="button" className="icon-button" onClick={() => setPortions((x) => Math.min(6, x + 1))} aria-label="Un repas de plus">
+              <Plus size={15} aria-hidden />
+            </button>
           </div>
         </div>
         <button type="submit" className="primary-button">
@@ -205,41 +242,50 @@ function MenuBlock({ r, planned, today, onLink }: { r: Recipe; planned: string[]
       {done && (
         <p className="small" role="status">
           Ajoutée le {formatShort(done)}. Si le jour était pris, la suite du plan a glissé.{' '}
-          <button type="button" className="link" onClick={() => app.goTo('calendar', done)}>Voir le calendrier</button>
+          <PanelLink onClick={() => app.goTo('calendar', done)}>Voir la semaine</PanelLink>
         </p>
       )}
     </>
   );
 
+  const planPanel = (
+    <Panel
+      title="Planifier"
+      meta={planned.length ? `Prévue ${planned.map((d) => `le ${formatShort(d)}`).join(', ')}` : 'Pas prévue au calendrier'}
+      className="plan-panel"
+    >
+      {planForm}
+    </Panel>
+  );
+
   if (!isPlannable(r)) {
     return (
-      <section className="menu-box">
-        <h2 className="section-label">Dans tes menus</h2>
-        <p className="hint">
-          Cette fiche n'a pas encore de quantités reliées au stock : elle ne compte ni les calories ni les courses.
-          {ingredientsTextCount > 0 ? ' La relier prend une minute, l’app propose les correspondances.' : ' Ajoute les ingrédients depuis « Modifier ».'}
-        </p>
-        {ingredientsTextCount > 0 && (
-          <button type="button" className="secondary-button" onClick={onLink}>
-            <Link2 size={15} aria-hidden /> Relier les {ingredientsTextCount} ingrédients au stock
-          </button>
-        )}
-        {planned.length > 0 && <p className="small">Prévue {planned.map((d) => `le ${formatShort(d)}`).join(', ')}.</p>}
-        {planForm}
-      </section>
+      <>
+        <Panel title="Reliée au stock" meta="Pas encore : la fiche ne compte ni les calories ni les courses.">
+          <p className="hint">
+            {ingredientsTextCount > 0 ? 'La relier prend une minute, l’app propose les correspondances.' : 'Ajoute les ingrédients depuis « Modifier ».'}
+          </p>
+          {ingredientsTextCount > 0 && (
+            <div>
+              <button type="button" className="secondary-button is-sm" onClick={onLink}>
+                <Link2 size={14} aria-hidden /> Relier les {ingredientsTextCount} ingrédients
+              </button>
+            </div>
+          )}
+        </Panel>
+        {planPanel}
+      </>
     );
   }
   const p = app.portions.get(r.id)!;
   return (
-    <section className="menu-box">
-      <h2 className="section-label">Dans tes menus</h2>
-      <div className="menu-grid">
-        <div>
-          <h3 className="mini-title">Par repas, face à un repas principal</h3>
+    <>
+      {planPanel}
+      <div className="panel-grid">
+        <Panel title="Par repas" meta="Face à un repas principal">
           <BalanceRows rows={assessDay(p.nutrients, p.plantG, mealTargets(app.targets)).rows} compact />
-        </div>
-        <div>
-          <h3 className="mini-title">Ce qui sort du stock, pour {portionsOf(r)} repas</h3>
+        </Panel>
+        <Panel title="Sort du stock" meta={`Pour ${portionsOf(r)} repas`}>
           <ul className="ingredients">
             {(r.ingredients ?? []).map((ing, i) => {
               const food = app.foods.get(ing.foodId);
@@ -253,20 +299,17 @@ function MenuBlock({ r, planned, today, onLink }: { r: Recipe; planned: string[]
                     {a.label}
                     {ing.note && <span className="muted"> · {ing.note}</span>}
                   </span>
-                  <span className="stock-state">{ok ? <Check size={14} aria-label="en stock" /> : have > 0 ? `reste ${amount(food, have)}` : 'pas en stock'}</span>
+                  <span className="stock-state">
+                    {ok ? <Check size={14} aria-label="en stock" /> : have > 0 ? `reste ${amount(food, have)}` : 'pas en stock'}
+                  </span>
                 </li>
               );
             })}
           </ul>
-          {r.extras && r.extras.length > 0 && <p className="small muted">Aussi, non comptés : {r.extras.join(' · ')}</p>}
-        </div>
+          {r.extras && r.extras.length > 0 && <p className="hint">Aussi, non comptés : {r.extras.join(' · ')}</p>}
+          {r.planNote && <p className="note">{r.planNote}</p>}
+        </Panel>
       </div>
-      {r.planNote && <p className="note">{r.planNote}</p>}
-      <p className="small">
-        {planned.length ? <>Prévue {planned.map((d) => `le ${formatShort(d)}`).join(', ')}.</> : <span className="muted">Pas prévue au calendrier.</span>}
-      </p>
-
-      {planForm}
-    </section>
+    </>
   );
 }

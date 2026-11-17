@@ -8,7 +8,8 @@ import { newId } from '../domain/plan';
 import { amount, formatQty, shortQty, type FoodStock } from '../domain/stock';
 import { urgencyTone } from './Today';
 import type { Adjustment, Storage } from '../domain/types';
-import { Empty } from '../components/ui';
+import { Empty, PageHeader } from '../components/ui';
+import { Modal } from '../components/Modal';
 
 type Filter = Storage | 'all' | 'watch';
 const FILTERS: { id: Filter; label: string }[] = [
@@ -29,12 +30,14 @@ const FRESH_LABEL: Record<FoodStock['freshness'], string> = {
 
 export function StockView() {
   const app = useApp();
-  const { data, today, store } = app;
+  const { today, store } = app;
   const [filter, setFilter] = useState<Filter>('all');
   const [q, setQ] = useState('');
   const [mode, setMode] = useState<'stock' | 'courses'>('stock');
   const [adding, setAdding] = useState(false);
   const [ordering, setOrdering] = useState(false);
+  const [correcting, setCorrecting] = useState<string | null>(null);
+  const correctFood = correcting ? app.stock.get(correcting) : undefined;
   const risk = new Map<string, number>();
   for (const l of app.forecast.losses) risk.set(l.foodId, (risk.get(l.foodId) ?? 0) + l.qty);
 
@@ -51,89 +54,124 @@ export function StockView() {
   const adjust = (foodId: string, qty: number, reason: Adjustment['reason']) =>
     store.update('journal', (j) => ({ ...j, adjustments: [...j.adjustments, { id: newId('a'), date: today, foodId, qty, reason }] }));
 
+  const watchCount = all.filter(watched).length;
+
   return (
     <div className="page">
-      <header className="page-head page-head-row">
-        <div>
-          <h1 className="display-title">Stock</h1>
-          <p className="page-subtitle">
-            <span className="num">{live.length}</span> produits<span className="subtitle-sep">·</span><span className="num">{all.filter(watched).length}</span> à surveiller
-          </p>
-        </div>
-        <div className="head-actions">
-          <button type="button" className="primary-button" onClick={() => { setMode('stock'); setOrdering((v) => !v); setAdding(false); }} aria-expanded={ordering}>
-            <ClipboardPaste size={16} aria-hidden /> Saisir une commande
-          </button>
-          <button type="button" className="secondary-button" onClick={() => { setMode('stock'); setAdding((v) => !v); setOrdering(false); }} aria-expanded={adding}>
-            <Plus size={16} aria-hidden /> Un achat
-          </button>
-        </div>
-      </header>
+      <PageHeader
+        title="Stock"
+        context={`${live.length} produit${live.length > 1 ? 's' : ''}${watchCount ? ` · ${watchCount} à surveiller` : ''}`}
+        actions={
+          <>
+            <button type="button" className="secondary-button" onClick={() => setAdding(true)}>
+              <Plus size={16} aria-hidden /> Un achat
+            </button>
+            <button type="button" className="primary-button" onClick={() => setOrdering(true)}>
+              <ClipboardPaste size={16} aria-hidden /> Saisir une commande
+            </button>
+          </>
+        }
+      />
 
-      <div className="seg-group" role="tablist" aria-label="Vue">
-        <button type="button" role="tab" aria-selected={mode === 'stock'} className={`seg-pill ${mode === 'stock' ? 'on' : ''}`} onClick={() => setMode('stock')}>
-          Mon stock
-        </button>
-        <button type="button" role="tab" aria-selected={mode === 'courses'} className={`seg-pill ${mode === 'courses' ? 'on' : ''}`} onClick={() => { setMode('courses'); setOrdering(false); setAdding(false); }}>
-          <ShoppingBasket size={14} aria-hidden /> Liste de courses
-        </button>
+      <div className="toolbar">
+        <div className="seg-group" role="tablist" aria-label="Vue">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === 'stock'}
+            className={`seg-pill ${mode === 'stock' ? 'on' : ''}`}
+            onClick={() => setMode('stock')}
+          >
+            Mon stock
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === 'courses'}
+            className={`seg-pill ${mode === 'courses' ? 'on' : ''}`}
+            onClick={() => setMode('courses')}
+          >
+            <ShoppingBasket size={14} aria-hidden /> Liste de courses
+          </button>
+        </div>
+        {mode === 'stock' && (
+          <div className="toolbar-end">
+            <label className="search-pill">
+              <Search size={15} aria-hidden />
+              <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Chercher un produit" aria-label="Chercher un produit" />
+            </label>
+            <div className="seg-group" role="tablist" aria-label="Filtrer le stock">
+              {FILTERS.map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={filter === f.id}
+                  className={`seg-pill ${filter === f.id ? 'on' : ''}`}
+                  onClick={() => setFilter(f.id)}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {mode === 'courses' && <ShoppingList />}
 
-      {mode === 'stock' && ordering && <OrderImport onDone={() => setOrdering(false)} />}
-      {mode === 'stock' && adding && <PurchaseForm onDone={() => setAdding(false)} />}
-
-      {mode === 'stock' && (
-        <div className="stock-toolbar">
-          <label className="search-pill">
-            <Search size={15} aria-hidden />
-            <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Chercher un produit" aria-label="Chercher un produit" />
-          </label>
-          <div className="seg-group" role="tablist" aria-label="Filtrer le stock">
-            {FILTERS.map((f) => (
-              <button key={f.id} type="button" role="tab" aria-selected={filter === f.id} className={`seg-pill ${filter === f.id ? 'on' : ''}`} onClick={() => setFilter(f.id)}>
-                {f.label}
-              </button>
-            ))}
+      {mode === 'stock' &&
+        (rows.length === 0 ? (
+          <div className="panel">
+            <Empty title={filter === 'watch' ? 'Rien à surveiller' : 'Rien ici'}>
+              {filter === 'watch' ? 'Tout ce qui est frais sera cuisiné à temps avec le plan actuel.' : undefined}
+            </Empty>
           </div>
-        </div>
-      )}
+        ) : (
+          <section className="panel stock-panel" aria-label="Produits en stock">
+            <ul className="stock-list">
+              <li className="stock-row stock-head" aria-hidden>
+                <span>Produit</span>
+                <span>Reste</span>
+                <span>Se garde</span>
+                <span>Utilisation</span>
+                <span />
+              </li>
+              {rows.map((s) => (
+                <StockRow key={s.food.id} s={s} risk={risk.get(s.food.id) ?? 0} onCorrect={() => setCorrecting(s.food.id)} />
+              ))}
+            </ul>
+            <p className="panel-foot">Durées estimées depuis la réception. Un repas ne sort du stock qu’une fois coché.</p>
+          </section>
+        ))}
 
-      {mode === 'stock' && (rows.length === 0 ? (
-        <Empty title={filter === 'watch' ? 'Rien à surveiller' : 'Rien ici'}>{filter === 'watch' ? 'Tout ce qui est frais sera cuisiné à temps avec le plan actuel.' : undefined}</Empty>
-      ) : (
-        <ul className="stock-list">
-          <li className="stock-row stock-head" aria-hidden>
-            <span>Produit</span>
-            <span>Reste</span>
-            <span>Se garde</span>
-            <span>Utilisation</span>
-            <span />
-          </li>
-          {rows.map((s) => (
-            <StockRow key={s.food.id} s={s} risk={risk.get(s.food.id) ?? 0} onAdjust={adjust} />
-          ))}
-        </ul>
-      ))}
-      {mode === 'stock' && (
-        <p className="hint">
-          Durées de conservation estimées depuis la réception, sauf date limite saisie. Fruits nature comptés à {data.settings.fruitsPerDay} par jour,
-          réglage qui vit dans la liste de courses. Un repas ne sort du stock qu’une fois coché : un plat passé non coché apparaît ici comme non prévu.
-        </p>
-      )}
+      <Modal open={ordering} onClose={() => setOrdering(false)} title="Saisir une commande" size="lg">
+        {ordering && <OrderImport onDone={() => setOrdering(false)} />}
+      </Modal>
+      <Modal open={adding} onClose={() => setAdding(false)} title="Ajouter un achat" size="sm">
+        {adding && <PurchaseForm onDone={() => setAdding(false)} />}
+      </Modal>
+      <Modal open={!!correctFood} onClose={() => setCorrecting(null)} title={correctFood ? `Corriger · ${correctFood.food.name}` : 'Corriger'} size="sm">
+        {correctFood && (
+          <CorrectForm
+            s={correctFood}
+            onDone={(qty, reason) => {
+              adjust(correctFood.food.id, qty, reason);
+              setCorrecting(null);
+            }}
+            onCancel={() => setCorrecting(null)}
+          />
+        )}
+      </Modal>
     </div>
   );
 }
 
-function StockRow({ s, risk, onAdjust }: { s: FoodStock; risk: number; onAdjust: (foodId: string, qty: number, reason: Adjustment['reason']) => void }) {
+function StockRow({ s, risk, onCorrect }: { s: FoodStock; risk: number; onCorrect: () => void }) {
   const app = useApp();
   const { today } = app;
-  const [open, setOpen] = useState(false);
-  const [qty, setQty] = useState('');
   const next = app.forecast.nextUse.get(s.food.id);
   const pct = s.initial > 0 ? Math.min(100, (s.remaining / s.initial) * 100) : 0;
-  const unitLabel = s.food.unit === 'pièce' ? 'pièce(s)' : s.food.unit;
   return (
     <li className={`stock-row fresh-${s.freshness}`}>
       <div className="stock-name">
@@ -143,7 +181,9 @@ function StockRow({ s, risk, onAdjust }: { s: FoodStock; risk: number; onAdjust:
       <div className="stock-qty">
         <span className="num">{formatQty(s.food, s.remaining)}</span>
         <span className="muted num small">&nbsp;/ {formatQty(s.food, s.initial)}</span>
-        <span className="level" aria-hidden><span style={{ width: `${pct}%` }} /></span>
+        <span className="level" aria-hidden>
+          <span style={{ width: `${pct}%` }} />
+        </span>
       </div>
       <div className="stock-fresh">
         {s.nextExpiry && s.remaining > 1e-6 ? (
@@ -160,7 +200,13 @@ function StockRow({ s, risk, onAdjust }: { s: FoodStock; risk: number; onAdjust:
       </div>
       <div className="stock-use small">
         <span className={next || s.food.dailyFruit ? '' : 'muted'}>
-          {next ? <>Plat {relative(today, next) === "aujourd'hui" ? "aujourd'hui" : `le ${formatShort(next)}`}</> : s.food.dailyFruit ? <>Fruit nature</> : <>Aucun plat prévu</>}
+          {next ? (
+            <>Plat {relative(today, next) === "aujourd'hui" ? "aujourd'hui" : `le ${formatShort(next)}`}</>
+          ) : s.food.dailyFruit ? (
+            <>Fruit nature</>
+          ) : (
+            <>Aucun plat prévu</>
+          )}
         </span>
         {risk > 0.01 && (
           <span className="risk" title="Ni dans un plat prévu, ni dans un à-côté : ça reste en stock">
@@ -170,32 +216,67 @@ function StockRow({ s, risk, onAdjust }: { s: FoodStock; risk: number; onAdjust:
         {s.overdrawn > 0.01 && <span className="risk">{amount(s.food, s.overdrawn)} utilisé en plus du stock</span>}
       </div>
       <div className="stock-actions">
-        <button type="button" className="secondary-button is-sm" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
-          <Minus size={14} aria-hidden /> Corriger
+        {s.remaining > 1e-6 && (
+          <button type="button" className="text-button is-sm stock-correct" onClick={onCorrect} aria-label={`Corriger ${s.food.name}`}>
+            <Minus size={14} aria-hidden /> Corriger
+          </button>
+        )}
+      </div>
+    </li>
+  );
+}
+
+/** Ce qui est sorti du stock sans passer par un plat : mangé à côté, jeté, ou une erreur de compte. */
+function CorrectForm({ s, onDone, onCancel }: { s: FoodStock; onDone: (qty: number, reason: Adjustment['reason']) => void; onCancel: () => void }) {
+  const [qty, setQty] = useState('');
+  const [reason, setReason] = useState<Adjustment['reason']>('jeté');
+  const n = Number(qty.replace(',', '.'));
+  const REASONS: [Adjustment['reason'], string][] = [
+    ['jeté', 'Jeté'],
+    ['mangé hors plan', 'Mangé hors plan'],
+    ['correction', 'Erreur de compte'],
+  ];
+  return (
+    <form
+      className="form-stack"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (n > 0) onDone(n, reason);
+      }}
+    >
+      <p className="hint">
+        Il en reste <span className="num">{formatQty(s.food, s.remaining)}</span>. Indique ce qui est sorti du stock.
+      </p>
+      <label className="field">
+        <span>Quantité</span>
+        <span className="qty-input">
+          <input inputMode="decimal" value={qty} onChange={(e) => setQty(e.target.value)} placeholder={s.food.unit === 'pièce' ? '1' : '100'} autoFocus />
+          <span className="unit">{s.food.unit === 'pièce' ? 'pc' : s.food.unit}</span>
+        </span>
+      </label>
+      <div className="seg-group" role="radiogroup" aria-label="Raison">
+        {REASONS.map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            role="radio"
+            aria-checked={reason === id}
+            className={`seg-pill ${reason === id ? 'on' : ''}`}
+            onClick={() => setReason(id)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <div className="modal-foot">
+        <button type="button" className="text-button" onClick={onCancel}>
+          Annuler
+        </button>
+        <button type="submit" className="primary-button" disabled={!(n > 0)}>
+          Retirer du stock
         </button>
       </div>
-      {open && (
-        <form
-          className="adjust"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const n = Number(qty.replace(',', '.'));
-            if (!n || n <= 0) return;
-            const reason = (e.nativeEvent as SubmitEvent).submitter?.getAttribute('value') as Adjustment['reason'];
-            onAdjust(s.food.id, n, reason ?? 'jeté');
-            setOpen(false);
-          }}
-        >
-          <label className="field field-inline">
-            <span>Quantité ({unitLabel})</span>
-            <input inputMode="decimal" value={qty} onChange={(e) => setQty(e.target.value)} placeholder={s.food.unit === 'pièce' ? '1' : '100'} autoFocus />
-          </label>
-          <button type="submit" value="mangé hors plan" className="secondary-button is-sm">Mangé hors plan</button>
-          <button type="submit" value="jeté" className="secondary-button is-sm">Jeté</button>
-          <button type="submit" value="correction" className="secondary-button is-sm">Correction</button>
-        </form>
-      )}
-    </li>
+    </form>
   );
 }
 
@@ -207,12 +288,12 @@ function PurchaseForm({ onDone }: { onDone: () => void }) {
   const [expiresAt, setExpiresAt] = useState('');
   const food = data.foods.find((f) => f.id === foodId);
   const foods = [...data.foods].sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+  const n = Number(qty.replace(',', '.'));
   return (
     <form
-      className="panel-form"
+      className="form-stack"
       onSubmit={(e) => {
         e.preventDefault();
-        const n = Number(qty.replace(',', '.'));
         if (!food || !n || n <= 0) return;
         store.update('stock', (s) => [...s, { id: newId('p'), foodId, qty: n, receivedAt, ...(expiresAt ? { expiresAt } : {}) }]);
         onDone();
@@ -222,27 +303,38 @@ function PurchaseForm({ onDone }: { onDone: () => void }) {
         <span>Produit</span>
         <select value={foodId} onChange={(e) => setFoodId(e.target.value)}>
           {foods.map((f) => (
-            <option key={f.id} value={f.id}>{f.name}</option>
+            <option key={f.id} value={f.id}>
+              {f.name}
+            </option>
           ))}
         </select>
       </label>
       <label className="field">
-        <span>Quantité ({food?.unit === 'pièce' ? 'pièces' : food?.unit}){food?.pack ? ` · ${food.pack.label}` : ''}</span>
-        <input inputMode="decimal" value={qty} onChange={(e) => setQty(e.target.value)} required />
+        <span>Quantité{food?.pack ? ` · ${food.pack.label}` : ''}</span>
+        <span className="qty-input">
+          <input inputMode="decimal" value={qty} onChange={(e) => setQty(e.target.value)} required />
+          <span className="unit">{food?.unit === 'pièce' ? 'pc' : food?.unit}</span>
+        </span>
       </label>
-      <label className="field">
-        <span>Reçu le</span>
-        <input type="date" value={receivedAt} onChange={(e) => setReceivedAt(e.target.value)} required />
-      </label>
-      <label className="field">
-        <span>Date limite (si indiquée)</span>
-        <input type="date" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} />
-      </label>
-      <div className="panel-actions">
-        <button type="submit" className="primary-button">Ajouter au stock</button>
-        <button type="button" className="secondary-button" onClick={onDone}>Annuler</button>
+      <div className="field-pair">
+        <label className="field">
+          <span>Reçu le</span>
+          <input type="date" value={receivedAt} onChange={(e) => setReceivedAt(e.target.value)} required />
+        </label>
+        <label className="field">
+          <span>Date limite</span>
+          <input type="date" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} />
+        </label>
       </div>
       <p className="hint">Un produit absent de la liste : demande à Hermès de l’ajouter, avec ses valeurs nutritionnelles.</p>
+      <div className="modal-foot">
+        <button type="button" className="text-button" onClick={onDone}>
+          Annuler
+        </button>
+        <button type="submit" className="primary-button" disabled={!food || !(n > 0)}>
+          Ajouter au stock
+        </button>
+      </div>
     </form>
   );
 }

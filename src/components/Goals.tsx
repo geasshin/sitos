@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
-import { ArrowLeft, ArrowRight, Check, ChevronDown, Target } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
+import { Modal } from './Modal';
+import { Panel } from './ui';
 import { useApp } from '../context';
 import { ACTIVITY_LABEL, applyTargets, computeTargets, GOAL_LABEL, RHYTHM_LABEL, type Targets } from '../domain/targets';
 import type { Activity, Diet, Goal, Profile, Rhythm, Sex } from '../domain/types';
@@ -12,15 +14,12 @@ const DIET_LABEL: Record<Diet, string> = {
 const SEX_LABEL: Record<Sex, string> = { homme: 'Homme', femme: 'Femme' };
 const fr = (v: number) => Math.round(v).toLocaleString('fr-FR');
 
-/** Résumé des objectifs en vigueur, et l'accès au questionnaire. */
+/** Résumé des objectifs en vigueur ; le questionnaire s'ouvre dans une fenêtre. */
 export function GoalsCard() {
   const app = useApp();
   const { data, targets } = app;
   const [editing, setEditing] = useState(false);
   const p = data.settings.profile;
-  const [open, setOpen] = useState(!p);
-
-  if (editing) return <GoalsWizard onDone={() => setEditing(false)} />;
 
   const items: [string, string][] = [
     ['Énergie', `${fr(targets.kcal)} kcal`],
@@ -33,28 +32,20 @@ export function GoalsCard() {
     ['Repas principal', `≈ ${fr(Math.round((targets.kcal * targets.mealShare) / 25) * 25)} kcal`],
   ];
   return (
-    <section className={`goals-card ${p ? '' : 'is-new'}`} aria-label="Mes objectifs">
-      <div className="goals-head">
-        <div>
-          <p className="goals-title">{p ? 'Mes objectifs par jour' : 'Définissons tes objectifs'}</p>
-          <p className="hint">
-            {p
-              ? `${SEX_LABEL[p.sex]}, ${p.age} ans, ${p.heightCm} cm, ${String(p.weightKg).replace('.', ',')} kg · ${GOAL_LABEL[p.goal].split(' (')[0].toLowerCase()} · validés le ${new Date(p.updatedAt).toLocaleDateString('fr-FR')}`
-              : 'Les valeurs ci-dessous sont provisoires. Quatre questions suffisent pour les caler sur toi, selon les repères de l’ANSES.'}
-          </p>
-        </div>
-        <div className="head-actions">
-          {p && (
-            <button type="button" className="text-button is-sm" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
-              {open ? 'Masquer le détail' : 'Voir le détail'} <ChevronDown size={14} className={`chev ${open ? 'up' : ''}`} aria-hidden />
-            </button>
-          )}
-          <button type="button" className={p ? 'secondary-button' : 'primary-button'} onClick={() => setEditing(true)}>
-            <Target size={15} aria-hidden /> {p ? 'Revoir' : 'Commencer'}
+    <>
+      <Panel
+        title="Mes objectifs"
+        meta={
+          p
+            ? `${SEX_LABEL[p.sex]}, ${p.age} ans, ${p.heightCm} cm, ${String(p.weightKg).replace('.', ',')} kg · ${GOAL_LABEL[p.goal].split(' (')[0].toLowerCase()}`
+            : 'Provisoires. Quatre questions suffisent pour les caler sur toi.'
+        }
+        aside={
+          <button type="button" className={p ? 'secondary-button is-sm' : 'primary-button is-sm'} onClick={() => setEditing(true)}>
+            {p ? 'Revoir' : 'Commencer'}
           </button>
-        </div>
-      </div>
-      {open && (
+        }
+      >
         <dl className="goals-grid">
           {items.map(([k, v]) => (
             <div key={k}>
@@ -63,19 +54,36 @@ export function GoalsCard() {
             </div>
           ))}
         </dl>
-      )}
-    </section>
+      </Panel>
+      <Modal open={editing} onClose={() => setEditing(false)} title="Mes objectifs" size="lg">
+        {editing && <GoalsWizard onDone={() => setEditing(false)} />}
+      </Modal>
+    </>
   );
 }
 
 const STEPS = ['Toi', 'Ton quotidien', 'Ce que tu vises', 'Tes cibles'] as const;
 
-function Choice<T extends string>({ value, options, labels, onChange, name }: { value: T; options: T[]; labels: Record<T, string>; onChange: (v: T) => void; name: string }) {
+function Choice<T extends string>({
+  value,
+  options,
+  labels,
+  onChange,
+  name,
+}: {
+  value: T;
+  options: T[];
+  labels: Record<T, string>;
+  onChange: (v: T) => void;
+  name: string;
+}) {
   return (
     <div className="choices" role="radiogroup" aria-label={name}>
       {options.map((o) => (
         <button key={o} type="button" role="radio" aria-checked={value === o} className={`choice ${value === o ? 'on' : ''}`} onClick={() => onChange(o)}>
-          <span className="choice-dot" aria-hidden>{value === o && <Check size={12} />}</span>
+          <span className="choice-dot" aria-hidden>
+            {value === o && <Check size={12} />}
+          </span>
           {labels[o]}
         </button>
       ))}
@@ -83,7 +91,23 @@ function Choice<T extends string>({ value, options, labels, onChange, name }: { 
   );
 }
 
-function NumberField({ label, value, unit, onChange, min, max, step = 1 }: { label: string; value: number; unit: string; onChange: (v: number) => void; min: number; max: number; step?: number }) {
+function NumberField({
+  label,
+  value,
+  unit,
+  onChange,
+  min,
+  max,
+  step = 1,
+}: {
+  label: string;
+  value: number;
+  unit: string;
+  onChange: (v: number) => void;
+  min: number;
+  max: number;
+  step?: number;
+}) {
   const [text, setText] = useState(String(value).replace('.', ','));
   return (
     <label className="field">
@@ -134,7 +158,7 @@ export function GoalsWizard({ onDone }: { onDone: () => void }) {
   };
 
   return (
-    <section className="goals-card wizard" aria-label="Définir mes objectifs">
+    <div className="wizard" aria-label="Définir mes objectifs">
       <ol className="wizard-steps">
         {STEPS.map((s, i) => (
           <li key={s} className={i === step ? 'on' : i < step ? 'done' : ''}>
@@ -151,16 +175,28 @@ export function GoalsWizard({ onDone }: { onDone: () => void }) {
             <NumberField label="Taille" value={p.heightCm} unit="cm" min={130} max={230} onChange={(v) => set('heightCm', v)} />
             <NumberField label="Poids" value={p.weightKg} unit="kg" min={35} max={250} step={0.1} onChange={(v) => set('weightKg', v)} />
           </div>
-          {lastWeight === undefined && <p className="hint">Pas encore de pesée dans l’onglet Poids : mets ton poids habituel, tu pourras le corriger plus tard.</p>}
+          {lastWeight === undefined && <p className="hint">Pas encore de pesée : mets ton poids habituel, tu pourras le corriger plus tard.</p>}
         </div>
       )}
 
       {step === 1 && (
         <div className="wizard-body">
           <p className="wizard-q">Ton activité, en dehors des repas</p>
-          <Choice<Activity> name="Activité" value={p.activity} options={['faible', 'moderee', 'elevee']} labels={ACTIVITY_LABEL} onChange={(v) => set('activity', v)} />
+          <Choice<Activity>
+            name="Activité"
+            value={p.activity}
+            options={['faible', 'moderee', 'elevee']}
+            labels={ACTIVITY_LABEL}
+            onChange={(v) => set('activity', v)}
+          />
           <p className="wizard-q">Ton rythme de repas</p>
-          <Choice<Rhythm> name="Rythme" value={p.rhythm} options={['un-repas', 'deux-repas', 'trois-repas']} labels={RHYTHM_LABEL} onChange={(v) => set('rhythm', v)} />
+          <Choice<Rhythm>
+            name="Rythme"
+            value={p.rhythm}
+            options={['un-repas', 'deux-repas', 'trois-repas']}
+            labels={RHYTHM_LABEL}
+            onChange={(v) => set('rhythm', v)}
+          />
         </div>
       )}
 
@@ -169,7 +205,13 @@ export function GoalsWizard({ onDone }: { onDone: () => void }) {
           <p className="wizard-q">Ce que tu vises</p>
           <Choice<Goal> name="Objectif" value={p.goal} options={['maintenir', 'doucement', 'perdre']} labels={GOAL_LABEL} onChange={(v) => set('goal', v)} />
           <p className="wizard-q">Ta façon de manger</p>
-          <Choice<Diet> name="Alimentation" value={p.diet} options={['vegetarien', 'flexitarien', 'omnivore']} labels={DIET_LABEL} onChange={(v) => set('diet', v)} />
+          <Choice<Diet>
+            name="Alimentation"
+            value={p.diet}
+            options={['vegetarien', 'flexitarien', 'omnivore']}
+            labels={DIET_LABEL}
+            onChange={(v) => set('diet', v)}
+          />
         </div>
       )}
 
@@ -189,18 +231,27 @@ export function GoalsWizard({ onDone }: { onDone: () => void }) {
               ] as [keyof Targets, string, string, number][]
             ).map(([k, label, unit, noteIdx]) => (
               <div className="target-line-wrap" key={k}>
-              {k === 'satFatMaxG' && <p className="balance-sub target-cap">À limiter</p>}
-              <div className="target-line">
-                <NumberField key={`${k}-${plan.targets[k]}-${edits[k] === undefined ? 'calc' : 'edit'}`} label={label} value={final[k] as number} unit={unit} min={0} max={10000} onChange={(v) => setEdits((e) => ({ ...e, [k]: v }))} />
-                <p className="target-why small">
-                  {plan.notes[noteIdx]?.text}
-                  {final[k] !== plan.targets[k] && (
-                    <button type="button" className="link small" onClick={() => setEdits((e) => ({ ...e, [k]: undefined }))}>
-                      {' '}Revenir à {String(plan.targets[k]).replace('.', ',')}
-                    </button>
-                  )}
-                </p>
-              </div>
+                {k === 'satFatMaxG' && <p className="balance-sub target-cap">À limiter</p>}
+                <div className="target-line">
+                  <NumberField
+                    key={`${k}-${plan.targets[k]}-${edits[k] === undefined ? 'calc' : 'edit'}`}
+                    label={label}
+                    value={final[k] as number}
+                    unit={unit}
+                    min={0}
+                    max={10000}
+                    onChange={(v) => setEdits((e) => ({ ...e, [k]: v }))}
+                  />
+                  <p className="target-why small">
+                    {plan.notes[noteIdx]?.text}
+                    {final[k] !== plan.targets[k] && (
+                      <button type="button" className="link small" onClick={() => setEdits((e) => ({ ...e, [k]: undefined }))}>
+                        {' '}
+                        Revenir à {String(plan.targets[k]).replace('.', ',')}
+                      </button>
+                    )}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
@@ -210,14 +261,21 @@ export function GoalsWizard({ onDone }: { onDone: () => void }) {
             </p>
           ))}
           <p className="hint">
-            Repas principal visé ≈ {fr(Math.round((final.kcal * final.mealShare) / 25) * 25)} kcal ({Math.round(final.mealShare * 100)} % de la journée), le reste pour le soir et les fruits.
+            Repas principal visé ≈ {fr(Math.round((final.kcal * final.mealShare) / 25) * 25)} kcal ({Math.round(final.mealShare * 100)} % de la journée), le
+            reste pour les compléments et les fruits.
           </p>
         </div>
       )}
 
-      <div className="wizard-foot">
+      <div className="modal-foot">
         <button type="button" className="text-button" onClick={() => (step === 0 ? onDone() : setStep(step - 1))}>
-          {step === 0 ? 'Annuler' : <><ArrowLeft size={15} aria-hidden /> Retour</>}
+          {step === 0 ? (
+            'Annuler'
+          ) : (
+            <>
+              <ArrowLeft size={15} aria-hidden /> Retour
+            </>
+          )}
         </button>
         {step < STEPS.length - 1 ? (
           <button type="button" className="primary-button" onClick={() => setStep(step + 1)}>
@@ -229,6 +287,6 @@ export function GoalsWizard({ onDone }: { onDone: () => void }) {
           </button>
         )}
       </div>
-    </section>
+    </div>
   );
 }

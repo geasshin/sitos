@@ -67,8 +67,11 @@ s'annoncent dans l'app (carte en bas à droite) et s'installent d'un clic.
 - **Barre basse** : Aujourd'hui · Semaine · Recettes · Stock · Nutrition, avec Paramètres à droite. Le Poids est
   une section de Nutrition (et reste joignable par l'adresse `#/weight`). Toute la largeur de la fenêtre sert au contenu.
 - **Nutrition** : trois chiffres de la semaine face aux objectifs avec une phrase, un graphique cliquable qui ouvre
-  le bilan du jour, « Cette semaine, essaie » avec deux ou trois gestes concrets, les objectifs (repliés une fois
-  définis) et le poids.
+  le bilan du jour, « À essayer » avec deux ou trois gestes concrets, les objectifs (questionnaire dans une fenêtre)
+  et le poids.
+- **Langage commun** : chaque page a le même en-tête sur une ligne (titre, contexte, actions à droite) et les mêmes
+  panneaux blancs titrés (`PageHeader`, `Panel`, `PanelLink` dans `src/components/ui.tsx`). Ce qui demande une saisie
+  (achat, commande, correction de stock, objectifs) s'ouvre dans une fenêtre.
 - **Stock & courses** : tout le stock par date de péremption, recherche, correction d'une quantité. « Saisir une
   commande » accepte un texte collé (« 2 courgettes », « 1 kg de riz ») et propose ce qu'il a compris avant
   d'enregistrer. La liste de courses réunit ce qui manque pour le plan, ce qui va finir et les produits de base,

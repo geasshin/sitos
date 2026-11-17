@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Check, Copy, PackageOpen } from 'lucide-react';
+import { Check, Copy, Minus, PackageOpen, Plus } from 'lucide-react';
+import { Panel } from './ui';
 import { useApp } from '../context';
 import { shoppingList, shoppingText, type ShoppingLine } from '../domain/shopping';
 import { formatQty } from '../domain/stock';
@@ -63,35 +64,52 @@ export function ShoppingList() {
       );
     });
 
+  const setFruitsTo = (n: number) => {
+    setFruits(n);
+    store.update('settings', (x) => ({ ...x, fruitsPerDay: n }));
+  };
+
   return (
-    <div className="shopping">
-      <div className="shopping-head">
-        <p className="page-subtitle">
-          <span className="num">{total}</span> produit{total > 1 ? 's' : ''} à prendre
-        </p>
-        <div className="setting-actions">
+    <Panel
+      title="Liste de courses"
+      meta={total === 0 ? 'Rien à acheter' : `${total} produit${total > 1 ? 's' : ''} à prendre`}
+      className="shopping"
+      aside={
+        <div className="shopping-tools">
           <div className="stepper" role="group" aria-label="Fruits mangés nature par jour">
-            <button type="button" className="icon-button" aria-label="Un fruit de moins" disabled={fruits <= 0} onClick={() => { const n = Math.max(0, fruits - 1); setFruits(n); store.update('settings', (x) => ({ ...x, fruitsPerDay: n })); }}>
-              <span aria-hidden>−</span>
+            <button
+              type="button"
+              className="icon-button"
+              aria-label="Un fruit de moins"
+              disabled={fruits <= 0}
+              onClick={() => setFruitsTo(Math.max(0, fruits - 1))}
+            >
+              <Minus size={14} aria-hidden />
             </button>
             <span className="num">{fruits}</span>
-            <button type="button" className="icon-button" aria-label="Un fruit de plus" disabled={fruits >= 4} onClick={() => { const n = Math.min(4, fruits + 1); setFruits(n); store.update('settings', (x) => ({ ...x, fruitsPerDay: n })); }}>
-              <span aria-hidden>+</span>
+            <button
+              type="button"
+              className="icon-button"
+              aria-label="Un fruit de plus"
+              disabled={fruits >= 4}
+              onClick={() => setFruitsTo(Math.min(4, fruits + 1))}
+            >
+              <Plus size={14} aria-hidden />
             </button>
           </div>
-          <span className="muted small">fruits par jour</span>
+          <span className="muted small">fruit{fruits > 1 ? 's' : ''} par jour</span>
           <button type="button" className="secondary-button is-sm" onClick={() => void copy()} disabled={total === 0}>
-            {copied ? <Check size={14} aria-hidden /> : <Copy size={14} aria-hidden />} {copied ? 'Copié' : 'Copier la liste'}
+            {copied ? <Check size={14} aria-hidden /> : <Copy size={14} aria-hidden />} {copied ? 'Copié' : 'Copier'}
           </button>
         </div>
-      </div>
-
+      }
+    >
       {total === 0 ? (
         <p className="empty-inline">
-          <PackageOpen size={18} aria-hidden /> Rien à acheter : le plan tient avec le stock actuel.
+          <PackageOpen size={18} aria-hidden /> Le plan tient avec le stock actuel.
         </p>
       ) : (
-        <>
+        <div className="shop-sections">
           {(['manque', 'bientôt fini', 'base'] as const).map((reason) => {
             const lines = reason === 'manque' ? list.missing : reason === 'bientôt fini' ? list.low : list.basics;
             return (
@@ -104,8 +122,8 @@ export function ShoppingList() {
               </section>
             );
           })}
-        </>
+        </div>
       )}
-    </div>
+    </Panel>
   );
 }

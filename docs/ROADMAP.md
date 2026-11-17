@@ -80,6 +80,12 @@ Le plus gros chantier de composition.
   le repas et la journée en direct, enregistrer le plat maison dans les recettes. Le panneau du jour garde une carte
   par repas ; « Plus tôt / Plus tard / Dehors / Retirer » passent dans le menu « … ». Aujourd'hui utilise la même
   fenêtre pour ajouter ou modifier un repas.
+- ✅ **Harmonisation 0.10** : toutes les pages reprennent le langage de Semaine. Un en-tête unique sur une ligne,
+  un seul module (le panneau titré), un primaire plein, un secondaire cerclé, un lien « → » discret. Recettes : une
+  barre d'outils (recherche, filtres pleins quand actifs, statut et tri en listes) puis les types de plat. Stock :
+  la liste dans un panneau, « Corriger » au survol, achat, commande et correction dans des fenêtres. Nutrition et
+  fiche recette : des panneaux, objectifs dans une fenêtre. Paramètres : deux colonnes de panneaux, un interrupteur.
+  Aujourd'hui : « Pour compléter » au même dessin que Semaine.
 - ✅ **Suite 0.9** : le panneau du jour remonte en haut de la page, « Aujourd’hui » se colle au mois. « Pour compléter »
   devient un bloc titré : compléments ajoutés en pastilles, suggestions en lignes avec « + », manques restants en
   pastilles (plus de phrase « Même ainsi… »). Question de portion retirée. Flèches du clavier dans la grille.
