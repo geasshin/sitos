@@ -154,6 +154,10 @@ export interface Snack {
   date: ISODate;
   label: string;
   items: Ingredient[];
+  /** Base ajustable d'où vient le complément (catalogue ou idée personnelle). */
+  ideaId?: string;
+  /** Nombre d'unités de la base : pièces ou grammes du premier ingrédient. */
+  amount?: number;
 }
 
 export interface Adjustment {

@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { AlertTriangle, Check, Plus, Utensils, X } from 'lucide-react';
 import { useApp } from '../context';
-import { addDays, formatDayMonth, formatLong, formatShort, todayISO } from '../domain/dates';
+import { addDays, formatDayMonth, formatLong, formatShort, range, startOfWeek, todayISO, weekday } from '../domain/dates';
 import { entriesOn, mealOf } from '../domain/nutrition';
-import { leftoversInFridge, markOut, nextSlot, pendingPast, planRecipe, setSkipped, toggleDone, unmarkOut } from '../domain/plan';
+import { markOut, nextSlot, pendingPast, planRecipe, setSkipped, toggleDone, unmarkOut } from '../domain/plan';
 import { amount, shortQty, rescueSuggestions } from '../domain/stock';
-import type { PlanEntry } from '../domain/types';
+import type { ISODate, PlanEntry } from '../domain/types';
 import { NutritionPanel } from '../components/NutritionPanel';
 import { MealCard } from '../components/MealCard';
 import { MealComposer } from '../components/MealComposer';
@@ -19,15 +19,19 @@ export const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 export const urgencyTone = (days: number) => (days <= 2 ? 'tomato' : days <= 7 ? 'saffron' : 'neutral');
 
 const shortDay = (d: string) => capitalize(formatShort(d).split(' ')[0]);
+const WEEK_LETTERS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
 export function TodayView() {
   const app = useApp();
   const { data, today, store, targets } = app;
-  const planned = entriesOn(data, today);
+  // La page montre le jour choisi ; « aujourd'hui » reste la référence du stock et des rappels.
+  const [viewDate, setViewDate] = useState<ISODate>(today);
+  const planned = entriesOn(data, viewDate);
   const out = planned.find((e) => e.kind === 'out');
   const meals = planned.filter((e) => e.kind !== 'out');
   const slots = Math.max(targets.mealsPerDay, meals.length);
   const simulated = today !== todayISO();
+  const isToday = viewDate === today;
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<{
     cookId: string;
@@ -41,18 +45,31 @@ export function TodayView() {
     window.location.href = url.toString();
   };
 
+  const pickDate = (d: ISODate) => {
+    setViewDate(d);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="page today">
-      <PageHeader title="Aujourd’hui" context={capitalize(formatLong(today))}>
-        {simulated && (
-          <span className="sim-chip">
-            Date simulée
-            <button type="button" onClick={resetSimulation}>
+      <div className="today-head">
+        <PageHeader title="Aujourd’hui" context={capitalize(formatLong(viewDate))}>
+          {!isToday && (
+            <button type="button" className="text-button is-sm" onClick={() => pickDate(today)}>
               Revenir à aujourd’hui
             </button>
-          </span>
-        )}
-      </PageHeader>
+          )}
+          {simulated && (
+            <span className="sim-chip">
+              Date simulée
+              <button type="button" onClick={resetSimulation}>
+                Revenir à aujourd’hui
+              </button>
+            </span>
+          )}
+        </PageHeader>
+        <WeekStrip date={viewDate} today={today} onPick={pickDate} />
+      </div>
 
       <section className="today-block" aria-labelledby="today-meals-title">
         <h2 id="today-meals-title" className="sr-only">
@@ -80,11 +97,13 @@ export function TodayView() {
                 <p className="meal-note">La journée ne compte pas dans le bilan.</p>
               </div>
             </div>
-            <div className="meal-action-bar">
-              <button type="button" className="secondary-button is-sm" onClick={() => setEntries((e) => unmarkOut(e, out.id))}>
-                <X size={14} aria-hidden /> Finalement à la maison
-              </button>
-            </div>
+            {viewDate >= today && (
+              <div className="meal-action-bar">
+                <button type="button" className="secondary-button is-sm" onClick={() => setEntries((e) => unmarkOut(e, out.id))}>
+                  <X size={14} aria-hidden /> Finalement à la maison
+                </button>
+              </div>
+            )}
           </article>
         ) : (
           <div className={`meal-grid is-${Math.min(slots, 3)}`}>
@@ -94,40 +113,101 @@ export function TodayView() {
                 entry={meals[i]}
                 index={i}
                 single={slots === 1}
+                date={viewDate}
                 onAdd={() => setAddOpen(true)}
                 onIngredients={(cook, entry) => setEditing({ cookId: cook.id, entryId: entry.id })}
                 onRecipe={app.openRecipe}
-                onOut={() => setEntries((e) => markOut(e, today))}
-                showOut={i === 0}
+                onOut={() => setEntries((e) => markOut(e, viewDate))}
+                showOut={i === 0 && viewDate >= today}
               />
             ))}
           </div>
         )}
       </section>
 
-      {!out && (
-        <>
-          <NutritionPanel />
-          <div className="mini-grid">
-            <Priorities setEntries={setEntries} />
-            <TomorrowPanel />
-            <Fridge />
-            <WeightPanel />
-            <ExpensePanel />
-            <Attention />
-          </div>
-        </>
+      {!out && <NutritionPanel date={viewDate} />}
+
+      {isToday && !out && (
+        <div className="mini-grid">
+          <Priorities setEntries={setEntries} />
+          <TomorrowPanel />
+          <WeightPanel />
+          <ExpensePanel />
+          <Attention />
+        </div>
       )}
 
-      <PendingToast setEntries={setEntries} />
+      {isToday && <PendingToast setEntries={setEntries} onOpen={pickDate} />}
 
-      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Ajouter un repas" size="lg">
-        {addOpen && <MealComposer date={today} sameDay={planned.length > 0} onClose={() => setAddOpen(false)} />}
+      <Modal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        title={isToday ? 'Ajouter un repas' : `Ajouter un repas · ${formatShort(viewDate)}`}
+        size="lg"
+      >
+        {addOpen && (
+          <MealComposer date={viewDate} sameDay={planned.length > 0 || viewDate < today} onClose={() => setAddOpen(false)} />
+        )}
       </Modal>
 
       <Modal open={!!editing} onClose={() => setEditing(null)} title="Modifier le repas" size="lg">
-        {editing && <MealComposer date={today} target={editing} onClose={() => setEditing(null)} />}
+        {editing && <MealComposer date={viewDate} target={editing} onClose={() => setEditing(null)} />}
       </Modal>
+    </div>
+  );
+}
+
+/**
+ * Les sept jours de la semaine autour d'aujourd'hui. Un clic ouvre le jour dans la page :
+ * on complète un jour passé comme on prépare un jour à venir.
+ */
+function WeekStrip({ date, today, onPick }: { date: ISODate; today: ISODate; onPick: (d: ISODate) => void }) {
+  const { data } = useApp();
+  const start = startOfWeek(today);
+  const days = range(start, addDays(start, 6));
+
+  return (
+    <div className="week-strip" role="group" aria-label="Jours de la semaine">
+      {days.map((d) => {
+        const entries = entriesOn(data, d);
+        const meals = entries.filter((e) => e.kind !== 'out');
+        const isOut = entries.some((e) => e.kind === 'out');
+        const done = meals.length > 0 && meals.every((e) => e.done);
+        const pending = d < today && meals.length > 0 && !done;
+        const missing = d < today && meals.length === 0 && !isOut;
+        const state = isOut ? 'out' : done ? 'done' : pending ? 'pending' : missing ? 'missing' : meals.length > 0 ? 'planned' : 'empty';
+        const stateText =
+          state === 'done'
+            ? ', mangé'
+            : state === 'pending'
+              ? ', repas à cocher'
+              : state === 'missing'
+                ? ', rien de noté'
+                : state === 'out'
+                  ? ', dehors'
+                  : state === 'planned'
+                    ? ', prévu'
+                    : ', libre';
+        return (
+          <button
+            key={d}
+            type="button"
+            aria-pressed={d === date}
+            aria-label={`${capitalize(formatLong(d))}${stateText}`}
+            title={`${capitalize(formatLong(d))}${stateText}`}
+            className={`week-cell is-${state} ${d === today ? 'is-today' : ''}`}
+            onClick={() => onPick(d)}
+          >
+            <span className="week-cell-wd" aria-hidden>
+              {WEEK_LETTERS[weekday(d)]}
+            </span>
+            <span className="week-cell-num num" aria-hidden>
+              {Number(d.slice(8))}
+            </span>
+            <span className="week-cell-mark" aria-hidden />
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -135,9 +215,9 @@ export function TodayView() {
 /**
  * Les repas passés qui attendent une réponse, en bas à droite.
  * La notification ne prend aucune place dans la page et traite un repas à la fois ;
- * « Pas mangé » clôt le repas sans toucher au stock.
+ * « Pas mangé » clôt le repas sans toucher au stock, « Voir le jour » ouvre la journée.
  */
-function PendingToast({ setEntries }: { setEntries: (fn: (e: PlanEntry[]) => PlanEntry[]) => void }) {
+function PendingToast({ setEntries, onOpen }: { setEntries: (fn: (e: PlanEntry[]) => PlanEntry[]) => void; onOpen: (d: ISODate) => void }) {
   const app = useApp();
   const { data, today } = app;
   const [later, setLater] = useState<string[]>([]);
@@ -167,6 +247,9 @@ function PendingToast({ setEntries }: { setEntries: (fn: (e: PlanEntry[]) => Pla
         </button>
         <button type="button" className="secondary-button is-sm" onClick={() => setEntries((x) => setSkipped(x, entry.id))}>
           Pas mangé
+        </button>
+        <button type="button" className="text-button is-sm" onClick={() => onOpen(entry.date)}>
+          Voir le jour
         </button>
       </div>
     </aside>
@@ -224,26 +307,6 @@ function Priorities({ setEntries }: { setEntries: (fn: (e: PlanEntry[]) => PlanE
           </button>
         </div>
       )}
-    </MiniPanel>
-  );
-}
-
-function Fridge() {
-  const { data, today } = useApp();
-  const items = leftoversInFridge(data.plan.entries, data.recipes, today);
-  if (items.length === 0) return null;
-  return (
-    <MiniPanel title="Au frigo">
-      <ul className="plain">
-        {items.map((it) => (
-          <li key={it.cook.id} className="fridge-row">
-            <span>{it.name}</span>
-            <span className="muted small num">
-              {it.portionsLeft} repas · avant {formatShort(it.eatBefore)}
-            </span>
-          </li>
-        ))}
-      </ul>
     </MiniPanel>
   );
 }

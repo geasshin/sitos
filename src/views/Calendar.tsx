@@ -155,7 +155,8 @@ export function CalendarView({ focusDate }: { focusDate?: ISODate }) {
 
   const openAdd = (d: ISODate) => {
     const meals = (entriesByDate.get(d) ?? []).filter((e) => e.kind !== 'out');
-    setComposer({ date: d, sameDay: meals.length > 0 });
+    // Passé : on complète après coup, une portion, sans décaler la suite du plan.
+    setComposer({ date: d, sameDay: meals.length > 0 || d < today });
   };
 
   return (
@@ -208,7 +209,7 @@ export function CalendarView({ focusDate }: { focusDate?: ISODate }) {
                   const sameAfter =
                     leftover && i < 6 && (entriesByDate.get(week[i + 1]) ?? []).some((e) => e.kind === 'leftover' && e.batchId === first.batchId);
                   const idle = list.length === 0;
-                  const canAdd = d >= today && !out && meals.length < targets.mealsPerDay;
+                  const canAdd = !out && meals.length < targets.mealsPerDay;
                   const cls = [
                     'cal-day',
                     d.slice(0, 7) !== visibleMonth.slice(0, 7) && 'is-outside',
@@ -389,7 +390,8 @@ function DayPanel({
 }) {
   const app = useApp();
   const { data, today, targets } = app;
-  const editable = date >= today;
+  /** Un jour passé reste modifiable : on peut y ajouter un repas et compléter la journée après coup. */
+  const canShift = date >= today;
   const dayEntries = entriesOn(data, date);
   const out = dayEntries.find((e) => e.kind === 'out');
   const meals = dayEntries.filter((e) => e.kind !== 'out');
@@ -427,7 +429,7 @@ function DayPanel({
             <p className="week-meal-kicker">Repas dehors</p>
             <h3 className="week-meal-name">Dehors</h3>
             <p className="hint">La journée ne compte pas dans le bilan.</p>
-            {editable && (
+            {canShift && (
               <div className="week-meal-actions">
                 <button type="button" className="secondary-button is-sm" onClick={() => setEntries((e) => unmarkOut(e, out.id))}>
                   <X size={14} aria-hidden /> Finalement à la maison
@@ -444,11 +446,12 @@ function DayPanel({
                 index={i}
                 numbered={slots > 1}
                 date={date}
+                canShift={canShift}
                 setEntries={setEntries}
                 onSelect={onSelect}
                 onEdit={onEdit}
               />
-            ) : editable ? (
+            ) : (
               <button key={`slot-${i}`} type="button" className="week-add" onClick={onAdd}>
                 <span className="week-add-plus" aria-hidden>
                   <Plus size={18} strokeWidth={1.8} />
@@ -458,14 +461,10 @@ function DayPanel({
                   <span className="week-add-sub">Une recette ou un plat maison</span>
                 </span>
               </button>
-            ) : i === 0 ? (
-              <p key="none" className="muted small">
-                Rien de noté ce jour-là.
-              </p>
-            ) : null,
+            ),
           )
         )}
-        {editable && !out && meals.length === 0 && (
+        {canShift && !out && meals.length === 0 && (
           <button type="button" className="text-button is-sm week-out" onClick={() => setEntries((e) => markOut(e, date))}>
             <Utensils size={14} aria-hidden /> Je mange dehors ce jour-là
           </button>
@@ -487,6 +486,7 @@ function DayMeal({
   index,
   numbered,
   date,
+  canShift,
   setEntries,
   onSelect,
   onEdit,
@@ -495,6 +495,7 @@ function DayMeal({
   index: number;
   numbered: boolean;
   date: ISODate;
+  canShift: boolean;
   setEntries: SetEntries;
   onSelect: (d: ISODate) => void;
   onEdit: (target: ComposerTarget) => void;
@@ -505,7 +506,6 @@ function DayMeal({
   if (!meal) return null;
   const portion = mealPortion(foods, meal, entry.eaten ?? 1);
   const empty = meal.ingredients.length === 0;
-  const editable = date >= today && !entry.done;
   const rests = data.plan.entries.filter((e) => e.kind === 'leftover' && e.batchId === meal.cook.id).sort((a, b) => (a.date < b.date ? -1 : 1));
   const kind =
     entry.kind === 'leftover'
@@ -531,7 +531,7 @@ function DayMeal({
           },
         ]
       : []),
-    ...(editable
+    ...(canShift
       ? [
           {
             label: 'Échanger avec le plat d’avant',
@@ -552,6 +552,11 @@ function DayMeal({
                 },
               ]
             : []),
+        ]
+      : []),
+    // Un repas noté par erreur se retire aussi après coup : rien d'autre ne bouge.
+    ...(!entry.done
+      ? [
           {
             label: entry.kind === 'cook' && rests.length ? 'Retirer, avec ses restes' : 'Retirer du plan',
             icon: Trash2,

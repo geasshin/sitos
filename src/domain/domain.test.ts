@@ -360,6 +360,35 @@ describe('composer un repas', () => {
     expect(added.ingredients).toBeUndefined();
   });
 
+  it('un repas ajouté après coup ne crée ni reste ni décalage', () => {
+    const start = [cook('c1', '2026-11-14'), cook('b', '2026-11-15', 'riz-seul', 1)];
+    const out = placeMeal(
+      start,
+      recipes,
+      '2026-11-13',
+      { recipeId: 'riz-courgette', portions: 1, ingredients: [{ foodId: 'riz', qty: 100 }, { foodId: 'courgette', qty: 1 }] },
+      { noShift: true, sameDay: true },
+    );
+    expect(out.filter((e) => e.kind === 'leftover')).toHaveLength(0);
+    expect(out.find((e) => e.id === 'c1')!.date).toBe('2026-11-14');
+    expect(out.find((e) => e.id === 'b')!.date).toBe('2026-11-15');
+    expect(out.find((e) => e.date === '2026-11-13')).toMatchObject({ kind: 'cook', recipeId: 'riz-courgette', portions: 1 });
+  });
+
+  it('remplacer un repas passé ne décale pas la suite', () => {
+    const start = [cook('c1', '2026-11-14'), left('r1', '2026-11-15', 'c1'), cook('b', '2026-11-16', 'riz-seul', 1)];
+    const out = placeMeal(
+      start,
+      recipes,
+      '2026-11-14',
+      { recipeId: 'riz-seul', portions: 1, ingredients: [{ foodId: 'riz', qty: 100 }] },
+      { cookId: 'c1', noShift: true, sameDay: true },
+    );
+    expect(out.find((e) => e.id === 'b')!.date).toBe('2026-11-16');
+    expect(out.filter((e) => e.date === '2026-11-14')).toMatchObject([{ kind: 'cook', recipeId: 'riz-seul', portions: 1 }]);
+    expect(out.find((e) => e.id === 'r1')).toBeUndefined();
+  });
+
   it('modifier la même fiche met à jour la cuisson sur place, restes compris', () => {
     const start = [cook('c1', '2026-11-14'), left('r1', '2026-11-15', 'c1'), cook('b', '2026-11-16', 'riz-seul', 1)];
     const out = placeMeal(start, recipes, '2026-11-14', { recipeId: 'riz-courgette', portions: 3, ingredients: [{ foodId: 'riz', qty: 300 }, { foodId: 'courgette', qty: 2 }] }, { cookId: 'c1' });

@@ -4,7 +4,7 @@ import { formatShort } from '../domain/dates';
 import { mealOf, mealPortion } from '../domain/nutrition';
 import { toggleDone } from '../domain/plan';
 import { splitAmount } from '../domain/stock';
-import type { PlanEntry } from '../domain/types';
+import type { ISODate, PlanEntry } from '../domain/types';
 import { MealPlate } from './MealPlate';
 import { Cover } from './recipe';
 
@@ -24,6 +24,7 @@ export function MealCard({
   entry,
   index,
   single,
+  date,
   onAdd,
   onIngredients,
   onRecipe,
@@ -33,6 +34,7 @@ export function MealCard({
   entry?: PlanEntry;
   index: number;
   single: boolean;
+  date: ISODate;
   onAdd: () => void;
   onIngredients: (cook: PlanEntry, entry: PlanEntry, editable: boolean) => void;
   onRecipe: (id: string) => void;
@@ -40,7 +42,8 @@ export function MealCard({
   showOut: boolean;
 }) {
   const app = useApp();
-  const { data, store, foods, targets } = app;
+  const { data, store, foods, targets, today } = app;
+  const future = date > today;
 
   if (!entry) {
     return (
@@ -114,16 +117,10 @@ export function MealCard({
           )}
 
           {!empty && (
-            <div className="meal-content-row">
-              {single && (
-                <div className="meal-visual" role="img" aria-label={meal.recipe?.cover ? 'Photo de la recette' : 'Visuel du repas'}>
-                  {meal.recipe?.cover ? (
-                    <Cover recipe={meal.recipe} ratio="square" className="meal-visual-media" />
-                  ) : (
-                    <span className="meal-visual-media meal-visual-icon" aria-hidden>
-                      <Utensils size={32} strokeWidth={1.5} />
-                    </span>
-                  )}
+            <div className={`meal-content-row ${single && meal.recipe?.cover ? 'has-cover' : ''}`}>
+              {single && meal.recipe?.cover && (
+                <div className="meal-visual" role="img" aria-label="Photo de la recette">
+                  <Cover recipe={meal.recipe} ratio="square" className="meal-visual-media" />
                 </div>
               )}
 
@@ -196,7 +193,7 @@ export function MealCard({
           >
             Je n’ai pas mangé
           </button>
-        ) : (
+        ) : future ? null : (
           <button
             type="button"
             className="primary-button is-sm meal-eat"

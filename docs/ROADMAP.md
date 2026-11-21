@@ -57,6 +57,11 @@ seulement ⌘Z, et une puce le rappelle quelques secondes après un changement.
 > le score devient un anneau circulaire ; « À découvrir » cède la place à une « Dépense énergétique » verrouillée.
 > Le catalogue passe à des bases ajustables (pièces ou grammes). À garder pour plus tard : direction artistique plus
 > colorée, connexion API des balances/applications de poids et des données de santé (pas, sport, calories dépensées).
+>
+> **Jours rétroactifs (21 novembre 2026)** : la page ouvre les sept jours de la semaine ; un jour passé s'y complète
+> comme un jour à venir (plat, compléments, quantités). Semaine accepte un plat sur un jour passé et « Pour compléter »
+> y fonctionne (suggestions, ajout, quantité). Un repas ajouté après coup compte une portion et ne décale jamais la
+> suite du plan. Le module « Au frigo » est retiré.
 
 Garder : le plat du jour et « C'est fait », le bilan, « À utiliser vite ».
 Changer :

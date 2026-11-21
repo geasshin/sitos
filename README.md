@@ -17,10 +17,12 @@ s'annoncent dans l'app (carte en bas à droite) et s'installent d'un clic.
 
 ## Ce qu'elle fait
 
-- **Aujourd'hui** : autant de repas que le réglage (1 à 3). La carte sépare la recette à gauche (titre et courte liste
+- **Aujourd'hui** : autant de repas que le réglage (1 à 3). Une bande de sept jours ouvre n'importe quel jour de la
+  semaine dans la page : un jour passé se complète après coup, repas et compléments compris, sans décaler le plan.
+  La carte sépare la recette à gauche (titre et courte liste
   d'ingrédients) de la nutrition à droite (assiette de composition sur un repas unique, kcal / protéines / fibres).
-  Une tuile carrée sans légende occupe le bas de la colonne gauche : photo carrée de la recette si elle existe,
-  sinon une icône de couverts. Elle est centrée sur la hauteur des ingrédients placés à sa droite.
+  Quand la fiche a une photo, une tuile carrée sans légende ouvre la ligne des ingrédients ; sans photo, les
+  ingrédients gardent toute la largeur et la colonne de droite réunit l'assiette et les chiffres.
   Une barre d'actions groupée réunit « Modifier les ingrédients », « Voir la recette », « Je mange dehors » et
   « J'ai mangé » / « Je n'ai pas mangé » aligné à droite. Le mot **Repas principal** figure dans la carte, au-dessus du
   numéro et du nom du plat : même typographie et même icône de titre que **Bilan du jour**.
@@ -52,14 +54,17 @@ s'annoncent dans l'app (carte en bas à droite) et s'installent d'un clic.
   objectifs nutritionnels, fruits par jour ; apparence (comme le Mac, clair, sombre) ; dossier des données et
   sauvegarde manuelle ; à propos et sources.
 - **Repas non coché** : rien ne sort du stock tant que le repas n'est pas coché. Aujourd'hui le rappelle dans une
-  notification en bas à droite, un repas à la fois : Mangé, ou Pas mangé (clos sans toucher au stock).
+  notification en bas à droite, un repas à la fois : Mangé, ou Pas mangé (clos sans toucher au stock). Un repas oublié
+  peut être ajouté sur un jour passé, dans Aujourd'hui ou dans Semaine : il compte une portion et ne décale pas la
+  suite du plan.
 - **Portion** : la question « La portion était… » a été retirée (jugée inutile). Une portion déjà notée (`eaten`)
   compte toujours dans le bilan de la journée, jamais dans la fiche ni le stock.
 - **Repas principaux par jour** (1 à 3) : Aujourd'hui affiche autant de cartes que ce réglage, et le calendrier
   accepte plusieurs repas le même jour sans décaler les autres. La part de la journée que pèse un repas suit le réglage.
 - **Compléments** : dans le module Note du jour, un catalogue chiffré (un skyr, une banane, 10 g d'amandes…),
   les suggestions qui comblent le mieux la journée, la recherche, et la création d'un complément ou d'un aliment
-  à la main. Ajouter un complément met le bilan et la note à jour et sort les quantités du stock.
+  à la main. Ajouter un complément met le bilan et la note à jour et sort les quantités du stock. Chaque complément
+  garde sa quantité ajustable, y compris sur un jour passé, où les suggestions restent disponibles après coup.
 
 - **Recettes** : bibliothèque héritée de Sylloge. Le filtre « Réalisables maintenant » ne montre que ce que le stock
   permet ; les fiches sans quantités se relient au stock en une minute (l'app propose produit et quantité par ligne).

@@ -1,4 +1,4 @@
-import type { Ingredient, SnackIdea } from './types';
+import type { Ingredient, Snack, SnackIdea } from './types';
 
 /**
  * Catalogue livré avec l'app. Chaque entrée décrit une base ajustable : un œuf, une clémentine,
@@ -133,4 +133,26 @@ export function mergeComplements(ideas: SnackIdea[]): SnackIdea[] {
 export function searchComplements(ideas: SnackIdea[], query: string): SnackIdea[] {
   const q = norm(query);
   return q ? ideas.filter((idea) => norm(idea.name).includes(q)) : ideas;
+}
+
+/** Quantité d'un complément déjà au journal : celle retenue, sinon celle de sa base. */
+export function snackAmount(snack: Snack): number {
+  return snack.amount ?? baseAmount(snack);
+}
+
+/** Base de catalogue d'un complément déjà ajouté, si elle existe encore. */
+export function snackBase(snack: Snack, ideas: SnackIdea[]): SnackIdea | undefined {
+  return snack.ideaId ? ideas.find((idea) => idea.id === snack.ideaId) : undefined;
+}
+
+/**
+ * Les ingrédients d'un complément pour une nouvelle quantité. Une base connue repart de zéro
+ * (fiable même après plusieurs changements) ; un complément saisi à la main garde ses proportions.
+ */
+export function snackItems(snack: Snack, ideas: SnackIdea[], amount: number): Ingredient[] {
+  const idea = snackBase(snack, ideas);
+  if (idea) return scaledItems(idea, amount);
+  const current = snackAmount(snack);
+  const factor = current > 0 ? amount / current : 1;
+  return snack.items.map((item) => ({ ...item, qty: Math.round(item.qty * factor * 100) / 100 }));
 }

@@ -267,20 +267,6 @@ export function validatePlan(entries: PlanEntry[], recipes: Recipe[], today: ISO
   return out;
 }
 
-/** Restes cuisinés encore au frigo à une date donnée. */
-export function leftoversInFridge(entries: PlanEntry[], recipes: Recipe[], today: ISODate) {
-  const out: { cook: PlanEntry; name: string; portionsLeft: number; eatBefore: ISODate }[] = [];
-  for (const cook of entries) {
-    if (cook.kind !== 'cook' || !cook.done || cook.date > today) continue;
-    const meal = mealOfCook(recipes, cook);
-    const eaten = 1 + entries.filter((x) => x.kind === 'leftover' && x.batchId === cook.id && x.done && x.date <= today).length;
-    const left = meal.portions - eaten;
-    const eatBefore = addDays(cook.date, meal.fridgeDays);
-    if (left > 0 && eatBefore >= today) out.push({ cook, name: meal.name, portionsLeft: left, eatBefore });
-  }
-  return out;
-}
-
 /**
  * Un repas de plus le même jour, sans rien décaler : c'est ce que demandent deux ou trois
  * repas par jour. Réservé aux repas simples (une portion), pour ne pas empiler des restes.
@@ -347,20 +333,19 @@ function cookFields(recipes: Recipe[], draft: MealDraft): Omit<PlanEntry, 'id' |
  *   troisième repas, une portion) ; sinon la cuisson et ses restes s'insèrent comme `planRecipe`.
  * - Avec `cookId` : la même fiche (ou le même plat maison) est mise à jour sur place, restes compris ;
  *   une autre fiche remplace la cuisson au même jour. La fiche de la bibliothèque n'est jamais touchée.
+ * - `noShift` : jamais de restes ni de décalage, pour un jour passé qu'on complète après coup.
  */
 export function placeMeal(
   entries: PlanEntry[],
   recipes: Recipe[],
   date: ISODate,
   draft: MealDraft,
-  opts: { cookId?: string; sameDay?: boolean } = {},
+  opts: { cookId?: string; sameDay?: boolean; noShift?: boolean } = {},
 ): PlanEntry[] {
   const current = opts.cookId ? entries.find((e) => e.id === opts.cookId && e.kind === 'cook') : undefined;
   const at = current?.date ?? date;
   // Un repas ajouté à un jour qui en porte déjà un reste à une portion : il ne décale rien.
-  const single = current
-    ? entries.some((e) => e.date === at && e.id !== current.id && e.kind !== 'out')
-    : !!opts.sameDay;
+  const single = !!opts.noShift || (current ? entries.some((e) => e.date === at && e.id !== current.id && e.kind !== 'out') : !!opts.sameDay);
   const portions = single && !(current && sameCook(current, draft)) ? 1 : Math.max(1, Math.round(draft.portions));
   const fields = cookFields(recipes, { ...draft, portions });
 

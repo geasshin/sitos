@@ -85,9 +85,11 @@ export function MealComposer({
   const leftover = entry?.kind === 'leftover';
   const cookDone = !!cook?.done;
   const day = entry?.date ?? date;
-  const single = cook ? entriesOn(data, cook.date).some((e) => e.id !== cook.id && e.kind !== 'out') : sameDay;
+  /** Un jour passé se complète après coup : une portion, sans jamais décaler la suite du plan. */
+  const retro = day < today;
+  const single = retro || (cook ? entriesOn(data, cook.date).some((e) => e.id !== cook.id && e.kind !== 'out') : sameDay);
   const canSwitch = !leftover && !cookDone;
-  const canRemove = !!entry && !entry.done && day >= today;
+  const canRemove = !!entry && !entry.done;
 
   const pickRecipe = (r: Recipe) => {
     const portions = single ? 1 : portionsOf(r);
@@ -154,7 +156,7 @@ export function MealComposer({
     const recipes = created ? [...data.recipes, created] : data.recipes;
     const linkAfter = created && cook && !cook.recipeId ? { cookId: cook.id, recipeId: created.id } : undefined;
     store.update('plan', (p) => {
-      let entries = placeMeal(p.entries, recipes, date, next, { cookId: cook?.id, sameDay });
+      let entries = placeMeal(p.entries, recipes, date, next, { cookId: cook?.id, sameDay, noShift: retro });
       if (linkAfter) entries = linkCookToRecipe(entries, linkAfter.cookId, linkAfter.recipeId);
       return { ...p, entries };
     });
@@ -203,6 +205,7 @@ export function MealComposer({
         {leftover && cook && (
           <p className="hint composer-note">Ce repas est un reste de la cuisson du {formatShort(cook.date)} : les quantités valent pour toute la cuisson.</p>
         )}
+        {retro && !cook && <p className="hint composer-note">Repas ajouté après coup : une portion, la suite du plan ne bouge pas.</p>}
         {cookDone && <p className="hint composer-note">Repas déjà validé : modifier les quantités ajuste le stock.</p>}
 
         {!single && !leftover && (

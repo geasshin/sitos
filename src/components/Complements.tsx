@@ -1,12 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { BookOpen, Check, Plus, Search, X } from 'lucide-react';
 import { useApp } from '../context';
-import { recommendSides, sideCandidates } from '../domain/balance';
-import { baseAmount, mergeComplements, scaledItems, searchComplements } from '../domain/complements';
+import { recommendSides, sideCandidates, type Gap } from '../domain/balance';
+import { baseAmount, mergeComplements, scaledItems, searchComplements, snackAmount, snackItems } from '../domain/complements';
 import { dayNutrition, itemsNutrients, ZERO, type FoodIndex } from '../domain/nutrition';
 import { newId } from '../domain/plan';
 import { amount, availableOn } from '../domain/stock';
-import type { Food, Ingredient, ISODate } from '../domain/types';
+import type { Food, Ingredient, ISODate, Snack, SnackIdea } from '../domain/types';
 import { Modal } from './Modal';
 
 const fr = (v: number) => Math.round(v).toLocaleString('fr-FR');
@@ -27,6 +27,13 @@ function facts(foodIndex: FoodIndex, items: Ingredient[]) {
   const n = itemsNutrients(foodIndex, items);
   return `${fr(n.kcal)} kcal · ${fr(n.protein)} g prot.`;
 }
+
+const GAP_LABEL: Record<Gap['key'], (v: number) => string> = {
+  kcal: (v) => `${fr(v)} kcal`,
+  protein: (v) => `${fr(v)} g de protéines`,
+  fiber: (v) => `${fr(v)} g de fibres`,
+  plant: (v) => `${fr(v)} g de légumes et fruits`,
+};
 
 /**
  * Le catalogue de compléments d'une journée : ce qui est déjà choisi, ce qui comble le mieux
@@ -54,7 +61,10 @@ export function Complements({ date }: { date: ISODate }) {
     const safe = Number.isFinite(value) ? Math.max(step, Math.round(value * 100) / 100) : baseAmount(idea);
     setAmounts((prev) => ({ ...prev, [idea.id]: safe }));
   };
-  const addIdea = (idea: PortionIdea) => add(ideaName(idea), scaledItems(idea, amountOf(idea)));
+  const addIdea = (idea: PortionIdea) => {
+    const value = amountOf(idea);
+    add(ideaName(idea), scaledItems(idea, value), { id: idea.id, amount: value });
+  };
 
   const ideas = useMemo(() => mergeComplements(data.snackIdeas), [data.snackIdeas]);
   const known = useMemo(() => ideas.filter((c) => c.items.every((i) => foods.has(i.foodId))), [ideas, foods]);
@@ -86,11 +96,25 @@ export function Complements({ date }: { date: ISODate }) {
     });
   }, [known, query, avail, chosenLabels]);
 
-  const add = (label: string, items: Ingredient[]) => store.update('journal', (j) => ({ ...j, snacks: [...j.snacks, { id: newId('s'), date, label, items }] }));
+  const add = (label: string, items: Ingredient[], base?: { id?: string; amount?: number }) =>
+    store.update('journal', (j) => ({
+      ...j,
+      snacks: [
+        ...j.snacks,
+        {
+          id: newId('s'),
+          date,
+          label,
+          items,
+          ...(base?.id ? { ideaId: base.id } : {}),
+          ...(base?.amount ? { amount: base.amount } : {}),
+        },
+      ],
+    }));
   const remove = (id: string) => store.update('journal', (j) => ({ ...j, snacks: j.snacks.filter((s) => s.id !== id) }));
 
   const create = (label: string, items: Ingredient[], keep: boolean) => {
-    add(label, items);
+    add(label, items, { amount: items[0]?.qty });
     if (!keep) return;
     store.update('snackIdeas', (list) => {
       const key = norm(label);
@@ -120,14 +144,9 @@ export function Complements({ date }: { date: ISODate }) {
       </div>
 
       {chosen.length > 0 && (
-        <ul className="complete-added" aria-label="Compléments choisis">
+        <ul className="snack-list" aria-label="Compléments choisis">
           {chosen.map((s) => (
-            <li key={s.id} className="complete-chip" title={facts(foods, s.items)}>
-              <Check size={13} aria-hidden /> {s.label}
-              <button type="button" onClick={() => remove(s.id)} aria-label={`Retirer ${s.label}`}>
-                <X size={13} aria-hidden />
-              </button>
-            </li>
+            <SnackRow key={s.id} snack={s} ideas={ideas} onRemove={() => remove(s.id)} />
           ))}
         </ul>
       )}
@@ -167,6 +186,19 @@ export function Complements({ date }: { date: ISODate }) {
         </ul>
       ) : (
         <p className="complete-done">{reco.missing.length === 0 ? 'La journée est complète.' : 'Rien dans le stock ne comble ce qui manque.'}</p>
+      )}
+
+      {picks.length > 0 && reco.missing.length > 0 && (
+        <div className="complete-left">
+          <span className="complete-left-label">Il manquera encore</span>
+          <ul className="complete-gaps">
+            {reco.missing.map((g) => (
+              <li key={g.key} className="complete-gap num">
+                {GAP_LABEL[g.key](g.amount)}
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       <button type="button" className="secondary-button comp-open-catalog" onClick={openCatalog}>
@@ -261,6 +293,55 @@ export function Complements({ date }: { date: ISODate }) {
         )}
       </Modal>
     </div>
+  );
+}
+
+/** Une portion déjà ajoutée : son nom, sa quantité ajustable, ses valeurs, et le retrait. */
+function SnackRow({ snack, ideas, onRemove }: { snack: Snack; ideas: SnackIdea[]; onRemove: () => void }) {
+  const { foods, store } = useApp();
+  const current = snackAmount(snack);
+  const first = foods.get(snack.items[0]?.foodId ?? '');
+  const unit = first?.unit === 'pièce' ? 'pièce' : first?.unit === 'ml' ? 'ml' : 'g';
+  const step = first?.unit === 'pièce' ? 0.5 : 10;
+  const [value, setValue] = useState(String(current));
+  useEffect(() => setValue(String(current)), [current]);
+
+  const commit = (raw: string) => {
+    const next = Number(raw.replace(',', '.'));
+    if (!Number.isFinite(next) || next <= 0) {
+      setValue(String(current));
+      return;
+    }
+    const items = snackItems(snack, ideas, next);
+    store.update('journal', (j) => ({
+      ...j,
+      snacks: j.snacks.map((s) => (s.id === snack.id ? { ...s, items, amount: next } : s)),
+    }));
+  };
+
+  return (
+    <li className="snack-row">
+      <span className="snack-row-name">{snack.label}</span>
+      <span className="comp-add">
+        <input
+          className="comp-qty-input num"
+          type="number"
+          min={step}
+          step={step}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onBlur={(e) => commit(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+          aria-label={`Quantité de ${snack.label} en ${unit}`}
+          title="Ajuster la quantité"
+        />
+        <span className="comp-unit">{unit}</span>
+      </span>
+      <span className="snack-row-facts num">{facts(foods, snack.items)}</span>
+      <button type="button" className="icon-button is-sm" onClick={onRemove} aria-label={`Retirer ${snack.label}`}>
+        <X size={13} aria-hidden />
+      </button>
+    </li>
   );
 }
 

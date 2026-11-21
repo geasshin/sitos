@@ -3,6 +3,7 @@ import { Gauge, Info } from 'lucide-react';
 import { useApp } from '../context';
 import { assessDay, type BalanceRow } from '../domain/balance';
 import { dayNutrition } from '../domain/nutrition';
+import type { ISODate } from '../domain/types';
 import { BalanceRows, SplitBar } from './Balance';
 import { Complements } from './Complements';
 import { Modal } from './Modal';
@@ -64,11 +65,12 @@ const RING = 2 * Math.PI * 42;
  * les chiffres à gauche, les compléments à droite. Les « reste X » des lignes
  * disent ce qui manque ; la note ne les répète pas.
  */
-export function NutritionPanel() {
+export function NutritionPanel({ date }: { date?: ISODate }) {
   const app = useApp();
   const [infoOpen, setInfoOpen] = useState(false);
   const { data, foods, targets, today } = app;
-  const day = dayNutrition(data, foods, today);
+  const dayDate = date ?? today;
+  const day = dayNutrition(data, foods, dayDate);
   if (day.out) return null;
 
   const balance = assessDay(day.total, day.plantG, targets);
@@ -161,7 +163,7 @@ export function NutritionPanel() {
         </div>
 
         <div className="nutrition-secondary">
-          <Complements date={today} />
+          <Complements date={dayDate} />
         </div>
       </div>
       </section>
