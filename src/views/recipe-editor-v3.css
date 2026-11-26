@@ -1,0 +1,928 @@
+/* L’éditeur de recette, troisième charte : le carnet qu’on remplit.
+   Quatre sections courtes sur du papier, des étiquettes au-dessus des champs,
+   un aperçu qui suit la frappe, et l’enregistrement à portée en haut comme en bas.
+   Tout est préfixé re- : cette feuille ne touche aucune autre page. */
+
+.re-page {
+  --re-edge: var(--line-strong);
+  --re-edge-soft: var(--line);
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .re-page {
+    --re-edge: color-mix(in srgb, var(--line-strong) 55%, var(--ink-soft));
+    --re-edge-soft: color-mix(in srgb, var(--line) 55%, var(--ink-soft));
+  }
+}
+
+/* ---------- la barre du haut ---------- */
+
+.re-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+}
+
+.re-toolbar .s-btn.is-ghost {
+  height: 38px;
+  padding: 0 12px;
+}
+
+.re-crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--ink-faint);
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.re-crumb b {
+  color: var(--ink-soft);
+  font-weight: 800;
+}
+
+.re-save {
+  height: 48px;
+  padding: 0 22px;
+  font-size: 16px;
+  box-shadow: var(--pop);
+}
+
+.re-save:active {
+  box-shadow: none;
+  transform: translate(3px, 3px);
+}
+
+.re-toolbar > .re-save {
+  margin-left: auto;
+}
+
+/* ---------- le titre de la page ---------- */
+
+.re-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 4px 2px 0;
+  min-width: 0;
+}
+
+.re-kicker {
+  height: 26px;
+  font-size: 11.5px;
+}
+
+.re-title {
+  max-width: 100%;
+  margin: 2px 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(34px, 3.3vw, 46px);
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -0.015em;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.re-lede {
+  max-width: 72ch;
+  color: var(--ink-soft);
+  font-size: 14.5px;
+  font-weight: 600;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.re-lede b {
+  color: var(--ink);
+  font-weight: 800;
+}
+
+/* ---------- la page : formulaire à gauche, aperçu à droite ---------- */
+
+.re-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 310px;
+  gap: 22px 26px;
+  align-items: start;
+  min-width: 0;
+}
+
+.re-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+/* ---------- une section ---------- */
+
+.re-card {
+  min-width: 0;
+  padding: 18px 20px 20px;
+  background: var(--card);
+  border: 2px solid var(--re-edge);
+  border-radius: var(--radius-xl);
+}
+
+.re-card-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+  padding-bottom: 14px;
+  margin-bottom: 16px;
+  border-bottom: 1px dashed var(--re-edge-soft);
+}
+
+.re-card-num {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  color: var(--ink-soft);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--paper);
+  border: 2px solid var(--re-edge);
+  border-radius: 50%;
+}
+
+.re-card-titlewrap {
+  min-width: 0;
+}
+
+.re-card-titlewrap h2 {
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.re-card-titlewrap p {
+  max-width: 62ch;
+  margin-top: 2px;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.re-card-meta {
+  align-self: start;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+/* ---------- la grille des champs ---------- */
+
+.re-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 18px;
+  min-width: 0;
+}
+
+.re-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.re-field.is-wide {
+  grid-column: 1 / -1;
+}
+
+.re-trio {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px 18px;
+  min-width: 0;
+}
+
+.re-field > label,
+.re-label,
+.re-label-row label {
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.re-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.re-required {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  height: 20px;
+  padding: 0 7px;
+  color: var(--butter-ink);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: var(--butter-soft);
+  border-radius: var(--radius-pill);
+}
+
+/* ---------- champs ---------- */
+
+.re-input,
+.re-textarea,
+.re-select select {
+  width: 100%;
+  min-width: 0;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 650;
+  background: var(--paper);
+  border: 2px solid var(--re-edge);
+  border-radius: 14px;
+  transition: border-color 120ms var(--ease-out), box-shadow 120ms var(--ease-out), background-color 120ms var(--ease-out);
+}
+
+.re-input {
+  height: 44px;
+  min-height: 0;
+  padding: 0 14px;
+}
+
+.re-input.is-title {
+  height: 56px;
+  padding: 0 16px;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  background: var(--card);
+}
+
+.re-input.is-title::placeholder {
+  font-weight: 400;
+}
+
+.re-input:hover,
+.re-textarea:hover,
+.re-select select:hover {
+  border-color: var(--ink-faint);
+}
+
+.re-input:focus-visible,
+.re-textarea:focus-visible,
+.re-select select:focus-visible {
+  background: var(--card);
+  border-color: var(--ink);
+  outline: none;
+  box-shadow: var(--pop-sm);
+}
+
+.re-input::placeholder,
+.re-textarea::placeholder {
+  color: var(--ink-faint);
+  font-weight: 600;
+}
+
+.re-input[aria-invalid="true"] {
+  background: var(--peach-soft);
+  border-color: var(--peach-ink);
+}
+
+.re-textarea {
+  min-height: 160px;
+  padding: 11px 14px;
+  font-weight: 600;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+.re-textarea.is-steps {
+  min-height: 190px;
+}
+
+.re-textarea.is-note {
+  min-height: 118px;
+}
+
+/* le menu déroulant garde son chevron dessiné */
+
+.re-select {
+  position: relative;
+  display: flex;
+  min-width: 0;
+}
+
+.re-select select {
+  height: 44px;
+  min-height: 0;
+  padding: 0 40px 0 14px;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.re-select svg {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  color: var(--ink-soft);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+/* la conservation : le nombre, puis son unité */
+
+.re-suffix {
+  position: relative;
+  display: flex;
+  min-width: 0;
+}
+
+.re-suffix input {
+  padding-right: 62px;
+}
+
+.re-suffix input::-webkit-outer-spin-button,
+.re-suffix input::-webkit-inner-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+.re-suffix input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.re-suffix span {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  color: var(--ink-faint);
+  font-size: 11.5px;
+  font-weight: 800;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+/* ---------- les statuts, en pastilles ---------- */
+
+.re-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding-top: 1px;
+}
+
+.re-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 13px;
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 800;
+  white-space: nowrap;
+  background: var(--card);
+  border: 2px solid var(--re-edge);
+  border-radius: var(--radius-pill);
+  transition: color 120ms var(--ease-out), background-color 120ms var(--ease-out), border-color 120ms var(--ease-out), box-shadow 120ms var(--ease-out);
+}
+
+.re-pill:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.re-pill .re-dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.re-pill.is-todo .re-dot {
+  background: var(--butter);
+  border: 1.5px solid var(--butter-ink);
+}
+
+.re-pill.is-tested .re-dot {
+  background: var(--mint);
+  border: 1.5px solid var(--mint-ink);
+}
+
+.re-pill.is-mastered .re-dot {
+  background: var(--ink);
+  border: 1.5px solid var(--ink);
+}
+
+.re-pill.is-on {
+  box-shadow: var(--pop-sm);
+}
+
+.re-pill.is-todo.is-on {
+  color: var(--butter-ink);
+  background: var(--butter-soft);
+  border-color: var(--butter-ink);
+}
+
+.re-pill.is-tested.is-on {
+  color: var(--mint-ink);
+  background: var(--mint-soft);
+  border-color: var(--mint-ink);
+}
+
+.re-pill.is-mastered.is-on {
+  color: var(--card);
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+.re-pill.is-mastered.is-on .re-dot {
+  background: var(--butter);
+  border-color: var(--butter);
+}
+
+/* ---------- l’aide, les compteurs, les erreurs ---------- */
+
+.re-help {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.re-field-foot {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.re-field-foot .re-help {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.re-count {
+  flex: none;
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.45;
+  white-space: nowrap;
+}
+
+.re-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  color: var(--peach-ink);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.re-error::before {
+  content: '';
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin-top: 6px;
+  background: var(--peach);
+  border: 1.5px solid var(--peach-ink);
+  border-radius: 50%;
+}
+
+/* ---------- la photo : le champ, puis son aperçu à droite ---------- */
+
+.re-photo-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 108px;
+  gap: 14px;
+  align-items: start;
+  min-width: 0;
+}
+
+.re-photo-main {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.re-photo-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  margin: 0;
+}
+
+.re-photo-shot.poster {
+  width: 108px;
+  height: 108px;
+  aspect-ratio: auto;
+  background-color: var(--butter-soft);
+  background-image: radial-gradient(var(--line) 1px, transparent 1.1px);
+  background-size: 10px 10px;
+  border: 2px solid var(--re-edge);
+  border-radius: 16px;
+  box-shadow: none;
+}
+
+.re-photo-shot img {
+  border-radius: 13px;
+}
+
+.re-photo-shot .poster-fallback {
+  color: var(--butter-ink);
+}
+
+.re-photo-preview figcaption {
+  color: var(--ink-soft);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ---------- le rappel du stock ---------- */
+
+.re-callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 2px;
+  padding: 10px 12px;
+  color: var(--sky-ink);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
+  background: var(--sky-soft);
+  border: 2px dashed color-mix(in srgb, var(--sky-ink) 32%, var(--sky-soft));
+  border-radius: 12px;
+}
+
+.re-callout svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+.re-callout span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- l’aperçu de la fiche ---------- */
+
+.re-aside {
+  position: sticky;
+  top: 88px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.re-preview-card {
+  min-width: 0;
+  padding: 10px;
+  background: var(--card);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--pop);
+}
+
+.re-preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 4px 9px;
+}
+
+.re-preview-kicker {
+  color: var(--ink-faint);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.re-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ink-faint);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.re-live::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: var(--ink);
+  border-radius: 50%;
+}
+
+.re-preview-cover-wrap {
+  min-width: 0;
+}
+
+.re-preview-cover.poster {
+  aspect-ratio: 4 / 3;
+  background-color: var(--butter-soft);
+  background-image: radial-gradient(var(--line) 1px, transparent 1.1px);
+  background-size: 11px 11px;
+  border: 2px solid var(--re-edge);
+  border-radius: 18px;
+  box-shadow: none;
+}
+
+.re-preview-cover img {
+  border-radius: 15px;
+}
+
+.re-preview-cover .poster-fallback {
+  color: var(--butter-ink);
+}
+
+.re-preview-cover .poster-fallback svg {
+  width: 44px;
+  height: 44px;
+}
+
+.re-preview-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 6px 6px;
+}
+
+.re-preview-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.re-preview-chips .s-chip {
+  height: 24px;
+  padding: 0 9px;
+  font-size: 10.5px;
+}
+
+.re-preview-status {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 8px;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: 1.5px dashed currentColor;
+  border-radius: 7px;
+}
+
+.re-preview-status.is-todo {
+  color: var(--butter-ink);
+}
+
+.re-preview-status.is-tested {
+  color: var(--mint-ink);
+}
+
+.re-preview-status.is-mastered {
+  color: var(--ink);
+}
+
+.re-preview-name {
+  margin-top: 3px;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.06;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.re-preview-source {
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.re-preview-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 8px;
+  padding-top: 9px;
+  border-top: 1px dashed var(--re-edge-soft);
+}
+
+.re-preview-fact {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+  color: var(--ink-soft);
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.re-preview-fact svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--ink-faint);
+}
+
+.re-preview-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 9px;
+  padding-top: 8px;
+  color: var(--ink-faint);
+  font-size: 11px;
+  font-weight: 800;
+  border-top: 1px dashed var(--re-edge-soft);
+}
+
+.re-aside-note {
+  padding: 0 6px;
+  color: var(--ink-faint);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* ---------- la barre d’enregistrement du bas ---------- */
+
+.re-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  padding: 12px 14px 12px 20px;
+  background: var(--card);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--pop);
+}
+
+.re-actions-note {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  color: var(--ink-soft);
+  font-size: 11.5px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.re-actions-note b {
+  color: var(--ink);
+  font-size: 12.5px;
+  font-weight: 800;
+}
+
+.re-actions-buttons {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* ---------- largeurs ---------- */
+
+@media (max-width: 1120px) {
+  .re-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* L’aperçu est un luxe de grande largeur : sous 1120 px, la saisie passe devant. */
+  .re-aside {
+    display: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .re-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .re-field.is-wide {
+    grid-column: auto;
+  }
+
+  .re-trio {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .re-card {
+    padding: 16px 16px 18px;
+  }
+
+  .re-card-head {
+    gap: 10px;
+  }
+
+  .re-card-num {
+    width: 34px;
+    height: 34px;
+    font-size: 13px;
+  }
+
+  .re-card-titlewrap h2 {
+    font-size: 19px;
+  }
+
+  .re-actions-buttons {
+    width: 100%;
+  }
+
+  .re-actions-buttons .s-btn {
+    flex: 1;
+  }
+
+  .re-photo-row {
+    grid-template-columns: minmax(0, 1fr) 96px;
+    gap: 12px;
+  }
+
+  .re-photo-shot.poster {
+    width: 96px;
+    height: 96px;
+  }
+}
+
+@media (max-width: 560px) {
+  .re-crumb {
+    display: none;
+  }
+
+  .re-toolbar > .re-save {
+    height: 44px;
+    padding: 0 16px;
+    font-size: 14.5px;
+  }
+
+  .re-title {
+    font-size: 32px;
+  }
+
+  .re-card-meta {
+    display: none;
+  }
+
+  .re-photo-row {
+    grid-template-columns: minmax(0, 1fr) 84px;
+    gap: 10px;
+  }
+
+  .re-photo-shot.poster {
+    width: 84px;
+    height: 84px;
+  }
+}

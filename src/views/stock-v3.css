@@ -1,0 +1,1227 @@
+/* Mon frigo : des étagères de produits frais, un inventaire au sec, une liste qu’on coche.
+   Le pastel dit la fraîcheur (menthe = large, beurre = bientôt, pêche = à cuisiner, rose = périmé).
+   Les formes restent bombées, les ombres franches, et le frigo se lit comme un meuble. */
+
+.stock-page { min-width: 0; max-width: 100%; }
+
+.stock-page .s-pagehead-actions { flex-wrap: wrap; }
+
+/* ---------- les deux portes : étagères, liste de courses ---------- */
+
+.stock-switch {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  width: fit-content;
+  max-width: 100%;
+  padding: 6px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--paper-deep);
+}
+
+.stock-door {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 44px;
+  padding: 0 17px;
+  border: 2px solid transparent;
+  border-radius: var(--radius-pill);
+  background: none;
+  color: var(--ink-soft);
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    background-color 120ms var(--ease-out),
+    border-color 120ms var(--ease-out),
+    color 120ms var(--ease-out),
+    box-shadow 120ms var(--ease-out);
+}
+
+.stock-door svg { flex: none; color: var(--ink-faint); transition: color 120ms var(--ease-out); }
+.stock-door:hover { background: color-mix(in srgb, var(--card) 55%, transparent); color: var(--ink); }
+.stock-door:hover svg { color: var(--ink-soft); }
+
+.stock-door.is-on {
+  background: var(--card);
+  border-color: var(--ink);
+  color: var(--ink);
+  box-shadow: var(--pop-sm);
+}
+.stock-door.is-on svg { color: var(--ink); }
+
+.stock-door-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 7px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--ink) 9%, var(--card));
+  color: var(--ink-soft);
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.stock-door.is-on .stock-door-count { background: var(--ink); color: var(--card); }
+
+/* ---------- chercher, filtrer ---------- */
+
+.stock-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-width: 0; }
+
+.stock-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 1 300px;
+  min-width: 190px;
+  height: 40px;
+  padding: 0 14px;
+  border: 2px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--card);
+  color: var(--ink-faint);
+  transition: border-color 120ms var(--ease-out);
+}
+.stock-search:focus-within { border-color: var(--ink); color: var(--ink-soft); }
+.stock-search svg { flex: none; }
+.stock-search input {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.stock-search input:focus-visible { outline: none; box-shadow: none; border: 0; }
+.stock-search input::placeholder { color: var(--ink-faint); font-weight: 600; }
+.stock-search input::-webkit-search-cancel-button { filter: grayscale(1); opacity: 0.5; }
+
+.stock-filters { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; margin-left: auto; min-width: 0; }
+
+.stock-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 12px;
+  border: 2px solid transparent;
+  border-radius: var(--radius-pill);
+  background: none;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-weight: 800;
+  white-space: nowrap;
+  transition:
+    background-color 120ms var(--ease-out),
+    border-color 120ms var(--ease-out),
+    color 120ms var(--ease-out),
+    box-shadow 120ms var(--ease-out);
+}
+.stock-filter:hover { background: var(--paper-deep); color: var(--ink); }
+.stock-filter.is-on {
+  background: var(--card);
+  border-color: var(--ink);
+  color: var(--ink);
+  box-shadow: var(--pop-sm);
+}
+.stock-filter-count { font-family: var(--font-display); font-size: 12px; font-weight: 600; color: var(--ink-faint); }
+.stock-filter.is-on .stock-filter-count { color: var(--ink); }
+
+/* ---------- le rappel qui presse ---------- */
+
+.stock-press {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 16px 11px 12px;
+  border: 2px solid var(--peach-ink);
+  border-radius: var(--radius-xl);
+  background: var(--peach-soft);
+  color: var(--peach-ink);
+  text-align: left;
+  box-shadow: var(--pop-sm);
+  transition: transform 90ms var(--ease-out), box-shadow 90ms var(--ease-out);
+}
+.stock-press:hover { transform: translate(-1px, -1px); box-shadow: var(--pop); }
+.stock-press:active { transform: translate(1px, 1px); box-shadow: none; }
+
+.stock-press-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border: 2px solid var(--peach-ink);
+  border-radius: 12px;
+  background: var(--peach);
+  color: var(--peach-ink);
+}
+
+.stock-press-text { min-width: 0; font-size: 13px; font-weight: 700; line-height: 1.35; }
+.stock-press-text b { font-family: var(--font-display); font-size: 16px; font-weight: 600; }
+.stock-press-names { font-weight: 700; opacity: 0.85; }
+
+.stock-press-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+  flex: none;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ---------- les meubles ---------- */
+
+.stock-zones { display: flex; flex-direction: column; gap: 26px; min-width: 0; }
+
+.stock-zone { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+.stock-zone-head { display: flex; align-items: center; gap: 12px; min-width: 0; }
+
+.stock-zone-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 46px;
+  height: 46px;
+  border: 2px solid var(--line-strong);
+  border-radius: 15px;
+  background: var(--card);
+  color: var(--ink-soft);
+  box-shadow: var(--pop-sm);
+}
+.stock-zone.is-frigo .stock-zone-icon,
+.stock-zone.is-fruitier .stock-zone-icon {
+  border-color: var(--mint-ink);
+  background: var(--mint-soft);
+  color: var(--mint-ink);
+}
+.stock-zone.is-placard .stock-zone-icon {
+  border-color: var(--lilac-ink);
+  background: var(--lilac-soft);
+  color: var(--lilac-ink);
+}
+.stock-zone-icon.is-watch {
+  border-color: var(--peach-ink);
+  background: var(--peach-soft);
+  color: var(--peach-ink);
+}
+
+.stock-zone-title { min-width: 0; }
+.stock-zone-title h2 { margin: 0; font-size: 24px; line-height: 1.1; }
+.stock-zone-title p { margin: 3px 0 0; font-size: 12.5px; font-weight: 700; color: var(--ink-soft); }
+
+.stock-shelves { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+
+/* ---------- une étagère : son titre, ses produits, sa planche ---------- */
+
+.shelf { display: flex; flex-direction: column; gap: 0; min-width: 0; }
+
+.shelf-head { display: flex; align-items: baseline; gap: 10px; padding: 0 6px 8px; }
+.shelf-head h3 { margin: 0; font-size: 16.5px; font-weight: 500; color: var(--ink); }
+.shelf-meta { font-size: 12px; font-weight: 800; color: var(--ink-faint); }
+
+.shelf-rail {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(148px, 100%), 1fr));
+  gap: 10px;
+  min-width: 0;
+  padding: 0 6px 4px;
+}
+
+.shelf-plank {
+  height: 15px;
+  margin: 0 2px;
+  border: 2px solid var(--line-strong);
+  border-radius: 9px 9px 5px 5px;
+  background: var(--paper-deep);
+  box-shadow:
+    inset 0 4px 0 color-mix(in srgb, var(--card) 55%, var(--paper-deep)),
+    0 4px 0 var(--line);
+}
+
+/* ---------- un produit sur l’étagère ---------- */
+
+.shelf-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 11px 11px 10px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  transition:
+    border-color 120ms var(--ease-out),
+    transform 120ms var(--ease-out),
+    box-shadow 120ms var(--ease-out);
+}
+.shelf-card:hover { border-color: var(--line-strong); }
+
+/* Ce qui est passé, puis ce qui presse : la carte se teinte, sans quitter l’étagère. */
+.shelf-card.is-late {
+  border-color: var(--berry-ink);
+  background: color-mix(in srgb, var(--berry-soft) 45%, var(--card));
+}
+.shelf-card.is-now {
+  border-color: var(--peach-ink);
+  background: color-mix(in srgb, var(--peach-soft) 45%, var(--card));
+}
+.shelf-card.is-gone { opacity: 0.62; }
+
+.shelf-card-top { display: flex; align-items: flex-start; gap: 4px; min-width: 0; }
+
+.shelf-name {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.005em;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow-wrap: anywhere;
+}
+
+.shelf-fix {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: var(--paper-deep);
+  color: var(--ink-faint);
+  transition: background-color 120ms var(--ease-out), color 120ms var(--ease-out), border-color 120ms var(--ease-out);
+}
+.shelf-fix:hover { background: var(--peach-soft); border-color: var(--peach-ink); color: var(--peach-ink); }
+
+/* La quantité est un bouton : un clic ouvre la correction en place. La phrase et la jauge
+   disent la même chose, « reste 250 g sur 500 g achetés », pour qu’aucune barre ne soit muette. */
+.shelf-amount {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  flex-wrap: wrap;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.shelf-amount-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.shelf-amount b {
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink);
+  transition: color 120ms var(--ease-out);
+}
+.shelf-amount:hover b { color: var(--peach-ink); }
+.shelf-amount:hover .shelf-of { text-decoration: underline dotted var(--peach-ink); text-underline-offset: 2px; }
+.shelf-of {
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--ink-soft);
+  white-space: normal;
+}
+
+.shelf-jauge { height: 7px; background: color-mix(in srgb, var(--ink) 9%, var(--card)); }
+/* La jauge dit la quantité restante et prend la couleur de la fraîcheur :
+   une barre pleine ne doit pas rassurer sur un aliment qui périme demain. */
+.shelf-jauge > span { background: var(--ink-soft); }
+.shelf-jauge.is-mint > span { background: var(--mint-ink); }
+.shelf-jauge.is-butter > span { background: var(--butter-ink); }
+.shelf-jauge.is-peach > span { background: var(--peach-ink); }
+.shelf-jauge.is-berry > span { background: var(--berry-ink); }
+
+.shelf-chip {
+  display: inline-block;
+  align-self: flex-start;
+  max-width: 100%;
+  height: auto;
+  min-height: 23px;
+  padding: 3px 8px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1.25;
+  white-space: normal;
+  text-align: left;
+}
+
+.shelf-when { margin: 0; font-size: 11px; font-weight: 700; line-height: 1.35; color: var(--ink-soft); }
+
+/* ---------- un lot entamé : sa quantité, sa date et son compte à rebours ---------- */
+
+.lot-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lot-line {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px 5px;
+  min-width: 0;
+  padding: 4px 6px;
+  border-left: 3px solid var(--line-strong);
+  border-radius: 7px;
+  background: var(--paper-deep);
+}
+
+.lot-tag {
+  flex: none;
+  padding: 0 5px;
+  border-radius: 4px;
+  background: var(--card);
+  color: var(--ink-soft);
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.6;
+  text-transform: uppercase;
+}
+
+.lot-qty {
+  flex: none;
+  font-family: var(--font-display);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.lot-due {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1px 6px;
+  flex: 1 1 100%;
+  min-width: 0;
+  font-size: 9.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--ink-soft);
+}
+
+.lot-date { color: var(--ink-faint); white-space: nowrap; }
+.lot-left { font-weight: 800; white-space: nowrap; }
+
+.lot-line.is-late { border-left-color: var(--berry-ink); background: color-mix(in srgb, var(--berry-soft) 55%, var(--card)); }
+.lot-line.is-now { border-left-color: var(--peach-ink); background: color-mix(in srgb, var(--peach-soft) 55%, var(--card)); }
+.lot-line.is-soon { border-left-color: var(--butter-ink); background: color-mix(in srgb, var(--butter-soft) 55%, var(--card)); }
+.lot-line.is-fine { border-left-color: var(--mint-ink); background: color-mix(in srgb, var(--mint-soft) 55%, var(--card)); }
+.lot-line.is-late .lot-left { color: var(--berry-ink); }
+.lot-line.is-now .lot-left { color: var(--peach-ink); }
+.lot-line.is-soon .lot-left { color: var(--butter-ink); }
+.lot-line.is-fine .lot-left { color: var(--mint-ink); }
+
+.lot-list.is-compact { margin: 0 2px 7px; }
+.lot-list.is-compact .lot-line { padding: 3px 6px; }
+.lot-list.is-compact .lot-qty { font-size: 10.5px; }
+.shelf-zone-word {
+  display: inline-block;
+  margin-right: 3px;
+  padding: 0 5px;
+  border-radius: 5px;
+  background: var(--paper-deep);
+  color: var(--ink-soft);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.6;
+  text-transform: uppercase;
+}
+
+.shelf-boot { display: flex; flex-direction: column; gap: 2px; margin-top: auto; padding-top: 2px; min-width: 0; }
+.shelf-next { font-size: 10.5px; font-weight: 800; color: var(--ink-soft); line-height: 1.3; }
+.shelf-next.is-faint { color: var(--ink-faint); font-weight: 700; }
+.shelf-risk { font-size: 10.5px; font-weight: 800; color: var(--peach-ink); line-height: 1.3; }
+
+/* La correction en place : un champ court, l’unité à côté, l’erreur sous la ligne. */
+.qty-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  max-width: 100%;
+  min-width: 0;
+}
+.qty-edit input {
+  width: 76px;
+  max-width: 100%;
+  height: 28px;
+  padding: 0 6px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.qty-edit input[aria-invalid='true'] { border-color: var(--berry-ink); }
+.qty-edit-unit { font-size: 10.5px; font-weight: 800; color: var(--ink-soft); }
+.qty-edit-error {
+  flex-basis: 100%;
+  font-size: 9.5px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--berry-ink);
+}
+.qty-edit.is-compact input { width: 62px; height: 26px; font-size: 13px; }
+
+/* ---------- le placard : un inventaire, pas une devanture ---------- */
+
+.pantry-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
+  gap: 0 22px;
+  padding: 2px 6px;
+  min-width: 0;
+}
+
+.pantry-item { min-width: 0; border-bottom: 2px dotted var(--line); }
+
+.pantry-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(92px, auto) 22px;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  padding: 7px 2px;
+}
+
+.pantry-name {
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.pantry-item.is-gone .pantry-name { color: var(--ink-faint); }
+
+.pantry-qty {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.pantry-qty:hover { color: var(--ink); text-decoration: underline dotted var(--ink-faint); text-underline-offset: 2px; }
+
+.pantry-state { display: flex; align-items: center; justify-content: flex-end; min-width: 0; max-width: 158px; }
+.pantry-chip {
+  display: inline-block;
+  height: auto;
+  min-height: 20px;
+  padding: 2px 7px;
+  font-size: 9.5px;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: normal;
+  text-align: right;
+}
+
+.pantry-fix {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink-faint);
+  opacity: 0;
+  transition: opacity 120ms var(--ease-out), background-color 120ms var(--ease-out), color 120ms var(--ease-out), border-color 120ms var(--ease-out);
+}
+.pantry-row:hover .pantry-fix,
+.pantry-fix:focus-visible { opacity: 1; }
+.pantry-fix:hover { background: var(--peach-soft); border-color: var(--peach-ink); color: var(--peach-ink); }
+.pantry-fix-space { width: 22px; }
+
+@media (hover: none) {
+  .pantry-fix { opacity: 1; }
+}
+
+/* ---------- quand un rayon est vide ---------- */
+
+.stock-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 40px 22px;
+  border: 2px dashed var(--line-strong);
+  border-radius: var(--radius-xl);
+  background: var(--card);
+  text-align: center;
+}
+.stock-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 2px solid var(--line);
+  border-radius: 17px;
+  background: var(--paper-deep);
+  color: var(--ink-soft);
+}
+.stock-empty-title {
+  margin: 0;
+  max-width: 100%;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.stock-empty-text { margin: 0 0 4px; max-width: 46ch; color: var(--ink-soft); font-size: 13px; line-height: 1.45; }
+.stock-empty-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 4px; }
+
+.stock-note { margin: -6px 2px 0; font-size: 11.5px; font-weight: 600; color: var(--ink-soft); }
+
+.stock-watch { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+/* ---------- la liste de courses : une feuille à cocher ---------- */
+
+.shop-board {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  min-width: 0;
+  padding: 20px 22px 22px;
+  border: 2px solid var(--line-strong);
+  border-radius: var(--radius-xl);
+  background: var(--card);
+}
+
+.shop-board-head { display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; min-width: 0; }
+.shop-board-title { margin: 0; font-size: 24px; line-height: 1.1; }
+.shop-board-sub { margin: 3px 0 0; font-size: 12.5px; font-weight: 700; color: var(--ink-soft); }
+
+.shop-tools { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-left: auto; min-width: 0; }
+
+.fruit-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  height: 32px;
+  padding: 2px;
+  border: 2px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--card);
+}
+.fruit-stepper button {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink-soft);
+  transition: background-color 120ms var(--ease-out), color 120ms var(--ease-out);
+}
+.fruit-stepper button:hover:not(:disabled) { background: var(--paper-deep); color: var(--ink); }
+.fruit-stepper button:disabled { opacity: 0.35; cursor: not-allowed; }
+.fruit-stepper .num {
+  min-width: 20px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+}
+.shop-fruit-label { max-width: 78px; font-size: 11px; font-weight: 800; line-height: 1.25; color: var(--ink-soft); }
+
+.shop-progress-row { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.shop-progress {
+  flex: 1 1 auto;
+  height: 10px;
+  border: 2px solid var(--line-strong);
+  background: var(--paper-deep);
+}
+.shop-progress > span.is-full { background: var(--mint); }
+.shop-progress-label { flex: none; font-size: 11px; font-weight: 800; color: var(--ink-soft); }
+
+.shop-copy-error {
+  margin: -4px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--peach-ink);
+}
+
+.shop-sections { display: flex; flex-direction: column; align-items: stretch; gap: 17px; }
+
+.shop-section { display: flex; flex-direction: column; gap: 5px; }
+.shop-section + .shop-section { padding-top: 15px; border-top: 2px dashed var(--line); }
+
+.shop-sec-head { display: flex; align-items: center; gap: 8px; }
+.shop-sec-dot { width: 10px; height: 10px; flex: none; border: 2px solid var(--line-strong); border-radius: 50%; background: var(--card); }
+.shop-section.is-peach .shop-sec-dot { border-color: var(--peach-ink); background: var(--peach); }
+.shop-section.is-butter .shop-sec-dot { border-color: var(--butter-ink); background: var(--butter); }
+.shop-section.is-lilac .shop-sec-dot { border-color: var(--lilac-ink); background: var(--lilac); }
+
+.shop-sec-head h3 { margin: 0; font-size: 17px; font-weight: 500; }
+.shop-sec-count { font-family: var(--font-display); font-size: 12.5px; font-weight: 600; color: var(--ink-faint); }
+.shop-sec-empty { margin: 0 0 2px 18px; font-size: 12.5px; font-weight: 600; line-height: 1.4; color: var(--ink-soft); }
+
+.shop-list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+
+.shop-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 7px 4px;
+  border-bottom: 2px dotted var(--line);
+  border-radius: 8px;
+  transition: background-color 120ms var(--ease-out);
+}
+.shop-line:last-child { border-bottom: 0; }
+.shop-line:hover { background: color-mix(in srgb, var(--paper-deep) 45%, transparent); }
+
+.shop-tick {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 2px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--card);
+  color: transparent;
+  transition:
+    background-color 120ms var(--ease-out),
+    border-color 120ms var(--ease-out),
+    color 120ms var(--ease-out),
+    transform 120ms var(--ease-out);
+}
+.shop-tick:hover { border-color: var(--mint-ink); color: var(--mint-ink); transform: scale(1.05); }
+.shop-tick.is-on { background: var(--mint); border-color: var(--mint-ink); color: var(--mint-ink); }
+
+.shop-name {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+.shop-leader {
+  flex: 1 1 24px;
+  align-self: center;
+  min-width: 16px;
+  height: 0;
+  margin: 0 2px;
+  border-bottom: 2px dotted var(--line-strong);
+  transform: translateY(3px);
+  opacity: 0.8;
+}
+.shop-qty {
+  flex: none;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.shop-date { flex: none; font-size: 11px; font-weight: 700; color: var(--ink-soft); white-space: nowrap; }
+
+.shop-line.is-done .shop-name { color: var(--ink-faint); text-decoration: line-through; text-decoration-thickness: 2px; }
+.shop-line.is-done .shop-qty { color: var(--ink-faint); text-decoration: line-through; }
+.shop-line.is-done .shop-date { opacity: 0.55; }
+
+.shop-ready { margin: -2px 0 0; font-size: 12.5px; font-weight: 800; color: var(--mint-ink); }
+
+.shop-copied {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  margin: -6px 0 0;
+  padding: 4px 11px;
+  border-radius: var(--radius-pill);
+  background: var(--mint-soft);
+  color: var(--mint-ink);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* Une ligne ajoutée à la main : elle se coche, s’achète pour de vrai, ou se retire. */
+.shop-extra {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  padding: 10px 12px 8px;
+  border: 2px solid var(--mint-ink);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--mint-soft) 45%, var(--card));
+}
+
+.shop-extra .shop-sec-dot { border-color: var(--mint-ink); background: var(--mint); }
+
+.shop-extra-line { flex-wrap: wrap; }
+.shop-extra-line .shop-name { flex: 1 1 120px; }
+
+.shop-buy {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  height: 26px;
+  padding: 0 9px;
+  border: 2px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--card);
+  color: var(--ink-soft);
+  font-family: var(--font-display);
+  font-size: 11.5px;
+  font-weight: 500;
+  transition: background-color 120ms var(--ease-out), border-color 120ms var(--ease-out), color 120ms var(--ease-out);
+}
+.shop-buy:hover { border-color: var(--mint-ink); background: var(--mint-soft); color: var(--mint-ink); }
+
+.shop-drop {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink-faint);
+  transition: background-color 120ms var(--ease-out), color 120ms var(--ease-out);
+}
+.shop-drop:hover { background: var(--peach-soft); color: var(--peach-ink); }
+
+/* ---------- les achats qui reviennent ---------- */
+
+.recurring-board {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  min-width: 0;
+  padding: 17px 20px 19px;
+  border: 2px solid var(--line-strong);
+  border-radius: var(--radius-xl);
+  background: color-mix(in srgb, var(--paper-deep) 55%, var(--card));
+}
+
+.recurring-head { display: flex; align-items: center; gap: 12px; min-width: 0; }
+
+.recurring-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--butter-ink);
+  border-radius: 13px;
+  background: var(--butter-soft);
+  color: var(--butter-ink);
+}
+
+.recurring-head h3 { margin: 0; font-size: 19px; line-height: 1.15; }
+.recurring-head p { margin: 3px 0 0; font-size: 12px; font-weight: 700; color: var(--ink-soft); }
+
+.recurring-empty { margin: 0; font-size: 12.5px; font-weight: 600; line-height: 1.45; color: var(--ink-soft); }
+
+.recurring-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.recurring-item {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+}
+
+.recurring-what { display: flex; flex-direction: column; gap: 1px; flex: 1 1 120px; min-width: 0; order: 1; }
+.recurring-what b {
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  font-weight: 500;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.recurring-freq { font-size: 11px; font-weight: 800; color: var(--butter-ink); }
+
+.recurring-hist { flex: 1 1 100%; order: 3; font-size: 10.5px; font-weight: 700; line-height: 1.3; color: var(--ink-soft); }
+
+.recurring-item .s-btn { flex: none; order: 2; margin-left: auto; }
+.recurring-item .s-btn:disabled { opacity: 0.55; box-shadow: none; cursor: default; background: var(--paper-deep); }
+
+/* ---------- partager la liste en texte ---------- */
+
+.shop-share { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+
+.shop-share-hint { margin: 0; font-size: 12.5px; font-weight: 600; line-height: 1.5; color: var(--ink-soft); }
+
+.shop-share textarea {
+  width: 100%;
+  min-height: 220px;
+  max-height: 44vh;
+  padding: 10px 12px;
+  border: 2px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--paper-deep);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.55;
+  white-space: pre;
+  overflow: auto;
+}
+
+.shop-share .modal-foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+
+/* ---------- les achats saisis : une erreur se supprime et s’annule ---------- */
+
+.purchases {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 16px 18px 18px;
+  border: 2px dashed var(--line-strong);
+  border-radius: var(--radius-xl);
+  background: color-mix(in srgb, var(--card) 82%, var(--paper-deep));
+}
+
+.purchases-head { display: flex; align-items: center; gap: 12px; min-width: 0; }
+
+.purchases-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border: 2px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--paper-deep);
+  color: var(--ink-soft);
+}
+
+.purchases-head h2 { margin: 0; font-size: 18px; line-height: 1.15; }
+.purchases-head p { margin: 2px 0 0; font-size: 11.5px; font-weight: 700; color: var(--ink-soft); }
+
+.purchases-empty { margin: 0; font-size: 12.5px; font-weight: 600; color: var(--ink-soft); }
+
+.purchase-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr));
+  gap: 0 22px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.purchase-line {
+  display: grid;
+  grid-template-columns: 50px minmax(0, 1fr) auto 26px;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 6px 2px;
+  border-bottom: 2px dotted var(--line);
+}
+
+.purchase-date { font-size: 11px; font-weight: 800; color: var(--ink-faint); white-space: nowrap; }
+.purchase-name {
+  min-width: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.purchase-qty {
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.purchase-del {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink-faint);
+  opacity: 0.65;
+  transition: opacity 120ms var(--ease-out), background-color 120ms var(--ease-out), border-color 120ms var(--ease-out), color 120ms var(--ease-out);
+}
+.purchase-line:hover .purchase-del,
+.purchase-del:focus-visible { opacity: 1; }
+.purchase-del:hover { border-color: var(--berry-ink); background: var(--berry-soft); color: var(--berry-ink); }
+
+.purchases-more {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 3px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-soft);
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.purchases-more:hover { color: var(--ink); }
+.purchases-more svg { transform: rotate(90deg); transition: transform 120ms var(--ease-out); }
+.purchases-more svg.is-up { transform: rotate(-90deg); }
+
+/* ---------- supprimer un achat, avec son annulation ---------- */
+
+.stock-toast {
+  position: fixed;
+  right: 22px;
+  bottom: calc(var(--dock-bottom, 18px) + var(--dock-h, 56px) + 72px);
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(440px, calc(100vw - 28px));
+  padding: 10px 12px 10px 14px;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  box-shadow: var(--pop);
+}
+
+.stock-toast-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.stock-toast-text b { font-weight: 800; overflow-wrap: anywhere; }
+
+.stock-toast-undo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  height: 30px;
+  padding: 0 11px;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-pill);
+  background: var(--butter-soft);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.stock-toast-undo:hover { background: var(--butter); }
+
+/* ---------- les fenêtres d’achat et de correction ---------- */
+
+.stock-form { display: flex; flex-direction: column; gap: 14px; }
+.stock-form .field > span { font-size: 12px; font-weight: 800; color: var(--ink-soft); }
+
+.stock-form select,
+.stock-form input,
+.stock-form textarea {
+  width: 100%;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 2px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+.stock-form textarea { padding: 9px 12px; line-height: 1.5; }
+.stock-form :is(select, input, textarea):focus-visible {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mint) 40%, transparent);
+}
+
+.stock-form .qty-input { width: 100%; }
+.stock-form .qty-input input { padding-right: 38px; text-align: right; }
+.stock-form .qty-input .unit { right: 12px; font-size: 11px; font-weight: 800; color: var(--ink-faint); }
+
+.stock-form .modal-foot { margin-top: 4px; padding-top: 14px; border-top: 2px dashed var(--line); }
+.stock-form .s-btn:disabled { opacity: 0.45; box-shadow: none; cursor: not-allowed; }
+
+.stock-form-hint { margin: 0; font-size: 12.5px; font-weight: 600; line-height: 1.45; color: var(--ink-soft); }
+.stock-form-hint b { color: var(--ink); font-weight: 800; }
+
+.stock-choices { display: flex; flex-wrap: wrap; gap: 6px; }
+.stock-choice {
+  height: 34px;
+  padding: 0 12px;
+  border: 2px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--card);
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-weight: 800;
+  white-space: nowrap;
+  transition:
+    background-color 120ms var(--ease-out),
+    border-color 120ms var(--ease-out),
+    color 120ms var(--ease-out),
+    box-shadow 120ms var(--ease-out);
+}
+.stock-choice:hover { border-color: var(--ink); color: var(--ink); }
+.stock-choice.is-on { background: var(--ink); border-color: var(--ink); color: var(--card); box-shadow: var(--pop-sm); }
+
+/* La saisie de commande garde son fonctionnement, elle prend juste la nouvelle tenue. */
+.stock-order .primary-button,
+.stock-order .secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 0 16px;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-pill);
+  background: var(--card);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: var(--pop-sm);
+}
+.stock-order .primary-button { background: var(--ink); color: var(--card); }
+.stock-order .primary-button:hover:not(:disabled) { background: #453729; }
+.stock-order .secondary-button:hover:not(:disabled) { background: var(--butter-soft); }
+.stock-order .primary-button:active,
+.stock-order .secondary-button:active { transform: translate(2px, 2px); box-shadow: none; }
+
+.stock-order .text-button { border-radius: var(--radius-pill); color: var(--ink-soft); font-weight: 800; }
+.stock-order .text-button:hover { background: var(--paper-deep); color: var(--ink); }
+
+.stock-order .balance-sub { display: flex; align-items: center; gap: 6px; margin: 0; font-family: var(--font-display); font-size: 14px; font-weight: 500; }
+.stock-order .order-lines { border-top: 2px solid var(--line); }
+.stock-order .order-line { border-bottom: 2px dotted var(--line); }
+.stock-order .order-line select,
+.stock-order .order-line input { min-height: 34px; font-size: 12.5px; }
+.stock-order .hint { font-size: 12px; color: var(--ink-soft); }
+
+/* ---------- au plus étroit ---------- */
+
+@media (max-width: 900px) {
+  .stock-switch { width: 100%; }
+  .stock-door { flex: 1 1 auto; justify-content: center; padding: 0 12px; font-size: 15px; }
+  .stock-search { flex: 1 1 100%; }
+  .stock-filters { margin-left: 0; }
+  .stock-filter { height: 34px; padding: 0 10px; }
+  .stock-zone-title h2 { font-size: 22px; }
+  .shelf-rail { grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr)); }
+  .shop-board { padding: 16px 16px 18px; }
+  .shop-tools { margin-left: 0; }
+  .shop-line { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; }
+  .shop-leader { display: none; }
+  .shop-date { grid-column: 2 / -1; margin-top: -4px; }
+  .shop-fruit-label { max-width: none; }
+  .shop-extra-line { display: flex; flex-wrap: wrap; }
+  .shop-extra-line .shop-name { flex: 1 1 100%; }
+  .purchase-list { grid-template-columns: 1fr; }
+  .recurring-list { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 560px) {
+  .stock-page .s-pagehead-actions { width: 100%; }
+  .stock-page .s-pagehead-actions .s-btn { flex: 1 1 auto; }
+  .stock-press { align-items: flex-start; }
+  .stock-press-go { align-self: center; }
+  .pantry-grid { grid-template-columns: 1fr; }
+  .pantry-state { max-width: 128px; }
+  .pantry-chip { font-size: 9px; }
+  .shop-progress-row { flex-wrap: wrap; }
+  .shop-progress-label { margin-left: auto; }
+  .field-pair { grid-template-columns: 1fr; }
+  .shop-line { grid-template-columns: 24px minmax(0, 1fr) auto; }
+  .shop-qty { text-align: right; }
+  .shop-extra-line { display: flex; flex-wrap: wrap; }
+  .shop-extra-line .shop-name { flex: 1 1 100%; }
+  .shop-tools { width: 100%; }
+  .shop-tools .s-btn { flex: 1 1 auto; }
+  .recurring-board { padding: 14px 14px 16px; }
+  .recurring-item .s-btn { margin-left: 0; }
+  .purchases { padding: 14px 14px 16px; }
+  .stock-toast { right: 14px; bottom: calc(var(--dock-bottom, 18px) + var(--dock-h, 56px) + 70px); left: 14px; max-width: none; }
+}

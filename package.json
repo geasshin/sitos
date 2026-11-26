@@ -1,7 +1,7 @@
 {
   "name": "sitos",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,8 +11,9 @@
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
+    "check:data": "node scripts/check-no-data.mjs",
     "test:release": "node --test scripts/release.test.mjs",
-    "verify": "npm run typecheck && npm test && npm run test:release"
+    "verify": "npm run check:data && npm run typecheck && npm test && npm run test:release"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.12.4",

@@ -1,0 +1,382 @@
+/* La feuille de liaison : la fiche ligne à ligne, le catalogue en panneau,
+   puis la relecture de ce qui sera enregistré. Préfixe ls- pour ne rien
+   disputer aux autres feuilles. */
+
+.ls-intro {
+  margin: 0;
+  max-width: 68ch;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+/* ---------- les lignes de la fiche ---------- */
+
+.ls-table {
+  border: 2px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  overflow: hidden;
+}
+
+.ls-head,
+.ls-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr) 128px 30px;
+  grid-template-areas: 'line food qty drop';
+  gap: 10px;
+  align-items: center;
+}
+
+.ls-head {
+  grid-template-areas: 'line food qty drop';
+  padding: 9px 14px;
+  background: var(--paper);
+  border-bottom: 2px solid var(--line);
+  color: var(--ink-faint);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.ls-head > span:nth-child(3) { padding-left: 2px; }
+
+.ls-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ls-row {
+  padding: 9px 14px;
+  border-bottom: 1px dashed var(--line);
+}
+.ls-row:last-child { border-bottom: 0; }
+.ls-row.is-off { background: color-mix(in srgb, var(--paper) 60%, var(--card)); }
+
+.ls-line {
+  grid-area: line;
+  min-width: 0;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.ls-row.is-off .ls-line { color: var(--ink-soft); }
+
+.ls-food {
+  grid-area: food;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+  min-height: 34px;
+  padding: 6px 9px;
+  color: var(--ink);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-align: left;
+  background: var(--card);
+  border: 2px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  transition: border-color 120ms var(--ease-out), background-color 120ms var(--ease-out);
+}
+.ls-food:hover { background: var(--butter-soft); border-color: var(--butter-ink); }
+.ls-food:focus-visible { outline: none; border-color: var(--mint-ink); box-shadow: 0 0 0 3px var(--mint-soft); }
+.ls-food.is-empty { color: var(--ink-soft); font-weight: 600; border-style: dashed; }
+
+.ls-food-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ls-food svg { flex: none; color: var(--ink-faint); }
+
+.ls-qty {
+  grid-area: qty;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ls-qty input {
+  width: 72px;
+  height: 34px;
+  padding: 0 8px;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  background: var(--card);
+  border: 2px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+}
+.ls-qty input:focus-visible {
+  outline: none;
+  border-color: var(--mint-ink);
+  box-shadow: 0 0 0 3px var(--mint-soft);
+}
+
+.ls-unit {
+  min-width: 26px;
+  color: var(--ink-soft);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.ls-qty-off {
+  color: var(--ink-faint);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.ls-drop {
+  grid-area: drop;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  color: var(--ink-faint);
+  background: none;
+  border: 0;
+  border-radius: 50%;
+  transition: background-color 120ms var(--ease-out), color 120ms var(--ease-out);
+}
+.ls-drop:hover:not(:disabled) { color: var(--peach-ink); background: var(--peach-soft); }
+.ls-drop:focus-visible { outline: 2px solid var(--mint-ink); outline-offset: 2px; }
+.ls-drop:disabled { opacity: 0.3; cursor: default; }
+
+/* Sous 1 200 px, la ligne de la fiche passe au-dessus de l’aliment :
+   le panneau du catalogue prend la moitié de la largeur. */
+@media (max-width: 1200px) {
+  .ls-head { display: none; }
+  .ls-row {
+    grid-template-columns: minmax(0, 1fr) 128px 30px;
+    grid-template-areas:
+      'line line drop'
+      'food qty drop';
+    gap: 6px 10px;
+    padding: 10px 14px;
+  }
+  .ls-drop { align-self: center; }
+}
+
+/* ---------- le compte des repas ---------- */
+
+.ls-portions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  background: var(--paper);
+  border: 2px solid var(--line);
+  border-radius: var(--radius-md);
+}
+
+.ls-portions-label {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ls-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 34px;
+  padding: 0 4px;
+  background: var(--card);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-pill);
+}
+.ls-stepper button {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  color: var(--ink-soft);
+  background: var(--paper-deep);
+  border: 0;
+  border-radius: 50%;
+}
+.ls-stepper button:hover { color: var(--butter-ink); background: var(--butter); }
+.ls-stepper .num {
+  min-width: 20px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.ls-portions-unit { color: var(--ink-soft); font-size: 12.5px; }
+
+.ls-note {
+  margin: 0;
+  padding: 10px 12px;
+  color: var(--butter-ink);
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.5;
+  background: var(--butter-soft);
+  border: 2px solid var(--butter);
+  border-radius: var(--radius-md);
+}
+
+/* ---------- la relecture ---------- */
+
+.ls-lead {
+  margin: 0;
+  max-width: 68ch;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.ls-lead b { font-family: var(--font-display); font-weight: 600; }
+
+.ls-diff {
+  display: flex;
+  gap: 10px;
+  margin: 0;
+}
+.ls-diff > div {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 9px 14px;
+  background: var(--paper);
+  border: 2px solid var(--line);
+  border-radius: var(--radius-md);
+}
+.ls-diff dt {
+  color: var(--ink-faint);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.ls-diff dd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 3px 0 0;
+  color: var(--ink-soft);
+}
+.ls-diff dd svg { color: var(--ink-faint); }
+.ls-diff-from { font-family: var(--font-display); font-size: 15px; }
+.ls-diff b { color: var(--ink); font-family: var(--font-display); font-size: 21px; font-weight: 600; }
+
+.ls-review {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--card);
+  border: 2px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.ls-review li {
+  display: grid;
+  grid-template-columns: 86px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: baseline;
+  padding: 9px 14px;
+  border-bottom: 1px dashed var(--line);
+}
+.ls-review li:last-child { border-bottom: 0; }
+
+.ls-review-qty {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ls-review-name { min-width: 0; font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
+
+.ls-review-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--mint-ink);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.ls-review-state.is-missing { color: var(--peach-ink); }
+
+.ls-ignored {
+  padding: 11px 14px 12px;
+  background: var(--paper);
+  border: 2px dashed var(--line-strong);
+  border-radius: var(--radius-md);
+}
+.ls-ignored h3 {
+  margin: 0 0 2px;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+}
+.ls-ignored p { margin: 0 0 6px; color: var(--ink-soft); font-size: 12.5px; line-height: 1.5; }
+.ls-ignored ul { margin: 0; padding-left: 18px; color: var(--ink-soft); font-size: 12.5px; line-height: 1.6; }
+.ls-ignored-why {
+  margin-left: 8px;
+  color: var(--peach-ink);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+/* ---------- le panneau du catalogue ---------- */
+
+/* Le panneau fait 320 px : le sélecteur passe en deux lignes par résultat
+   et les rappels clavier se replient au lieu de déborder. */
+.sheet-side .fp-meta { flex-wrap: wrap; gap: 4px 10px; }
+.sheet-side .fp-keys { white-space: normal; }
+.sheet-side .fp-row,
+.sheet-side .fp-row.has-stock {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'name stock'
+    'name facts';
+  column-gap: 10px;
+  row-gap: 2px;
+  padding: 6px 10px;
+}
+.sheet-side .fp-name { grid-area: name; align-self: center; }
+.sheet-side .fp-facts { grid-area: facts; text-align: right; font-size: 12px; }
+.sheet-side .fp-stock { grid-area: stock; justify-self: end; }
+
+.ls-pick-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--line);
+}
+.ls-pick-kicker {
+  color: var(--ink-faint);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.ls-pick-line {
+  margin-top: 2px;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 720px) {
+  .ls-diff { flex-direction: column; }
+  .ls-review li { grid-template-columns: 72px minmax(0, 1fr); }
+  .ls-review-state { grid-column: 2; }
+}

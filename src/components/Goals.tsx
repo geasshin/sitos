@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
-import { Modal } from './Modal';
-import { Panel } from './ui';
+import { Sheet } from './Sheet';
 import { useApp } from '../context';
 import { ACTIVITY_LABEL, applyTargets, computeTargets, GOAL_LABEL, RHYTHM_LABEL, type Targets } from '../domain/targets';
 import type { Activity, Diet, Goal, Profile, Rhythm, Sex } from '../domain/types';
+import './goals.css';
 
 const DIET_LABEL: Record<Diet, string> = {
   vegetarien: 'Végétarien',
@@ -14,7 +14,15 @@ const DIET_LABEL: Record<Diet, string> = {
 const SEX_LABEL: Record<Sex, string> = { homme: 'Homme', femme: 'Femme' };
 const fr = (v: number) => Math.round(v).toLocaleString('fr-FR');
 
-/** Résumé des objectifs en vigueur ; le questionnaire s'ouvre dans une fenêtre. */
+const STEPS = ['Toi', 'Ton quotidien', 'Ce que tu vises', 'Tes repères'] as const;
+const STEP_HINT = [
+  'Ton sexe, ton âge, ta taille et ton poids.',
+  'Ce que tu fais de tes journées, et comment tu manges.',
+  'Ce que tu vises, et ce que tu manges.',
+  'Calculés à partir de tes réponses. Tout se retouche.',
+] as const;
+
+/** Résumé des objectifs en vigueur ; le questionnaire s’ouvre dans la feuille de la charte. */
 export function GoalsCard() {
   const app = useApp();
   const { data, targets } = app;
@@ -31,21 +39,22 @@ export function GoalsCard() {
     ['Sel', `max. ${fr(targets.saltMaxG)} g`],
     ['Repas principal', `≈ ${fr(Math.round((targets.kcal * targets.mealShare) / 25) * 25)} kcal`],
   ];
+  const meta = p
+    ? `${SEX_LABEL[p.sex]}, ${p.age} ans, ${p.heightCm} cm, ${String(p.weightKg).replace('.', ',')} kg · ${GOAL_LABEL[p.goal].split(' (')[0].toLowerCase()}`
+    : 'Provisoires. Quatre questions suffisent pour les caler sur toi.';
+
   return (
     <>
-      <Panel
-        title="Mes objectifs"
-        meta={
-          p
-            ? `${SEX_LABEL[p.sex]}, ${p.age} ans, ${p.heightCm} cm, ${String(p.weightKg).replace('.', ',')} kg · ${GOAL_LABEL[p.goal].split(' (')[0].toLowerCase()}`
-            : 'Provisoires. Quatre questions suffisent pour les caler sur toi.'
-        }
-        aside={
-          <button type="button" className={p ? 'secondary-button is-sm' : 'primary-button is-sm'} onClick={() => setEditing(true)}>
+      <div className="goals">
+        <div className="goals-head">
+          <div className="goals-heading">
+            <h3 className="goals-title">Mes objectifs</h3>
+            <p className="goals-meta">{meta}</p>
+          </div>
+          <button type="button" className={p ? 's-btn is-sm' : 's-btn is-primary is-sm'} onClick={() => setEditing(true)}>
             {p ? 'Revoir' : 'Commencer'}
           </button>
-        }
-      >
+        </div>
         <dl className="goals-grid">
           {items.map(([k, v]) => (
             <div key={k}>
@@ -54,15 +63,11 @@ export function GoalsCard() {
             </div>
           ))}
         </dl>
-      </Panel>
-      <Modal open={editing} onClose={() => setEditing(false)} title="Mes objectifs" size="lg">
-        {editing && <GoalsWizard onDone={() => setEditing(false)} />}
-      </Modal>
+      </div>
+      {editing && <GoalsWizard onDone={() => setEditing(false)} />}
     </>
   );
 }
-
-const STEPS = ['Toi', 'Ton quotidien', 'Ce que tu vises', 'Tes cibles'] as const;
 
 function Choice<T extends string>({
   value,
@@ -78,10 +83,17 @@ function Choice<T extends string>({
   name: string;
 }) {
   return (
-    <div className="choices" role="radiogroup" aria-label={name}>
+    <div className="goals-choices" role="radiogroup" aria-label={name}>
       {options.map((o) => (
-        <button key={o} type="button" role="radio" aria-checked={value === o} className={`choice ${value === o ? 'on' : ''}`} onClick={() => onChange(o)}>
-          <span className="choice-dot" aria-hidden>
+        <button
+          key={o}
+          type="button"
+          role="radio"
+          aria-checked={value === o}
+          className={`goals-choice ${value === o ? 'is-on' : ''}`}
+          onClick={() => onChange(o)}
+        >
+          <span className="goals-choice-dot" aria-hidden>
             {value === o && <Check size={12} />}
           </span>
           {labels[o]}
@@ -112,10 +124,10 @@ function NumberField({
   return (
     <label className="field">
       <span>{label}</span>
-      <span className="qty-input">
+      <span className="goals-unit">
         <input
+          type="text"
           inputMode="decimal"
-          style={{ paddingRight: `${unit.length * 8 + 18}px` }}
           value={text}
           onChange={(e) => {
             setText(e.target.value);
@@ -129,7 +141,8 @@ function NumberField({
   );
 }
 
-export function GoalsWizard({ onDone }: { onDone: () => void }) {
+/** Le questionnaire, monté à l’ouverture seulement : il repart de zéro à chaque visite. */
+function GoalsWizard({ onDone }: { onDone: () => void }) {
   const app = useApp();
   const { data, today, store } = app;
   const lastWeight = [...data.journal.weights].sort((a, b) => (a.date < b.date ? 1 : -1))[0]?.kg;
@@ -158,81 +171,118 @@ export function GoalsWizard({ onDone }: { onDone: () => void }) {
   };
 
   return (
-    <div className="wizard" aria-label="Définir mes objectifs">
-      <ol className="wizard-steps">
-        {STEPS.map((s, i) => (
-          <li key={s} className={i === step ? 'on' : i < step ? 'done' : ''}>
-            <span className="num">{i + 1}</span> {s}
-          </li>
-        ))}
-      </ol>
+    <Sheet
+      open
+      onClose={onDone}
+      title="Mes objectifs"
+      subtitle={STEP_HINT[step]}
+      size="lg"
+      onSubmit={step === STEPS.length - 1 ? save : undefined}
+      footer={
+        <>
+          <span className="sheet-hint">
+            Étape <span className="num">{step + 1}</span> sur {STEPS.length}
+          </span>
+          <span className="sheet-foot-gap" />
+          <button type="button" className="s-btn is-ghost" onClick={() => (step === 0 ? onDone() : setStep(step - 1))}>
+            {step === 0 ? (
+              'Annuler'
+            ) : (
+              <>
+                <ArrowLeft size={15} aria-hidden /> Retour
+              </>
+            )}
+          </button>
+          {step < STEPS.length - 1 ? (
+            <button type="button" className="s-btn is-primary" onClick={() => setStep(step + 1)}>
+              Continuer <ArrowRight size={15} aria-hidden />
+            </button>
+          ) : (
+            <button type="button" className="s-btn is-primary" onClick={save}>
+              <Check size={15} aria-hidden /> Enregistrer mes objectifs
+            </button>
+          )}
+        </>
+      }
+    >
+      <div className="goals-wizard">
+        <ol className="goals-steps">
+          {STEPS.map((s, i) => (
+            <li key={s} className={`s-chip ${i === step ? 'is-ink' : i < step ? 'is-mint' : ''}`} aria-current={i === step ? 'step' : undefined}>
+              <span className="num">{i + 1}</span> {s}
+            </li>
+          ))}
+        </ol>
 
-      {step === 0 && (
-        <div className="wizard-body">
-          <Choice name="Sexe" value={p.sex} options={['homme', 'femme']} labels={SEX_LABEL} onChange={(v) => set('sex', v)} />
-          <div className="field-row">
-            <NumberField label="Âge" value={p.age} unit="ans" min={18} max={100} onChange={(v) => set('age', v)} />
-            <NumberField label="Taille" value={p.heightCm} unit="cm" min={130} max={230} onChange={(v) => set('heightCm', v)} />
-            <NumberField label="Poids" value={p.weightKg} unit="kg" min={35} max={250} step={0.1} onChange={(v) => set('weightKg', v)} />
+        {step === 0 && (
+          <div className="goals-step">
+            <Choice name="Sexe" value={p.sex} options={['homme', 'femme']} labels={SEX_LABEL} onChange={(v) => set('sex', v)} />
+            <div className="goals-fields">
+              <NumberField label="Âge" value={p.age} unit="ans" min={18} max={100} onChange={(v) => set('age', v)} />
+              <NumberField label="Taille" value={p.heightCm} unit="cm" min={130} max={230} onChange={(v) => set('heightCm', v)} />
+              <NumberField label="Poids" value={p.weightKg} unit="kg" min={35} max={250} step={0.1} onChange={(v) => set('weightKg', v)} />
+            </div>
+            {lastWeight === undefined && (
+              <p className="goals-hint">Pas encore de pesée : mets ton poids habituel, tu pourras le corriger plus tard.</p>
+            )}
           </div>
-          {lastWeight === undefined && <p className="hint">Pas encore de pesée : mets ton poids habituel, tu pourras le corriger plus tard.</p>}
-        </div>
-      )}
+        )}
 
-      {step === 1 && (
-        <div className="wizard-body">
-          <p className="wizard-q">Ton activité, en dehors des repas</p>
-          <Choice<Activity>
-            name="Activité"
-            value={p.activity}
-            options={['faible', 'moderee', 'elevee']}
-            labels={ACTIVITY_LABEL}
-            onChange={(v) => set('activity', v)}
-          />
-          <p className="wizard-q">Ton rythme de repas</p>
-          <Choice<Rhythm>
-            name="Rythme"
-            value={p.rhythm}
-            options={['un-repas', 'deux-repas', 'trois-repas']}
-            labels={RHYTHM_LABEL}
-            onChange={(v) => set('rhythm', v)}
-          />
-        </div>
-      )}
+        {step === 1 && (
+          <div className="goals-step">
+            <p className="goals-q">Ton activité, en dehors des repas</p>
+            <Choice<Activity>
+              name="Activité"
+              value={p.activity}
+              options={['faible', 'moderee', 'elevee']}
+              labels={ACTIVITY_LABEL}
+              onChange={(v) => set('activity', v)}
+            />
+            <p className="goals-q">Ton rythme de repas</p>
+            <Choice<Rhythm>
+              name="Rythme"
+              value={p.rhythm}
+              options={['un-repas', 'deux-repas', 'trois-repas']}
+              labels={RHYTHM_LABEL}
+              onChange={(v) => set('rhythm', v)}
+            />
+          </div>
+        )}
 
-      {step === 2 && (
-        <div className="wizard-body">
-          <p className="wizard-q">Ce que tu vises</p>
-          <Choice<Goal> name="Objectif" value={p.goal} options={['maintenir', 'doucement', 'perdre']} labels={GOAL_LABEL} onChange={(v) => set('goal', v)} />
-          <p className="wizard-q">Ta façon de manger</p>
-          <Choice<Diet>
-            name="Alimentation"
-            value={p.diet}
-            options={['vegetarien', 'flexitarien', 'omnivore']}
-            labels={DIET_LABEL}
-            onChange={(v) => set('diet', v)}
-          />
-        </div>
-      )}
+        {step === 2 && (
+          <div className="goals-step">
+            <p className="goals-q">Ce que tu vises</p>
+            <Choice<Goal> name="Objectif" value={p.goal} options={['maintenir', 'doucement', 'perdre']} labels={GOAL_LABEL} onChange={(v) => set('goal', v)} />
+            <p className="goals-q">Ta façon de manger</p>
+            <Choice<Diet>
+              name="Alimentation"
+              value={p.diet}
+              options={['vegetarien', 'flexitarien', 'omnivore']}
+              labels={DIET_LABEL}
+              onChange={(v) => set('diet', v)}
+            />
+          </div>
+        )}
 
-      {step === 3 && (
-        <div className="wizard-body">
-          <p className="hint">Calculés à partir de tes réponses. Tu peux retoucher chaque valeur ; les explications disent d’où elles viennent.</p>
-          <div className="target-edit">
-            {(
-              [
-                ['kcal', 'Énergie', 'kcal', 0],
-                ['protein', 'Protéines', 'g', 1],
-                ['fiber', 'Fibres', 'g', 2],
-                ['plantG', 'Légumes & fruits', 'g', 3],
-                ['satFatMaxG', 'Graisses saturées (max.)', 'g', 4],
-                ['sugarsMaxG', 'Sucres (max.)', 'g', 5],
-                ['saltMaxG', 'Sel (max.)', 'g', 6],
-              ] as [keyof Targets, string, string, number][]
-            ).map(([k, label, unit, noteIdx]) => (
-              <div className="target-line-wrap" key={k}>
-                {k === 'satFatMaxG' && <p className="balance-sub target-cap">À limiter</p>}
-                <div className="target-line">
+        {step === 3 && (
+          <div className="goals-step">
+            <p className="goals-hint">
+              Calculés à partir de tes réponses. Tu peux retoucher chaque valeur ; les explications disent d’où elles viennent.
+            </p>
+            <div className="goals-targets">
+              {(
+                [
+                  ['kcal', 'Énergie', 'kcal', 0],
+                  ['protein', 'Protéines', 'g', 1],
+                  ['fiber', 'Fibres', 'g', 2],
+                  ['plantG', 'Légumes & fruits', 'g', 3],
+                  ['satFatMaxG', 'Graisses saturées (max.)', 'g', 4],
+                  ['sugarsMaxG', 'Sucres (max.)', 'g', 5],
+                  ['saltMaxG', 'Sel (max.)', 'g', 6],
+                ] as [keyof Targets, string, string, number][]
+              ).map(([k, label, unit, noteIdx]) => (
+                <div className="goals-target" key={k}>
+                  {k === 'satFatMaxG' && <p className="goals-cap">Plafonds</p>}
                   <NumberField
                     key={`${k}-${plan.targets[k]}-${edits[k] === undefined ? 'calc' : 'edit'}`}
                     label={label}
@@ -242,51 +292,30 @@ export function GoalsWizard({ onDone }: { onDone: () => void }) {
                     max={10000}
                     onChange={(v) => setEdits((e) => ({ ...e, [k]: v }))}
                   />
-                  <p className="target-why small">
+                  <p className="goals-note">
                     {plan.notes[noteIdx]?.text}
                     {final[k] !== plan.targets[k] && (
-                      <button type="button" className="link small" onClick={() => setEdits((e) => ({ ...e, [k]: undefined }))}>
+                      <button type="button" className="goals-reset" onClick={() => setEdits((e) => ({ ...e, [k]: undefined }))}>
                         {' '}
                         Revenir à {String(plan.targets[k]).replace('.', ',')}
                       </button>
                     )}
                   </p>
                 </div>
-              </div>
+              ))}
+            </div>
+            {plan.notes.slice(7).map((n) => (
+              <p key={n.label} className="goals-hint">
+                <strong>{n.label}.</strong> {n.text}
+              </p>
             ))}
-          </div>
-          {plan.notes.slice(7).map((n) => (
-            <p key={n.label} className="hint">
-              <strong>{n.label}.</strong> {n.text}
+            <p className="goals-hint">
+              Repas principal visé ≈ {fr(Math.round((final.kcal * final.mealShare) / 25) * 25)} kcal ({Math.round(final.mealShare * 100)} % de la
+              journée), le reste pour les compléments et les fruits.
             </p>
-          ))}
-          <p className="hint">
-            Repas principal visé ≈ {fr(Math.round((final.kcal * final.mealShare) / 25) * 25)} kcal ({Math.round(final.mealShare * 100)} % de la journée), le
-            reste pour les compléments et les fruits.
-          </p>
-        </div>
-      )}
-
-      <div className="modal-foot">
-        <button type="button" className="text-button" onClick={() => (step === 0 ? onDone() : setStep(step - 1))}>
-          {step === 0 ? (
-            'Annuler'
-          ) : (
-            <>
-              <ArrowLeft size={15} aria-hidden /> Retour
-            </>
-          )}
-        </button>
-        {step < STEPS.length - 1 ? (
-          <button type="button" className="primary-button" onClick={() => setStep(step + 1)}>
-            Continuer <ArrowRight size={15} aria-hidden />
-          </button>
-        ) : (
-          <button type="button" className="primary-button" onClick={save}>
-            <Check size={15} aria-hidden /> Enregistrer mes objectifs
-          </button>
+          </div>
         )}
       </div>
-    </div>
+    </Sheet>
   );
 }

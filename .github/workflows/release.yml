@@ -6,6 +6,8 @@ name: Release
 #   et publie. La release reste un brouillon tant que le manifeste publié n'est pas complet.
 # - mode « build » : vérifie et construit, ne publie rien.
 # - un push sur main ne déclenche rien : la release est toujours un geste explicite.
+# - les notes de la version sont obligatoires : docs/releases/<version>.md, avec la version que le
+#   job prepare a calculée. Sans ce fichier, rien ne se construit et rien ne se publie.
 
 on:
   workflow_dispatch:
@@ -26,7 +28,7 @@ permissions:
 
 jobs:
   prepare:
-    name: Calculer la version
+    name: Calculer la version et exiger ses notes
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
@@ -42,7 +44,9 @@ jobs:
         with:
           node-version: 22
 
-      - name: Calculer la prochaine version
+      # Le script s'arrête si docs/releases/<version>.md manque ou est vide : la release n'a pas
+      # de corps sans notes, donc elle ne se construit pas.
+      - name: Calculer la prochaine version et vérifier ses notes
         id: version
         run: node scripts/prepare-tauri-release-version.mjs
 
@@ -211,17 +215,19 @@ jobs:
             echo "${name^^}=$value" >> "$GITHUB_ENV"
           done
 
-      - name: Préparer les notes de version
+      # Le corps de la release est un fichier du dépôt, écrit à la main, jamais généré.
+      # Le job prepare a déjà refusé de démarrer sans lui ; ici on refuse de publier sans lui.
+      - name: Lire les notes de version
         shell: bash
         run: |
           set -euo pipefail
-          notes="$RUNNER_TEMP/release-notes.md"
-          gh api "repos/$GITHUB_REPOSITORY/releases/generate-notes" \
-            -f tag_name="$TAG" -f target_commitish="$GITHUB_SHA" --jq .body > "$notes" || true
-          if ! grep -q '[^[:space:]]' "$notes" || grep -qx 'null' "$notes"; then
-            printf '%s\n' "Mise à jour de Sitos." > "$notes"
+          notes="docs/releases/$VERSION.md"
+          if [[ ! -s "$notes" ]] || ! grep -q '[^[:space:]]' "$notes"; then
+            echo "::error::Les notes de la version $VERSION sont absentes ou vides : créez docs/releases/$VERSION.md. La release ne se publie pas sans notes." >&2
+            exit 1
           fi
-          echo "NOTES=$notes" >> "$GITHUB_ENV"
+          echo "NOTES=$PWD/$notes" >> "$GITHUB_ENV"
+          echo "Notes de version : $notes"
 
       # Une release déjà publiée n'est jamais réécrite : un nouveau passage échoue bruyamment.
       - name: Créer ou reprendre le brouillon de release

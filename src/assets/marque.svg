@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Sitos">
+  <title>Sitos</title>
+  <!-- Le bol : demi-disque d’encre, liseré crème, rien d’autre. -->
+  <path d="M11 31h42a21 21 0 0 1-42 0z" fill="#2a2119"/>
+  <ellipse cx="32" cy="31" rx="21" ry="6" fill="#fffdf9" stroke="#2a2119" stroke-width="2.6"/>
+</svg>

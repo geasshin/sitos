@@ -6,7 +6,8 @@
     "main"
   ],
   "permissions": [
-    "core:default",
+    "core:app:default",
+    "core:window:default",
     "core:window:allow-set-theme",
     "process:allow-restart"
   ]

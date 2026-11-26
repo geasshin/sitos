@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Sitos">
+  <title>Sitos, icône</title>
+  <!-- Source de l’icône d’application. Toutes les tailles Tauri sortent de ce fichier.
+       Le carré arrondi est à 22,5 % de rayon, comme les icônes macOS à coin doux. -->
+  <rect width="1024" height="1024" rx="230" fill="#fbf3e7"/>
+  <path d="M176 402h672a336 336 0 0 1-672 0z" fill="#2a2119"/>
+  <ellipse cx="512" cy="402" rx="336" ry="96" fill="#fffdf9" stroke="#2a2119" stroke-width="42"/>
+</svg>

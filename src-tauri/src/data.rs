@@ -188,6 +188,138 @@ pub fn get_data_folder(app: AppHandle) -> Result<String, String> {
     Ok(data_dir(&app)?.to_string_lossy().to_string())
 }
 
+/// Une copie automatique d'une collection, telle qu'elle est sur le disque.
+#[derive(serde::Serialize, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct BackupFile {
+    pub name: String,
+    pub collection: String,
+    /// Date du fichier, en millisecondes depuis 1970.
+    pub saved_at: u64,
+    pub bytes: u64,
+}
+
+/// Le résultat d'une restauration : la collection remise et la copie de l'état d'avant.
+#[derive(serde::Serialize, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct Restored {
+    pub collection: String,
+    /// Nom du dossier de sauvegarde créé avant l'écriture ; absent s'il n'y avait rien à copier.
+    pub backup: Option<String>,
+    pub bytes: u64,
+}
+
+/// Le nom d'une copie désigne une collection connue et rien d'autre : jamais un chemin.
+fn collection_of(name: &str) -> Option<&'static str> {
+    if !name.ends_with(".json") {
+        return None;
+    }
+    COLLECTIONS.iter().copied().find(|collection| {
+        name.strip_prefix(collection)
+            .is_some_and(|rest| rest.starts_with('-'))
+    })
+}
+
+/// Résout une copie dans `.sauvegardes` : le nom doit être un simple fichier,
+/// d'une collection connue, présent sur le disque. Sinon, refus avant toute lecture.
+fn backup_source(dir: &Path, name: &str) -> Result<(&'static str, PathBuf), String> {
+    if name.is_empty()
+        || name.len() > 200
+        || name.contains('/')
+        || name.contains('\\')
+        || name.contains("..")
+        || name.starts_with('.')
+    {
+        return Err("nom de sauvegarde invalide".to_string());
+    }
+    let collection = collection_of(name).ok_or_else(|| "nom de sauvegarde invalide".to_string())?;
+    let path = dir.join(".sauvegardes").join(name);
+    if !path.is_file() {
+        return Err(format!("sauvegarde introuvable : {name}"));
+    }
+    Ok((collection, path))
+}
+
+/// Les copies automatiques, de la plus récente à la plus ancienne.
+pub fn backup_files(dir: &Path) -> Vec<BackupFile> {
+    let mut out = Vec::new();
+    let Ok(entries) = fs::read_dir(dir.join(".sauvegardes")) else {
+        return out;
+    };
+    for entry in entries.flatten() {
+        let name = entry.file_name().to_string_lossy().to_string();
+        let Some(collection) = collection_of(&name) else {
+            continue;
+        };
+        let Ok(metadata) = entry.metadata() else {
+            continue;
+        };
+        if !metadata.is_file() {
+            continue;
+        }
+        let saved_at = metadata
+            .modified()
+            .ok()
+            .and_then(|time| time.duration_since(UNIX_EPOCH).ok())
+            .map(|since| since.as_millis() as u64)
+            .unwrap_or_default();
+        out.push(BackupFile {
+            name,
+            collection: collection.to_string(),
+            saved_at,
+            bytes: metadata.len(),
+        });
+    }
+    out.sort_by_key(|b| std::cmp::Reverse(b.saved_at));
+    out
+}
+
+/// Remet une copie à la place de sa collection. L'état courant part d'abord dans
+/// un dossier de sauvegarde daté ; la copie est ensuite installée par un renommage,
+/// donc une coupure au mauvais moment laisse l'ancien fichier intact.
+pub fn restore(dir: &Path, name: &str, label: &str) -> Result<Restored, String> {
+    let (collection, source) = backup_source(dir, name)?;
+    let text =
+        fs::read_to_string(&source).map_err(|e| format!("lecture de la sauvegarde : {e}"))?;
+    serde_json::from_str::<Value>(&text).map_err(|e| format!("sauvegarde illisible : {e}"))?;
+
+    let target = dir.join(format!("{collection}.json"));
+    let backup = if target.exists() {
+        Some(snapshot(dir, label)?)
+    } else {
+        None
+    };
+
+    fs::create_dir_all(dir).map_err(|e| format!("dossier des données : {e}"))?;
+    let tmp = dir.join(format!("{collection}.json.tmp"));
+    fs::copy(&source, &tmp).map_err(|e| format!("copie de {collection} : {e}"))?;
+    fs::rename(&tmp, &target).map_err(|e| format!("remplacement de {collection} : {e}"))?;
+    let bytes = fs::metadata(&target).map(|m| m.len()).unwrap_or_default();
+    Ok(Restored {
+        collection: collection.to_string(),
+        backup,
+        bytes,
+    })
+}
+
+#[tauri::command]
+pub fn list_backups(app: AppHandle) -> Result<Vec<BackupFile>, String> {
+    Ok(backup_files(&data_dir(&app)?))
+}
+
+#[tauri::command]
+pub fn read_backup(app: AppHandle, name: String) -> Result<Value, String> {
+    let dir = data_dir(&app)?;
+    let (_, source) = backup_source(&dir, &name)?;
+    let raw = fs::read_to_string(&source).map_err(|e| format!("lecture de la sauvegarde : {e}"))?;
+    serde_json::from_str(&raw).map_err(|e| format!("sauvegarde illisible : {e}"))
+}
+
+#[tauri::command]
+pub fn restore_backup(app: AppHandle, name: String, label: String) -> Result<Restored, String> {
+    restore(&data_dir(&app)?, &name, &label)
+}
+
 /// Liens que l'interface peut ouvrir dans le navigateur : une liste fermée, jamais une adresse libre.
 pub fn link_url(target: &str) -> Option<&'static str> {
     match target {
@@ -269,6 +401,61 @@ mod tests {
         let info = backup_info(dir.path());
         assert_eq!(info.manual, vec!["manuel-20261114-1830".to_string()]);
         assert_eq!(info.automatic, 1);
+    }
+
+    #[test]
+    fn restore_puts_a_backup_back_and_snapshots_the_current_state() {
+        let dir = tempfile::tempdir().unwrap();
+        write_collection(dir.path(), "plan", &json!({"n": 1})).unwrap();
+        write_collection(dir.path(), "settings", &json!({"n": 2})).unwrap();
+        write_collection(dir.path(), "plan", &json!({"n": 3})).unwrap();
+        let backups = backup_files(dir.path());
+        let plan_backup = backups.iter().find(|b| b.collection == "plan").unwrap();
+        assert_eq!(
+            plan_backup.bytes,
+            fs::metadata(dir.path().join(".sauvegardes").join(&plan_backup.name))
+                .unwrap()
+                .len()
+        );
+        let restored = restore(dir.path(), &plan_backup.name, "20261126-1200").unwrap();
+        assert_eq!(restored.collection, "plan");
+        let plan: Value =
+            serde_json::from_str(&fs::read_to_string(dir.path().join("plan.json")).unwrap())
+                .unwrap();
+        assert_eq!(plan["n"], 1);
+        let before = dir
+            .path()
+            .join(".sauvegardes")
+            .join(restored.backup.expect("copie de l'état d'avant"));
+        let saved: Value =
+            serde_json::from_str(&fs::read_to_string(before.join("plan.json")).unwrap()).unwrap();
+        assert_eq!(saved["n"], 3);
+        let listed = backup_files(dir.path());
+        assert!(listed.windows(2).all(|w| w[0].saved_at >= w[1].saved_at));
+        assert!(restored.bytes > 0);
+    }
+
+    #[test]
+    fn a_backup_name_never_leaves_the_backup_folder() {
+        let dir = tempfile::tempdir().unwrap();
+        assert!(backup_source(dir.path(), "../plan.json").is_err());
+        assert!(backup_source(dir.path(), "plan.json").is_err());
+        assert!(backup_source(dir.path(), ".plan-1.json").is_err());
+        assert!(restore(dir.path(), "../settings.json", "20261126-1200").is_err());
+    }
+
+    #[test]
+    fn a_corrupt_backup_is_refused_before_writing() {
+        let dir = tempfile::tempdir().unwrap();
+        write_collection(dir.path(), "plan", &json!({"n": 1})).unwrap();
+        let backups = dir.path().join(".sauvegardes");
+        fs::create_dir_all(&backups).unwrap();
+        fs::write(backups.join("plan-000000000000001.json"), "{ pas du json").unwrap();
+        assert!(restore(dir.path(), "plan-000000000000001.json", "20261126-1200").is_err());
+        let plan: Value =
+            serde_json::from_str(&fs::read_to_string(dir.path().join("plan.json")).unwrap())
+                .unwrap();
+        assert_eq!(plan["n"], 1);
     }
 
     #[test]

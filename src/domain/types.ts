@@ -218,6 +218,8 @@ export interface Settings {
   mealsPerDay?: 1 | 2 | 3;
   /** Repas que donne une cuisson, quand la fiche ne le dit pas (2 à 4). */
   mealsPerCook?: 2 | 3 | 4;
+  /** La fenêtre de bienvenue a été lue (absente : jamais vue, elle s’ouvre). */
+  welcomeSeen?: boolean;
   demo: boolean;
   profile?: Profile;
   /** Rechercher une mise à jour à l'ouverture (vrai par défaut). */

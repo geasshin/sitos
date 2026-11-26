@@ -1,3 +1,7 @@
+// Prépare une release : calcule la version, exige ses notes, puis aligne les manifestes.
+// La version vient de SITOS_RELEASE_VERSION (calculée une fois par le job prepare) ou des tags.
+// Les notes vivent dans docs/releases/<version>.md et deviennent le corps de la release.
+
 import { appendFileSync, readFileSync, writeFileSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
 
@@ -20,7 +24,7 @@ if (!baseVersion) throw new Error('La version de base Tauri doit être un SemVer
 
 // Une version imposée (calculée une fois par le job « prepare ») prime sur le calcul.
 // Sans tag au-dessus de la version de base, la release porte la version de base
-// elle-même (la toute première release est donc la 0.1.0) ; sinon correctif + 1.
+// elle-même (la première release d'une nouvelle base) ; sinon correctif + 1.
 const explicitVersion = process.env.SITOS_RELEASE_VERSION?.trim().replace(/^v/, '')
 
 const computeNextVersion = () => {
@@ -44,6 +48,34 @@ if (explicitVersion && !parseStableVersion(explicitVersion)) {
 }
 const nextVersion = explicitVersion || computeNextVersion()
 const tagName = `v${nextVersion}`
+
+// Les notes de la version sont obligatoires : docs/releases/<version>.md devient le corps de la
+// release GitHub et le texte de la carte de mise à jour dans l'application. Le contrôle passe
+// avant toute écriture, pour qu'un refus ne laisse pas les manifestes à moitié réécrits.
+const notesPath = `docs/releases/${nextVersion}.md`
+const refuse = (message) => {
+  if (process.env.GITHUB_ACTIONS === 'true') process.stderr.write(`::error::${message}\n`)
+  process.stderr.write(`${message}\n`)
+  process.exit(1)
+}
+
+let releaseNotes
+try {
+  releaseNotes = readFileSync(notesPath, 'utf8')
+} catch (error) {
+  if (error.code !== 'ENOENT') throw error
+  refuse(
+    `Les notes de la version ${nextVersion} manquent : créez ${notesPath}. `
+    + 'Ce fichier devient le corps de la release GitHub et le texte affiché dans la carte de mise à jour. '
+    + 'Aucune release ne se construit sans notes.',
+  )
+}
+if (releaseNotes.trim() === '') {
+  refuse(
+    `Les notes de la version ${nextVersion} sont vides : ${notesPath} doit dire ce que change cette version. `
+    + 'Aucune release ne se construit sans notes.',
+  )
+}
 
 const updateJsonVersion = (path, update) => {
   const value = JSON.parse(readFileSync(path, 'utf8'))

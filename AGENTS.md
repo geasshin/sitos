@@ -4,7 +4,14 @@
 
 - Application personnelle macOS (Tauri 2, React, TypeScript) : stock des courses du mois, calendrier un plat par jour,
   bibliothèque de recettes, nutrition, poids. Profil et contraintes de cuisine d'Aurélien : skill `cuisine-recettes`.
-- Direction visuelle reprise de Sylloge (DESIGN.md de Sylloge) : monochrome froid, Syne en capitales, barre latérale îlot.
+- **Charte v3 (celle qui fait foi, branche `v3/ludique`)** : papier crème, encre brune, pastels qui portent un sens,
+  Fredoka pour les titres et les chiffres, Nunito pour le texte, formes bombées, ombre franche. Les jetons sont dans
+  `src/theme.css`. Le mode sombre n'est pas soigné en V1, le clair est la référence.
+- **Quatre portes** : Ma semaine, Recettes, Mon frigo, Bilan, plus Paramètres. Aujourd'hui a fusionné avec la semaine.
+  Le bilan vit dans Bilan, la semaine ne le duplique pas.
+- La cuisson en lot suit un modèle écrit dans `docs/ROADMAP-V1.md` : les ingrédients portent sur la fournée entière,
+  le nombre de repas est demandé avant la saisie, et les quantités ne sont jamais multipliées en silence.
+- Le vocabulaire de l'interface suit `docs/LEXIQUE.md` : un mot pour une chose, un chiffre toujours avec son référentiel.
 - Une recette de la bibliothèque n'est jamais modifiée pour adapter un repas : chaque cuisson du plan porte ses propres
   `ingredients` (et `title` pour un plat maison), voir `mealOf`/`mealOfCook` (src/domain/nutrition.ts) et
   `setIngredients`/`setPortions` (src/domain/plan.ts).

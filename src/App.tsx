@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { CalendarDays, ChartColumn, ChefHat, Package, RotateCcw, Settings, Sun } from 'lucide-react';
+import type React from 'react';
+import { ChartColumn, ChefHat, ListChecks, Package, RotateCcw, Settings as SettingsIcon } from 'lucide-react';
 import { AppContext, useDerived, type Route, type View } from './context';
 import { todayISO } from './domain/dates';
+import { dayNutrition } from './domain/nutrition';
 import type { ISODate } from './domain/types';
 import { useStore } from './store';
 import { UpdateNotice } from './components/UpdateNotice';
+import { Welcome } from './components/Welcome';
 import { applyTheme, isNative, openDataFolder } from './storage';
-import { TodayView } from './views/Today';
-import { CalendarView } from './views/Calendar';
+import { WeekView } from './views/Week';
 import { StockView } from './views/Stock';
 import { NutritionView } from './views/Nutrition';
 import { RecipesView } from './views/Recipes';
@@ -16,19 +18,24 @@ import { RecipeEditor } from './views/RecipeEditor';
 import { WeightView } from './views/Weight';
 import { SettingsView } from './views/Settings';
 import { useUpdates } from './updates';
+import markUrl from './assets/marque.svg';
 
-const NAV: { id: View; label: string; Icon: typeof Sun }[] = [
-  { id: 'today', label: 'Aujourd’hui', Icon: Sun },
-  { id: 'calendar', label: 'Semaine', Icon: CalendarDays },
+type NavId = 'week' | 'recipes' | 'stock' | 'nutrition';
+
+const NAV: { id: NavId; label: string; Icon: typeof ListChecks }[] = [
+  { id: 'week', label: 'Ma semaine', Icon: ListChecks },
   { id: 'recipes', label: 'Recettes', Icon: ChefHat },
-  { id: 'stock', label: 'Stock', Icon: Package },
-  { id: 'nutrition', label: 'Nutrition', Icon: ChartColumn },
+  { id: 'stock', label: 'Mon frigo', Icon: Package },
+  { id: 'nutrition', label: 'Bilan', Icon: ChartColumn },
 ];
+
+const LEGACY: Record<string, View> = { today: 'week', calendar: 'week' };
 
 function readRoute(): Route {
   const parts = window.location.hash.replace(/^#\/?/, '').split('/').map(decodeURIComponent);
-  const known = NAV.some((n) => n.id === parts[0]) || parts[0] === 'settings' || parts[0] === 'weight';
-  const view = (known ? parts[0] : 'today') as View;
+  const raw = LEGACY[parts[0]] ?? parts[0];
+  const known = NAV.some((n) => n.id === raw) || raw === 'settings' || raw === 'weight';
+  const view = (known ? raw : 'week') as View;
   if (view === 'recipes' && parts[1]) return { view, recipeId: parts[1], edit: parts[2] === 'modifier' || parts[1] === 'nouvelle' };
   return { view };
 }
@@ -49,6 +56,11 @@ export function App() {
   const [route, setRoute] = useState<Route>(readRoute);
   const [focusDate, setFocusDate] = useState<ISODate | undefined>();
   const today = useMemo(readToday, []);
+  const theme = store.data?.settings.theme ?? 'system';
+  // Le thème choisi s’applique dès la bienvenue, pas seulement une fois la coque montée.
+  useEffect(() => {
+    void applyTheme(theme);
+  }, [theme]);
 
   useEffect(() => {
     const on = () => setRoute(readRoute());
@@ -62,6 +74,11 @@ export function App() {
     setRoute(r);
     window.scrollTo({ top: 0 });
   }, []);
+
+  // La fenêtre de bienvenue se ferme en écrivant le réglage, comme le fait Paramètres.
+  const startWelcome = useCallback(() => {
+    store.update('settings', (s) => ({ ...s, welcomeSeen: true }));
+  }, [store.update]);
 
   if (store.error) {
     return (
@@ -84,6 +101,8 @@ export function App() {
     );
   }
   if (!store.data) return <div className="loading" aria-busy="true">Chargement…</div>;
+  // Un fichier existant sans `welcomeSeen` vient d’une version d’avant la fenêtre : elle s’ouvre.
+  if (!store.data.settings.welcomeSeen) return <Welcome onStart={startWelcome} />;
   return <Loaded store={store} route={route} navigate={navigate} today={today} focusDate={focusDate} setFocusDate={setFocusDate} />;
 }
 
@@ -118,10 +137,6 @@ function Loaded({
     back: () => (window.history.length > 1 ? window.history.back() : navigate({ view: 'recipes' })),
   };
   const updates = useUpdates();
-  const theme = data.settings.theme ?? 'system';
-  useEffect(() => {
-    void applyTheme(theme);
-  }, [theme]);
   useEffect(() => {
     // ⌘, ouvre les paramètres, comme dans toute app Mac
     const onKey = (e: KeyboardEvent) => {
@@ -143,29 +158,94 @@ function Loaded({
   }, [store.changeCount]);
 
   const alerts = derived.priorities.length;
-  const urgent = derived.priorities.some((p) => p.daysLeft <= 2);
 
   let page;
   if (route.view === 'recipes' && route.recipeId) {
     page = route.edit ? <RecipeEditor key={route.recipeId} id={route.recipeId} /> : <RecipeDetail key={route.recipeId} id={route.recipeId} />;
   } else {
-    page = {
-      today: <TodayView />,
-      calendar: <CalendarView focusDate={focusDate} />,
+    const pages: Record<View, React.ReactElement> = {
+      week: <WeekView />,
+      today: <WeekView />,
+      calendar: <WeekView />,
       recipes: <RecipesView />,
       stock: <StockView />,
-      nutrition: <NutritionView />,
+      nutrition: <NutritionView focusDate={focusDate} />,
       weight: <WeightView />,
       settings: <SettingsView />,
-    }[route.view];
+    };
+    page = pages[route.view];
   }
 
-  const active = (id: View) => route.view === id || (id === 'nutrition' && route.view === 'weight');
+  const todayKcal = Math.round(dayNutrition(data, derived.foods, today).total.kcal);
+  const pct = Math.min(100, Math.round((todayKcal / Math.max(1, derived.targets.kcal)) * 100));
+  const active = (id: NavId) => route.view === id || (id === 'nutrition' && route.view === 'weight');
 
   return (
     <AppContext.Provider value={ctx}>
-      <div className="shell">
-        <main className="main" id="contenu">
+      <div className="s-shell">
+        <header className="s-topbar">
+          <a
+            className="s-brand"
+            href="#/week"
+            onClick={(e) => {
+              e.preventDefault();
+              ctx.goTo('week');
+            }}
+          >
+            <img src={markUrl} alt="" />
+            <span className="s-brand-name">sitos</span>
+          </a>
+
+          <nav className="s-tabs" aria-label="Navigation principale">
+            {NAV.map(({ id, label, Icon }) => (
+              <a
+                key={id}
+                href={`#/${id}`}
+                className={`s-tab ${active(id) ? 'is-on' : ''}`}
+                aria-current={active(id) ? 'page' : undefined}
+                onClick={(e) => {
+                  e.preventDefault();
+                  ctx.goTo(id);
+                }}
+              >
+                <Icon size={17} aria-hidden />
+                {label}
+                {id === 'stock' && alerts > 0 && (
+                  <span className="s-chip is-berry num" aria-label={`${alerts} produits à surveiller`}>
+                    {alerts}
+                  </span>
+                )}
+              </a>
+            ))}
+          </nav>
+
+          <div className="s-topbar-right">
+            <span
+              className="s-daygauge"
+              title={`${todayKcal} kcal aujourd’hui, cible ${derived.targets.kcal}`}
+              aria-label={`Aujourd’hui : ${todayKcal} kcal sur ${derived.targets.kcal}`}
+            >
+              <span className="s-ring" style={{ ['--pct' as string]: pct }} aria-hidden />
+              <span className="s-daygauge-text num">{pct} %</span>
+            </span>
+            <a
+              href="#/settings"
+              className={`s-tab ${route.view === 'settings' ? 'is-on' : ''}`}
+              aria-label="Paramètres"
+              title="Paramètres (⌘,)"
+              aria-current={route.view === 'settings' ? 'page' : undefined}
+              onClick={(e) => {
+                e.preventDefault();
+                ctx.goTo('settings');
+              }}
+            >
+              <SettingsIcon size={17} aria-hidden />
+              {updates.phase === 'available' && <span className="dock-dot" aria-label="Mise à jour disponible" />}
+            </a>
+          </div>
+        </header>
+
+        <main className="s-main" id="contenu">
           {data.settings.demo && (
             <div className="banner" role="note">
               <span>
@@ -185,49 +265,6 @@ function Loaded({
           )}
           {page}
         </main>
-
-        <nav className="dock" aria-label="Navigation principale">
-          {NAV.map(({ id, label, Icon }) => (
-            <a
-              key={id}
-              href={`#/${id}`}
-              className={`dock-item ${active(id) ? 'is-active' : ''}`}
-              aria-current={active(id) ? 'page' : undefined}
-              aria-label={label}
-              onClick={(e) => {
-                e.preventDefault();
-                ctx.goTo(id);
-              }}
-            >
-              <Icon size={18} strokeWidth={1.7} aria-hidden />
-              <span className="dock-label">{label}</span>
-              {id === 'stock' && alerts > 0 && (
-                <span
-                  className={`dock-count num ${urgent ? 'is-urgent' : ''}`}
-                  aria-label={`${alerts} produits à surveiller`}
-                  title={`${alerts} produits à surveiller`}
-                >
-                  {alerts}
-                </span>
-              )}
-            </a>
-          ))}
-          <a
-            href="#/settings"
-            className={`dock-item ${route.view === 'settings' ? 'is-active' : ''}`}
-            aria-current={route.view === 'settings' ? 'page' : undefined}
-            aria-label="Paramètres"
-            title="Paramètres (⌘,)"
-            onClick={(e) => {
-              e.preventDefault();
-              ctx.goTo('settings');
-            }}
-          >
-            <Settings size={18} strokeWidth={1.7} aria-hidden />
-            <span className="dock-label">Paramètres</span>
-            {updates.phase === 'available' && <span className="dock-dot" aria-label="Mise à jour disponible" title="Mise à jour disponible" />}
-          </a>
-        </nav>
       </div>
 
       {undoVisible && store.canUndo && (

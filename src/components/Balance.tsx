@@ -4,7 +4,7 @@ import { dayNutrition, mealOf } from '../domain/nutrition';
 import type { Targets } from '../domain/targets';
 import type { ISODate } from '../domain/types';
 import { Complements } from './Complements';
-import { Meter } from './ui';
+import { Meter } from './meter';
 
 const fr = (v: number) => Math.round(v).toLocaleString('fr-FR');
 const dec = (v: number) => (Math.round(v * 10) / 10).toLocaleString('fr-FR');

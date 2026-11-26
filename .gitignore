@@ -4,6 +4,8 @@ src-tauri/target/
 src-tauri/gen/schemas/
 # Données personnelles : jamais dans le dépôt (le dépôt est public).
 data/
+sitos-export-*.json
+sitos-recettes-*.json
 *.local
 .DS_Store
 .playwright-cli/

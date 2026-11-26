@@ -1,0 +1,395 @@
+/* La semaine, lot 6 : le glisser-déposer et le rappel des repas passés.
+   Décision d’Aurélien, 26 novembre : aucun lien dessiné entre les jours d’une même
+   fournée. Le nom du plat est le signal, il est déjà là. Le vert dit oui, le rose dit non,
+   et la raison est toujours écrite. Aucune information ne dépend d’un survol. */
+
+/* ---------- la ligne de jour ---------- */
+
+.day-row {
+  position: relative;
+}
+
+.day-meal-line {
+  flex-wrap: wrap;
+  row-gap: 6px;
+}
+
+
+
+/* ---------- la poignée : glisser, ou appuyer pour choisir un jour ---------- */
+
+.day-grip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 9px;
+  border: 2px dashed var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.day-grip:hover {
+  border-color: var(--lilac-ink);
+  background: var(--lilac-soft);
+  color: var(--lilac-ink);
+}
+.day-grip:active {
+  cursor: grabbing;
+}
+.day-grip svg {
+  flex: none;
+}
+.day-grip svg,
+.day-grip span {
+  pointer-events: none;
+}
+.day-grip,
+.day-grip * {
+  -webkit-user-drag: none;
+}
+.day-grip-label {
+  display: none;
+}
+@media (min-width: 1080px) {
+  .day-grip-label {
+    display: inline;
+  }
+}
+
+body.is-week-drag {
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grabbing;
+}
+
+/* ---------- pendant le geste : la cible dit oui ou non ---------- */
+
+.week-ledger.is-dragging .day-row {
+  outline: 2px dashed color-mix(in srgb, var(--mint) 65%, transparent);
+  outline-offset: 3px;
+}
+.week-ledger.is-dragging .day-row.is-past,
+.week-ledger.is-dragging .day-row.is-drop-no {
+  outline-color: color-mix(in srgb, var(--berry) 55%, transparent);
+}
+
+.day-row.is-drop-ok {
+  border-color: var(--mint-ink);
+  background: color-mix(in srgb, var(--card) 62%, var(--mint-soft));
+  outline: 3px solid var(--mint-ink);
+  outline-offset: 2px;
+}
+.day-row.is-drop-no {
+  border-color: var(--berry-ink);
+  background: color-mix(in srgb, var(--card) 62%, var(--berry-soft));
+  outline: 3px solid var(--berry-ink);
+  outline-offset: 2px;
+}
+
+.day-drop-note {
+  position: absolute;
+  top: -13px;
+  right: 16px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  max-width: min(70%, 420px);
+  padding: 3px 10px;
+  border: 2px solid;
+  border-radius: var(--radius-pill);
+  font-size: 11.5px;
+  font-weight: 800;
+  line-height: 1.25;
+  white-space: normal;
+}
+.day-drop-note.is-ok {
+  background: var(--mint);
+  border-color: var(--mint-ink);
+  color: var(--mint-ink);
+}
+.day-drop-note.is-no {
+  background: var(--berry);
+  border-color: var(--berry-ink);
+  color: var(--berry-ink);
+}
+
+.week-drag-ghost {
+  position: fixed;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 160px;
+  max-width: 280px;
+  padding: 8px 12px;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-md);
+  background: var(--ink);
+  color: var(--card);
+  box-shadow: var(--pop);
+  pointer-events: none;
+}
+.week-drag-ghost.is-no {
+  background: var(--berry-ink);
+  border-color: var(--berry-ink);
+}
+.week-drag-ghost-main {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 500;
+}
+.week-drag-ghost-sub {
+  font-size: 11.5px;
+  font-weight: 700;
+  opacity: 0.82;
+}
+
+/* ---------- le rappel d’un repas passé ---------- */
+
+.day-reminder {
+  display: flex;
+  align-items: center;
+  gap: 8px 10px;
+  flex-wrap: wrap;
+  padding: 7px 10px;
+  border: 1.5px dashed var(--butter-ink);
+  border-radius: var(--radius-md);
+  background: var(--butter-soft);
+  color: var(--butter-ink);
+}
+.day-reminder-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 800;
+}
+.day-reminder-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+.day-reminder-row b {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* ---------- les trois recettes d’une ligne vide ---------- */
+
+.day-suggest {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.day-suggest-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--mint-ink);
+}
+.day-suggest-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 28px;
+  padding: 0 11px;
+  border: 1.5px solid var(--mint);
+  border-radius: var(--radius-pill);
+  background: var(--card);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 800;
+}
+.day-suggest-btn:hover {
+  border-color: var(--mint-ink);
+  background: var(--mint-soft);
+}
+.day-suggest-btn .num {
+  font-weight: 700;
+  color: var(--ink-faint);
+}
+
+/* ---------- le choix du jour ---------- */
+
+.move-days {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.move-day {
+  display: flex;
+  align-items: center;
+  gap: 8px 10px;
+  flex-wrap: wrap;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+}
+.move-day:hover:not(:disabled) {
+  border-color: var(--ink);
+  background: var(--paper);
+}
+.move-day:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+}
+.move-day-date {
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  font-weight: 600;
+}
+.move-day .s-chip {
+  margin-left: auto;
+}
+.move-day-why {
+  flex-basis: 100%;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--berry-ink);
+}
+
+.move-lead {
+  margin: 0;
+  font-size: 14.5px;
+}
+.move-lead b {
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+.move-count {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.move-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.move-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+}
+.move-choice:hover:not(:disabled) {
+  border-color: var(--ink);
+  box-shadow: var(--pop-sm);
+}
+.move-choice b {
+  font-family: var(--font-display);
+  font-size: 15.5px;
+  font-weight: 600;
+}
+.move-choice span {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+.move-choice:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.move-choice.is-primary {
+  border-color: var(--mint-ink);
+  background: var(--mint-soft);
+}
+.move-choice.is-quiet {
+  border-style: dashed;
+}
+
+/* ---------- resserrer ---------- */
+
+.gap-headline {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 27px;
+  line-height: 1.12;
+}
+.gap-sub {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+}
+.gap-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.gap-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--paper);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+.gap-row b {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+}
+.gap-arrow {
+  color: var(--lilac-ink);
+  font-weight: 800;
+}
+.gap-row .s-chip {
+  margin-left: auto;
+}
+
+.week-nav .s-btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+@media (max-width: 900px) {
+  .day-drop-note {
+    right: 10px;
+    max-width: calc(100% - 20px);
+  }
+  .day-reminder-row {
+    margin-left: 0;
+  }
+}

@@ -8,12 +8,13 @@ la bibliothèque de recettes, la nutrition et le poids. Tout reste sur le Mac : 
 
 σῖτος (*sitos*) : les vivres, ce qu'on met en réserve pour se nourrir.
 
-## Installer
+## Installation
 
 Télécharger **Sitos-macOS.dmg** depuis la [dernière release](https://github.com/geasshin/sitos/releases/latest),
-puis glisser Sitos dans Applications. L'app n'est pas notariée par Apple : au premier lancement, macOS la bloque ;
-ouvrir Réglages Système › Confidentialité et sécurité, puis « Ouvrir quand même ». Ensuite, les mises à jour
-s'annoncent dans l'app (carte en bas à droite) et s'installent d'un clic.
+puis glisser Sitos dans Applications. L’app n’est pas notariée par Apple : le premier lancement demande un geste
+de plus, décrit pas à pas dans [docs/INSTALLATION.md](docs/INSTALLATION.md), avec les deux chemins possibles et ce
+que cela implique pour la sécurité. Ensuite, les mises à jour s’annoncent dans l’app (carte en bas à droite) et
+s’installent d’un clic.
 
 ## Ce qu'elle fait
 
@@ -98,7 +99,7 @@ Un fichier JSON lisible par collection, dans `~/Library/Application Support/com.
 
 | Fichier | Contenu |
 |---|---|
-| `foods.json` | aliments : unité, valeurs pour 100 g (table Ciqual 2020 de l'ANSES, ou étiquette type : voir `source`), conservation après réception |
+| `foods.json` | aliments : unité, valeurs pour 100 g (table Ciqual 2020 de l'ANSES, ou étiquette type : voir `source`), conservation après réception. Le catalogue livré compte plus de 2 300 aliments, voir `docs/CATALOGUE.md` |
 | `stock.json` | achats : quantité, date de réception, date limite si connue, origine |
 | `recipes.json` | bibliothèque ; si la fiche est chiffrée : `ingredients`, `portions` (repas), `fridgeDays` |
 | `plan.json` | le plan : cuisson (`cook`, avec `ingredients` et `title` propres à ce repas si ajustés), reste (`leftover`), dehors (`out`) |
@@ -125,6 +126,12 @@ persistance dans `src/storage.ts` (navigateur ou natif) et `src-tauri/src/data.r
 
 Publier une version : [docs/RELEASE.md](docs/RELEASE.md).
 
+## Qualité
+
+- [docs/QA-NATIVE.md](docs/QA-NATIVE.md) : la recette dans la vraie fenêtre Tauri, sur macOS 14 et 15, geste par geste.
+- [docs/PERFORMANCE.md](docs/PERFORMANCE.md) : les mesures, le jeu de charge et les seuils.
+- [SECURITY.md](SECURITY.md) : ce qui est protégé, ce qui ne l’est pas, et comment signaler un problème.
+
 ## Repères nutritionnels
 
 Calcul dans `src/domain/targets.ts`, bilan et à-côtés dans `src/domain/balance.ts` (purs, testés).
@@ -143,3 +150,8 @@ Calcul dans `src/domain/targets.ts`, bilan et à-côtés dans `src/domain/balanc
 | Légumes et fruits | au moins 400 g/j | OMS, PNNS |
 
 Ce sont des repères pour une personne adulte en bonne santé, pas un avis médical.
+
+
+## Sources
+
+Les valeurs nutritionnelles viennent de la **table Ciqual 2020 de l'ANSES**, publiée sous licence CC BY 4.0. Voir `docs/CATALOGUE.md` pour l'import, la licence et la régénération du catalogue.

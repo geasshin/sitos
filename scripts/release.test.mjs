@@ -13,15 +13,22 @@ const SIG = 'dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXk
 const scratch = () => mkdtempSync(join(tmpdir(), 'sitos-release-'))
 const run = (args, cwd = ROOT) => spawnSync('node', [MERGE, ...args], { cwd, encoding: 'utf8' })
 
+// La version de base est lue dans le manifeste Tauri : ces tests suivent un passage de 0.1.0 à 1.0.0
+// sans être retouchés. Les notes de release sont obligatoires (docs/releases/<version>.md).
+const BASE = JSON.parse(readFileSync(join(ROOT, 'src-tauri/tauri.conf.json'), 'utf8')).version
+const [MAJOR, MINOR, PATCH] = BASE.split('.').map(Number)
+const patchVersion = (offset) => `${MAJOR}.${MINOR}.${PATCH + offset}`
+const escapeVersion = (version) => version.replace(/\./g, '\\.')
+
 test('le job publish assemble un manifeste macOS complet (arm + intel)', () => {
   const dir = scratch()
   writeFileSync(join(dir, 'a.sig'), SIG)
   writeFileSync(join(dir, 'notes.md'), 'Première version.')
   const out = join(dir, 'latest.json')
-  const url = 'https://github.com/geasshin/sitos/releases/download/v0.1.0/Sitos.app.tar.gz'
-  assert.equal(run(['--manifest', 'none', '--version', '0.1.0', '--notes-file', join(dir, 'notes.md'), '--platform', 'darwin-aarch64', '--url', url, '--signature-file', join(dir, 'a.sig'), '--output', out]).status, 0)
-  assert.equal(run(['--manifest', out, '--version', '0.1.0', '--alias', 'darwin-aarch64:darwin-x86_64', '--output', out]).status, 0)
-  const ok = run(['--check', out, '--version', '0.1.0', '--require', 'darwin-aarch64', '--require', 'darwin-x86_64'])
+  const url = `https://github.com/geasshin/sitos/releases/download/v${BASE}/Sitos.app.tar.gz`
+  assert.equal(run(['--manifest', 'none', '--version', BASE, '--notes-file', join(dir, 'notes.md'), '--platform', 'darwin-aarch64', '--url', url, '--signature-file', join(dir, 'a.sig'), '--output', out]).status, 0)
+  assert.equal(run(['--manifest', out, '--version', BASE, '--alias', 'darwin-aarch64:darwin-x86_64', '--output', out]).status, 0)
+  const ok = run(['--check', out, '--version', BASE, '--require', 'darwin-aarch64', '--require', 'darwin-x86_64'])
   assert.equal(ok.status, 0, ok.stderr)
   const manifest = JSON.parse(readFileSync(out, 'utf8'))
   assert.deepEqual(Object.keys(manifest.platforms).sort(), ['darwin-aarch64', 'darwin-x86_64'])
@@ -32,8 +39,8 @@ test('un manifeste sans la cible Intel est refusé', () => {
   const dir = scratch()
   writeFileSync(join(dir, 'a.sig'), SIG)
   const out = join(dir, 'latest.json')
-  run(['--manifest', 'none', '--version', '0.1.0', '--platform', 'darwin-aarch64', '--url', 'https://github.com/geasshin/sitos/releases/download/v0.1.0/Sitos.app.tar.gz', '--signature-file', join(dir, 'a.sig'), '--output', out])
-  const res = run(['--check', out, '--version', '0.1.0', '--require', 'darwin-aarch64', '--require', 'darwin-x86_64'])
+  run(['--manifest', 'none', '--version', BASE, '--platform', 'darwin-aarch64', '--url', `https://github.com/geasshin/sitos/releases/download/v${BASE}/Sitos.app.tar.gz`, '--signature-file', join(dir, 'a.sig'), '--output', out])
+  const res = run(['--check', out, '--version', BASE, '--require', 'darwin-aarch64', '--require', 'darwin-x86_64'])
   assert.notEqual(res.status, 0)
   assert.match(res.stderr, /darwin-x86_64/)
 })
@@ -41,15 +48,22 @@ test('un manifeste sans la cible Intel est refusé', () => {
 test('une archive hors du dépôt sitos est refusée', () => {
   const dir = scratch()
   writeFileSync(join(dir, 'a.sig'), SIG)
-  const res = run(['--manifest', 'none', '--version', '0.1.0', '--platform', 'darwin-aarch64', '--url', 'https://github.com/geasshin/sylloge/releases/download/v0.1.0/Sitos.app.tar.gz', '--signature-file', join(dir, 'a.sig'), '--output', join(dir, 'x.json')])
+  const res = run(['--manifest', 'none', '--version', BASE, '--platform', 'darwin-aarch64', '--url', `https://github.com/geasshin/sylloge/releases/download/v${BASE}/Sitos.app.tar.gz`, '--signature-file', join(dir, 'a.sig'), '--output', join(dir, 'x.json')])
   assert.notEqual(res.status, 0)
 })
 
-function versionRepo(tags) {
+const MANIFESTS = ['package.json', 'package-lock.json', 'src-tauri/tauri.conf.json', 'src-tauri/Cargo.toml', 'src-tauri/Cargo.lock']
+
+// Dépôt jetable : les manifestes du projet, les tags voulus, et les notes des versions attendues.
+function versionRepo(tags, notes = []) {
   const dir = scratch()
-  for (const f of ['package.json', 'package-lock.json', 'src-tauri/tauri.conf.json', 'src-tauri/Cargo.toml', 'src-tauri/Cargo.lock']) {
+  for (const f of MANIFESTS) {
     mkdirSync(join(dir, f, '..'), { recursive: true })
     cpSync(join(ROOT, f), join(dir, f))
+  }
+  for (const version of notes) {
+    mkdirSync(join(dir, 'docs/releases'), { recursive: true })
+    writeFileSync(join(dir, `docs/releases/${version}.md`), `Notes de la version ${version}.\n`)
   }
   const git = (...a) => execFileSync('git', a, { cwd: dir, stdio: 'ignore' })
   git('init', '-q'); git('-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', 'x')
@@ -57,13 +71,50 @@ function versionRepo(tags) {
   const env = { ...process.env }
   delete env.GITHUB_OUTPUT
   delete env.SITOS_RELEASE_VERSION
-  return execFileSync('node', [VERSION], { cwd: dir, encoding: 'utf8', env }).trim()
+  return { dir, env }
+}
+
+const prepare = ({ dir, env }) => spawnSync('node', [VERSION], { cwd: dir, encoding: 'utf8', env })
+
+function prepareVersion(tags, notes) {
+  const result = prepare(versionRepo(tags, notes))
+  assert.equal(result.status, 0, result.stderr)
+  return result.stdout.trim()
 }
 
 test('la première release porte la version de base, les suivantes un correctif de plus', () => {
-  const base = JSON.parse(readFileSync(join(ROOT, 'src-tauri/tauri.conf.json'), 'utf8')).version
-  const [a, b, c] = base.split('.').map(Number)
-  assert.equal(versionRepo([]), base)
-  assert.equal(versionRepo([`v${base}`]), `${a}.${b}.${c + 1}`)
-  assert.equal(versionRepo([`v${base}`, `v${a}.${b}.${c + 4}`]), `${a}.${b}.${c + 5}`)
+  assert.equal(prepareVersion([], [BASE]), BASE)
+  assert.equal(prepareVersion([`v${BASE}`], [patchVersion(1)]), patchVersion(1))
+  assert.equal(prepareVersion([`v${BASE}`, `v${patchVersion(4)}`], [patchVersion(5)]), patchVersion(5))
+})
+
+test('la version calculée est écrite dans les quatre manifestes', () => {
+  const repo = versionRepo([], [BASE])
+  const result = prepare(repo)
+  assert.equal(result.status, 0, result.stderr)
+  assert.equal(JSON.parse(readFileSync(join(repo.dir, 'package.json'), 'utf8')).version, BASE)
+  assert.equal(JSON.parse(readFileSync(join(repo.dir, 'src-tauri/tauri.conf.json'), 'utf8')).version, BASE)
+  assert.match(readFileSync(join(repo.dir, 'src-tauri/Cargo.toml'), 'utf8'), new RegExp(`^version = "${escapeVersion(BASE)}"$`, 'm'))
+  assert.match(readFileSync(join(repo.dir, 'src-tauri/Cargo.lock'), 'utf8'), new RegExp(`name = "sitos"\\r?\\nversion = "${escapeVersion(BASE)}"`))
+})
+
+test('une release sans notes est refusée avant toute écriture', () => {
+  const repo = versionRepo([`v${BASE}`])
+  const result = prepare(repo)
+  assert.notEqual(result.status, 0)
+  assert.match(result.stderr, new RegExp(`créez docs/releases/${escapeVersion(patchVersion(1))}\\.md`))
+  assert.equal(JSON.parse(readFileSync(join(repo.dir, 'package.json'), 'utf8')).version, BASE)
+})
+
+test('des notes vides sont refusées', () => {
+  const repo = versionRepo([], [BASE])
+  writeFileSync(join(repo.dir, `docs/releases/${BASE}.md`), '  \n\n')
+  const result = prepare(repo)
+  assert.notEqual(result.status, 0)
+  assert.match(result.stderr, /vides/)
+})
+
+test('la version de base du dépôt a ses notes', () => {
+  const notes = readFileSync(join(ROOT, 'docs/releases', `${BASE}.md`), 'utf8')
+  assert.ok(notes.trim().length > 0)
 })

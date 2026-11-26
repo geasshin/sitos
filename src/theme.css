@@ -1,0 +1,471 @@
+/* Sitos, troisième charte : le carnet qui se remplit.
+   Papier crème, encre brune, pastels pleins, formes bombées, ombre franche sans flou.
+   Fredoka pour les titres et les chiffres, Nunito pour la lecture.
+   La couleur porte un sens : menthe = végétal, pêche = protéines, beurre = féculents,
+   lilas = le reste, ciel = l'eau, rose = les compléments. Jamais décorative. */
+
+@font-face {
+  font-family: 'Fredoka';
+  src: url('./assets/fonts/Fredoka-Variable.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nunito';
+  src: url('./assets/fonts/Nunito-Variable.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 200 1000;
+  font-display: swap;
+}
+
+:root {
+  --paper: #fbf3e7;
+  --paper-deep: #f4e8d5;
+  --card: #fffdf9;
+  --ink: #2a2119;
+  --ink-soft: #6e5c48;
+  --ink-faint: #a08c74;
+  --line: #e8dac5;
+  --line-strong: #cbb79a;
+
+  --mint: #9ed9b8;
+  --mint-ink: #24694a;
+  --mint-soft: #e4f5ea;
+  --peach: #ffb49a;
+  --peach-ink: #9c3f22;
+  --peach-soft: #ffeae1;
+  --butter: #ffd98c;
+  --butter-ink: #7e5510;
+  --butter-soft: #fff4d8;
+  --lilac: #c6b8f2;
+  --lilac-ink: #513c9e;
+  --lilac-soft: #efeafd;
+  --sky: #a5d3f2;
+  --sky-ink: #1f5c85;
+  --sky-soft: #e6f2fb;
+  --berry: #f3a8c0;
+  --berry-ink: #8e2f4e;
+  --berry-soft: #fdeaf1;
+
+  /* Anciens jetons, réaccordés : les pages pas encore refaites restent lisibles. */
+  --color-canvas: var(--paper);
+  --color-surface: var(--card);
+  --color-surface-muted: var(--paper-deep);
+  --color-text: var(--ink);
+  --color-text-secondary: var(--ink-soft);
+  --color-text-muted: var(--ink-soft);
+  --color-text-subtle: var(--ink-faint);
+  --color-placeholder: var(--ink-faint);
+  --color-border: var(--line);
+  --color-border-strong: var(--line-strong);
+  --color-hairline: #efe3d1;
+  --color-accent: var(--ink);
+  --color-accent-hover: #453729;
+  --color-accent-soft: var(--butter-soft);
+  --color-on-accent: #fffdf9;
+  --color-danger: #b3402a;
+  --color-danger-soft: var(--peach-soft);
+  --color-danger-border: #efbfa9;
+  --color-danger-text: var(--peach-ink);
+  --color-warning: #b98a1c;
+  --color-warning-border: #ecd59a;
+  --color-warning-soft: var(--butter-soft);
+  --color-warning-text: var(--butter-ink);
+  --color-good: #3f8a63;
+  --color-good-text: var(--mint-ink);
+  --color-plate-veg: var(--mint);
+  --color-plate-protein: var(--peach);
+  --color-plate-carb: var(--butter);
+  --color-plate-other: var(--lilac);
+  --color-overlay: rgba(42, 33, 25, 0.34);
+  --veil-soft: rgba(42, 33, 25, 0.05);
+
+  --shadow-xs: 0 1px 0 rgba(42, 33, 25, 0.06);
+  --shadow-visual: 0 1px 0 rgba(42, 33, 25, 0.05);
+  --shadow-lifted: 0 2px 0 rgba(42, 33, 25, 0.07);
+  --shadow-popover: 0 10px 30px -12px rgba(42, 33, 25, 0.35);
+  --pop: 3px 3px 0 var(--ink);
+  --pop-sm: 2px 2px 0 var(--ink);
+  --pop-lg: 5px 5px 0 var(--ink);
+
+  --font-display: 'Fredoka', var(--font-ui);
+  --font-ui: 'Nunito', ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-label: var(--font-ui);
+  --font-personal: var(--font-display);
+
+  --text-2xs: 10px;
+  --text-xs: 11.5px;
+  --text-sm: 12.5px;
+  --text-md: 13.5px;
+  --text-lg: 15.5px;
+  --text-xl: 18px;
+  --text-2xl: 22px;
+  --text-3xl: 28px;
+  --text-4xl: 36px;
+  --text-display: 44px;
+
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 26px;
+  --radius-pill: 999px;
+
+  --control-sm: 30px;
+  --control-md: 38px;
+  --control-lg: 46px;
+
+  color-scheme: light;
+  accent-color: var(--mint-ink);
+}
+
+/* Le sombre reste chaud : encre profonde, papiers bruns, mêmes pastels. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #1d1712;
+    --paper-deep: #261e17;
+    --card: #2a2219;
+    --ink: #f7ecdc;
+    --ink-soft: #c4b19a;
+    --ink-faint: #94816c;
+    --line: #3b2f24;
+    --line-strong: #57452f;
+
+    --mint: #4e9c74;
+    --mint-ink: #b8e8cd;
+    --mint-soft: #23382c;
+    --peach: #c26a4c;
+    --peach-ink: #ffc7b2;
+    --peach-soft: #3b241c;
+    --butter: #b98f38;
+    --butter-ink: #ffe1a1;
+    --butter-soft: #362a17;
+    --lilac: #7a68b8;
+    --lilac-ink: #d8ceff;
+    --lilac-soft: #2b2544;
+    --sky: #4d87b3;
+    --sky-ink: #bfe0f7;
+    --sky-soft: #1d2f3d;
+    --berry: #b45f7d;
+    --berry-ink: #ffc6d9;
+    --berry-soft: #3a2029;
+
+    --color-canvas: var(--paper);
+    --color-surface: var(--card);
+    --color-surface-muted: var(--paper-deep);
+    --color-text: var(--ink);
+    --color-text-secondary: var(--ink-soft);
+    --color-text-muted: var(--ink-soft);
+    --color-text-subtle: var(--ink-faint);
+    --color-placeholder: var(--ink-faint);
+    --color-border: var(--line);
+    --color-border-strong: var(--line-strong);
+    --color-hairline: #33291f;
+    --color-accent: var(--ink);
+    --color-accent-hover: #fff8ec;
+    --color-accent-soft: var(--butter-soft);
+    --color-on-accent: #241d16;
+    --color-danger: #f0a184;
+    --color-danger-soft: var(--peach-soft);
+    --color-danger-border: #6c3e2d;
+    --color-danger-text: var(--peach-ink);
+    --color-warning: #e8c26a;
+    --color-warning-border: #6a5323;
+    --color-warning-soft: var(--butter-soft);
+    --color-warning-text: var(--butter-ink);
+    --color-good: #8fd3ac;
+    --color-good-text: var(--mint-ink);
+    --color-plate-veg: var(--mint);
+    --color-plate-protein: var(--peach);
+    --color-plate-carb: var(--butter);
+    --color-plate-other: var(--lilac);
+    --color-overlay: rgba(12, 9, 6, 0.6);
+    --veil-soft: rgba(247, 236, 220, 0.06);
+    --pop: 3px 3px 0 #0d0a07;
+    --pop-sm: 2px 2px 0 #0d0a07;
+    --pop-lg: 5px 5px 0 #0d0a07;
+  }
+}
+
+/* ---------- base ---------- */
+
+html, body { background: var(--paper); }
+body {
+  font-family: var(--font-ui);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, .page-title, .panel-title, .section-title, .display-title {
+  font-family: var(--font-display);
+  text-transform: none;
+  letter-spacing: -0.005em;
+  font-weight: 600;
+}
+
+.num { font-variant-numeric: tabular-nums; }
+
+::selection { background: var(--butter); color: var(--ink); }
+
+:focus-visible {
+  outline: 3px solid var(--mint);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ---------- la coque : barre haute, papier, quatre portes ---------- */
+
+.s-shell { min-height: 100dvh; display: flex; flex-direction: column; background: var(--paper); }
+
+.s-topbar {
+  position: sticky; top: 0; z-index: 30;
+  display: flex; align-items: center; gap: 18px;
+  padding: 12px 28px;
+  background: var(--paper);
+  border-bottom: 2px solid var(--line);
+}
+
+.s-brand { display: flex; align-items: center; gap: 10px; padding-right: 6px; }
+.s-brand img { width: 30px; height: 30px; border-radius: 9px; }
+.s-brand-name { font-family: var(--font-display); font-size: 25px; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); }
+
+/* styles.css pose `nav { flex-direction: column }` : la coque garde sa barre horizontale. */
+.s-topbar .s-tabs { display: flex; flex-direction: row; align-items: center; gap: 6px; flex-wrap: wrap; }
+.s-tab {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 38px; padding: 0 15px;
+  border: 2px solid transparent; border-radius: var(--radius-pill);
+  background: none; color: var(--ink-soft);
+  font-family: var(--font-display); font-size: 15.5px; font-weight: 500;
+  transition: background-color 120ms var(--ease-out), color 120ms var(--ease-out), border-color 120ms var(--ease-out);
+}
+.s-tab:hover { background: var(--paper-deep); color: var(--ink); }
+.s-tab.is-on {
+  background: var(--card); color: var(--ink);
+  border-color: var(--ink); box-shadow: var(--pop-sm);
+}
+.s-tab svg { flex: none; }
+
+.s-topbar-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+
+/* La jauge du jour : un anneau qui se remplit, la seule chose animée de la barre. */
+.s-daygauge { display: flex; align-items: center; gap: 9px; }
+.s-daygauge-text { font-size: 12px; font-weight: 700; color: var(--ink-soft); }
+.s-ring { --pct: 0; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+  background: conic-gradient(var(--mint) calc(var(--pct) * 1%), var(--paper-deep) 0);
+}
+.s-ring::after { content: ''; width: 24px; height: 24px; border-radius: 50%; background: var(--paper); }
+
+.s-main { flex: 1; width: 100%; max-width: 1160px; margin: 0 auto; padding: 26px 28px 80px; }
+
+.s-pagehead { display: flex; align-items: flex-end; gap: 18px; flex-wrap: wrap; margin-bottom: 22px; }
+.s-title { font-size: 40px; line-height: 1.05; margin: 0; }
+.s-subtitle { margin: 4px 0 0; color: var(--ink-soft); font-size: 15px; }
+
+/* ---------- primitives ---------- */
+
+.s-card {
+  background: var(--card);
+  border: 2px solid var(--line-strong);
+  border-radius: var(--radius-xl);
+  padding: 20px;
+}
+.s-card.is-pop { border-color: var(--ink); box-shadow: var(--pop); }
+
+.s-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 28px; padding: 0 11px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--ink) 8%, var(--card)); color: var(--ink);
+  font-size: 12.5px; font-weight: 700; white-space: nowrap;
+}
+.s-chip.is-mint { background: var(--mint-soft); color: var(--mint-ink); }
+.s-chip.is-peach { background: var(--peach-soft); color: var(--peach-ink); }
+.s-chip.is-butter { background: var(--butter-soft); color: var(--butter-ink); }
+.s-chip.is-lilac { background: var(--lilac-soft); color: var(--lilac-ink); }
+.s-chip.is-sky { background: var(--sky-soft); color: var(--sky-ink); }
+.s-chip.is-berry { background: var(--berry-soft); color: var(--berry-ink); }
+.s-chip.is-ink { background: var(--ink); color: var(--card); }
+
+.s-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  height: 40px; padding: 0 18px;
+  border: 2px solid var(--ink); border-radius: var(--radius-pill);
+  background: var(--card); color: var(--ink);
+  font-family: var(--font-display); font-size: 14.5px; font-weight: 500;
+  box-shadow: var(--pop-sm);
+  transition: transform 80ms var(--ease-out), box-shadow 80ms var(--ease-out), background-color 120ms var(--ease-out);
+}
+.s-btn:hover { background: var(--butter-soft); }
+.s-btn:active { transform: translate(2px, 2px); box-shadow: none; }
+.s-btn.is-primary { background: var(--ink); color: var(--card); }
+.s-btn.is-primary:hover { background: #453729; }
+.s-btn.is-mint { background: var(--mint); color: var(--mint-ink); border-color: var(--mint-ink); box-shadow: 2px 2px 0 var(--mint-ink); }
+.s-btn.is-ghost { border-color: transparent; box-shadow: none; background: none; color: var(--ink-soft); }
+.s-btn.is-ghost:hover { background: var(--paper-deep); color: var(--ink); }
+.s-btn.is-sm { height: 32px; padding: 0 13px; font-size: 13px; }
+
+.s-jauge { height: 10px; border-radius: 999px; background: var(--paper-deep); overflow: hidden; }
+.s-jauge > span { display: block; height: 100%; border-radius: 999px; background: var(--mint); transition: width 260ms var(--ease-out); }
+.s-jauge.is-butter > span { background: var(--butter); }
+.s-jauge.is-peach > span { background: var(--peach); }
+
+.s-section-title { display: flex; align-items: baseline; gap: 10px; margin: 0 0 12px; }
+.s-section-title h2 { font-size: 19px; margin: 0; }
+.s-section-title .s-meta { font-size: 13px; color: var(--ink-soft); }
+
+/* ---------- la semaine : sept lignes à remplir ---------- */
+
+.week-ledger { display: flex; flex-direction: column; gap: 12px; }
+
+.week-progress {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 14px 18px; border-radius: var(--radius-xl);
+  background: var(--card); border: 2px dashed var(--line-strong);
+}
+.week-progress-text { font-family: var(--font-display); font-size: 15px; }
+.week-progress-text b { font-weight: 600; }
+.week-dots { display: flex; gap: 6px; margin-left: auto; }
+.week-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--line-strong); background: var(--card); }
+.week-dot.is-on { background: var(--mint); border-color: var(--mint-ink); }
+.week-dot.is-today { box-shadow: 0 0 0 3px var(--butter); }
+
+.day-row {
+  display: grid;
+  grid-template-columns: 92px 48px minmax(0, 1fr) auto;
+  align-items: center; gap: 16px;
+  padding: 12px 16px;
+  background: var(--card);
+  border: 2px solid var(--line);
+  border-radius: var(--radius-lg);
+  transition: border-color 120ms var(--ease-out), box-shadow 120ms var(--ease-out);
+}
+.day-row:hover { border-color: var(--line-strong); }
+.day-row.is-today { border-color: var(--ink); box-shadow: 4px 4px 0 var(--ink); padding: 18px; align-items: start; }
+.day-row.is-past { background: color-mix(in srgb, var(--card) 72%, var(--paper-deep)); }
+.day-row.is-empty .day-main { opacity: 0.92; }
+
+.day-thumb {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid var(--line);
+  background: var(--paper-deep);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.day-thumb .poster { width: 100%; height: 100%; position: relative; }
+.day-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.day-thumb .poster-fallback { position: static; }
+.day-thumb-vide { color: var(--ink-faint); display: grid; place-items: center; }
+.day-row.is-today .day-thumb { border-color: var(--line-strong); }
+
+.day-date { display: flex; flex-direction: column; gap: 2px; }
+.day-wd { font-family: var(--font-display); font-size: 15px; font-weight: 600; text-transform: capitalize; }
+.day-num { font-size: 12.5px; color: var(--ink-faint); font-weight: 700; }
+.day-row.is-today .day-wd { color: var(--ink); }
+
+.day-main { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+
+.day-meal-line { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.day-meal-name {
+  font-family: var(--font-display); font-size: 17px; font-weight: 500; color: var(--ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.day-row.is-today .day-meal-name { font-size: 22px; }
+.day-meal-empty { font-size: 14.5px; color: var(--ink-faint); font-weight: 700; }
+
+.day-facts { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.day-actions { display: flex; align-items: center; gap: 8px; }
+
+/* La coche : un rond qui se remplit. Le seul endroit où la couleur explose. */
+.day-tick {
+  width: 44px; height: 44px; flex: none;
+  display: grid; place-items: center;
+  border: 2px solid var(--line-strong); border-radius: 50%;
+  background: var(--card); color: transparent;
+  transition: background-color 140ms var(--ease-out), border-color 140ms var(--ease-out), color 140ms var(--ease-out), transform 140ms var(--ease-out);
+}
+.day-tick:hover { border-color: var(--mint-ink); color: var(--mint-ink); transform: scale(1.04); }
+.day-tick.is-on { background: var(--mint); border-color: var(--mint-ink); color: var(--mint-ink); }
+.day-tick.is-skip { background: var(--paper-deep); border-color: var(--line-strong); color: var(--ink-faint); }
+
+/* La carte du jour ouvert : plus large, avec les ingrédients et les gestes. */
+.day-open { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+.day-ingredients { display: flex; flex-wrap: wrap; gap: 6px; }
+.day-ing-chip {
+  display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 10px;
+  border-radius: var(--radius-pill); background: var(--paper-deep); color: var(--ink-soft);
+  font-size: 12.5px; font-weight: 700;
+}
+.day-ing-chip b { font-weight: 800; color: var(--ink); }
+
+/* ---------- transitions douces, sans excès ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; }
+}
+
+@media (max-width: 900px) {
+  .s-main { padding: 18px 16px 70px; }
+  .s-topbar { padding: 10px 16px; gap: 10px; }
+  .s-title { font-size: 30px; }
+  .day-row { grid-template-columns: 74px minmax(0, 1fr) auto; padding: 10px 12px; gap: 12px; }
+  .day-open { grid-template-columns: 1fr; }
+}
+
+/* ---------- compléments de la page Semaine ---------- */
+
+.s-page { display: flex; flex-direction: column; gap: 18px; }
+.s-pagehead-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+.week-nav { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+
+.day-head-btn {
+  display: block; width: 100%; text-align: left; padding: 0;
+  border: 0; background: none; color: inherit; font: inherit; cursor: pointer;
+}
+.day-head-btn:hover .day-meal-name { text-decoration: underline; text-underline-offset: 3px; }
+
+.day-open-body { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.day-open-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ---------- la proposition de semaine ---------- */
+
+.proposal-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.proposal-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px; border: 2px solid var(--line); border-radius: var(--radius-lg);
+  background: var(--card); transition: opacity 120ms var(--ease-out), border-color 120ms var(--ease-out);
+}
+.proposal-row.is-off { opacity: 0.5; border-style: dashed; }
+.proposal-tick {
+  width: 34px; height: 34px; flex: none; display: grid; place-items: center;
+  border: 2px solid var(--line-strong); border-radius: 50%;
+  background: var(--card); color: transparent;
+  transition: background-color 120ms var(--ease-out), color 120ms var(--ease-out), border-color 120ms var(--ease-out);
+}
+.proposal-tick.is-on { background: var(--mint); border-color: var(--mint-ink); color: var(--mint-ink); }
+.proposal-body { min-width: 0; flex: 1; }
+.proposal-day { margin: 0; font-size: 11.5px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-faint); }
+.proposal-name { margin: 1px 0 2px; font-family: var(--font-display); font-size: 16px; font-weight: 500; }
+.proposal-reason { margin: 0; display: flex; align-items: center; gap: 5px; font-size: 12.5px; }
+.proposal-reason.is-ready { color: var(--mint-ink); }
+.proposal-reason.is-missing { color: var(--peach-ink); }
+.proposal-needs { color: var(--ink-soft); font-weight: 700; }
+.proposal-facts { flex: none; }
+.proposal-empty { margin: 0; color: var(--ink-soft); font-size: 14px; }
+
+@media (max-width: 700px) {
+  .proposal-row { flex-wrap: wrap; }
+  .proposal-facts { margin-left: 46px; }
+}
+
+/* L'ancienne feuille souligne tous les liens : la barre ne doit rien en hériter. */
+.s-brand, .s-brand:visited, .s-tabs a, .s-tabs a:visited { text-decoration: none; }
+.s-tab.is-on { text-decoration: none; }

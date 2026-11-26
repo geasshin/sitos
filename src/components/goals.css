@@ -1,0 +1,175 @@
+/* La fenêtre « Mes objectifs » : le résumé posé dans les Paramètres,
+   et le questionnaire en quatre étapes, dans la feuille de la charte. */
+
+.goals { display: flex; flex-direction: column; gap: 12px; }
+
+.goals-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.goals-heading { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+.goals-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+.goals-meta {
+  margin: 0;
+  max-width: 62ch;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.goals .goals-grid { margin: 0; }
+
+/* ---------- le questionnaire ---------- */
+
+.goals-wizard { display: flex; flex-direction: column; gap: 16px; }
+
+.goals-steps { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.goals-steps .s-chip { height: 26px; }
+
+.goals-step { display: flex; flex-direction: column; gap: 14px; }
+
+.goals-q {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.goals-hint {
+  margin: 0;
+  max-width: 70ch;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+.goals-hint strong { color: var(--ink); }
+
+/* Un choix se lit comme une pastille : le point se remplit, le fond s’allume. */
+.goals-choices { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.goals-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 2px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--card);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  font-weight: 700;
+  text-align: left;
+  transition:
+    background-color 120ms var(--ease-out),
+    border-color 120ms var(--ease-out),
+    box-shadow 80ms var(--ease-out);
+}
+.goals-choice:hover { border-color: var(--ink-soft); background: var(--paper); }
+.goals-choice.is-on { border-color: var(--ink); background: var(--butter-soft); box-shadow: var(--pop-sm); }
+
+.goals-choice-dot {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--line-strong);
+  border-radius: 50%;
+  background: var(--card);
+  color: transparent;
+}
+.goals-choice.is-on .goals-choice-dot { border-color: var(--ink); background: var(--ink); color: var(--card); }
+
+.goals-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+
+/* Le champ : le libellé au-dessus, l’unité posée dans le cadre. */
+.goals-wizard .goals-unit { position: relative; display: flex; align-items: center; }
+.goals-wizard .goals-unit input[type='text'] {
+  width: 100%;
+  padding: 9px 52px 9px 12px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.goals-wizard .goals-unit .unit {
+  position: absolute;
+  right: 12px;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--ink-faint);
+  pointer-events: none;
+}
+
+/* ---------- les repères calculés et leurs explications ---------- */
+
+.goals-targets { display: flex; flex-direction: column; }
+
+.goals-target {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+  padding: 12px 0;
+  border-top: 2px dashed var(--line);
+}
+.goals-target:first-child { border-top: 0; padding-top: 0; }
+
+.goals-cap {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--lilac-ink);
+}
+
+.goals-note {
+  margin: 6px 0 0;
+  max-width: 62ch;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.goals-reset {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 800;
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+.goals-reset:hover { text-decoration-color: var(--ink); }
+
+@media (max-width: 720px) {
+  .goals-fields { grid-template-columns: minmax(0, 1fr); }
+  .goals-target { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .goals-target .goals-note { margin-top: 0; }
+}
+
+@media (max-width: 430px) {
+  .goals-choice { width: 100%; }
+}
