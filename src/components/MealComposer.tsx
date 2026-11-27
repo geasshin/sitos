@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { ArrowLeft, ChefHat, Leaf, Package, Plus, RotateCcw, Search, Trash2, Utensils, X } from 'lucide-react';
+import { ArrowLeft, ChefHat, Leaf, Plus, RotateCcw, Search, Trash2, Utensils, X } from 'lucide-react';
 import { useApp } from '../context';
 import { formatDayMonth, formatShort } from '../domain/dates';
 import {
@@ -31,7 +31,7 @@ const showQty = (f: Food | undefined, q: number) => (f?.unit === 'pièce' ? frac
 /** Une quantité de départ plausible : une pièce, un filet d’huile, 100 g sinon. */
 const usualQty = (f: Food) => (f.unit === 'pièce' ? 1 : f.category === 'matières grasses' ? 10 : 100);
 
-type Source = 'recipe' | 'custom' | 'stock';
+type Source = 'recipe' | 'custom';
 
 function draftOf(recipes: Recipe[], cook: PlanEntry): MealDraft {
   const meal = mealOfCook(recipes, cook);
@@ -60,6 +60,7 @@ export function MealComposer({
   target,
   sameDay = false,
   onClose,
+  onOut,
 }: {
   date: ISODate;
   /** Repas existant à modifier ; absent pour un nouveau repas. */
@@ -67,6 +68,8 @@ export function MealComposer({
   /** Nouveau repas sur un jour qui en porte déjà un : une portion, rien ne se décale. */
   sameDay?: boolean;
   onClose: () => void;
+  /** Manger dehors : la semaine marque le jour et décale la suite. Absent, l’option n’est pas proposée. */
+  onOut?: (note: string) => void;
 }) {
   const app = useApp();
   const { data, foods, store, today, targets } = app;
@@ -91,6 +94,9 @@ export function MealComposer({
   const [choosing, setChoosing] = useState(!cook);
   const [pendingSource, setPendingSource] = useState<Source | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  /** Manger dehors : un état à part, ce n’est pas un plat composé. */
+  const [outMode, setOutMode] = useState(false);
+  const [outNote, setOutNote] = useState('');
   const [focusFood, setFocusFood] = useState<string | null>(null);
   const [keep, setKeep] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
@@ -111,7 +117,7 @@ export function MealComposer({
   const valid = !!draft && draft.ingredients.length > 0 && (custom || !!recipe);
   const canSwitch = !leftover && !cookDone && !retro && !sharedDay;
   const canRemove = !!entry && !entry.done;
-  const dishName = recipe?.name ?? (draft?.title?.trim() || 'Plat maison');
+  const dishName = recipe?.name ?? (draft?.title?.trim() || 'Mon plat');
   const unknown = ingredients
     .map((i) => foods.get(i.foodId))
     .filter((f): f is Food => !!f && !!f.custom && f.per100.kcal === 0)
@@ -318,19 +324,44 @@ export function MealComposer({
                 <SourceTile
                   icon={<Utensils size={16} aria-hidden />}
                   tone="peach"
-                  name="Un plat maison"
-                  sub="Un nom, tes ingrédients"
-                  on={source === 'custom'}
+                  name="Je compose mon plat"
+                  sub="Un nom, tes ingrédients, sans recette"
+                  on={source === 'custom' && !outMode}
                   onClick={() => pickSource('custom')}
                 />
-                <SourceTile
-                  icon={<Package size={16} aria-hidden />}
-                  tone="butter"
-                  name="Avec ce que j’ai en stock"
-                  sub="Partir du frigo et du placard"
-                  on={source === 'stock'}
-                  onClick={() => pickSource('stock')}
-                />
+                {onOut && (
+                  <SourceTile
+                    icon={<Utensils size={16} aria-hidden />}
+                    tone="lilac"
+                    name="Je mange dehors"
+                    sub="Ce jour-là, à l’extérieur"
+                    on={outMode}
+                    onClick={() => {
+                      setOutMode(true);
+                      setDraft(null);
+                      setChoosing(false);
+                    }}
+                  />
+                )}
+              </div>
+            )}
+
+            {outMode && onOut && (
+              <div className="mc-out">
+                <label className="mc-name-field">
+                  <span>Qu’est-ce que tu as mangé ?</span>
+                  <input
+                    className="mc-name-input"
+                    value={outNote}
+                    onChange={(e) => setOutNote(e.target.value)}
+                    placeholder="Burger, restaurant, chez des amis…"
+                    autoFocus
+                  />
+                </label>
+                <p className="mc-out-note">Facultatif. Ce jour compte comme repas dehors, sans bilan nutritionnel.</p>
+                <button type="button" className="s-btn is-mint" onClick={() => onOut(outNote.trim())}>
+                  <Utensils size={14} aria-hidden /> Marquer ce jour dehors
+                </button>
               </div>
             )}
 
@@ -343,15 +374,26 @@ export function MealComposer({
                   className="mc-name-input"
                   value={draft.title ?? ''}
                   onChange={(e) => setDraft((d) => (d ? { ...d, title: e.target.value } : d))}
-                  placeholder="Plat maison"
+                  placeholder="Nom du plat"
                   autoFocus={!draft.title && draft.ingredients.length === 0}
                 />
               </label>
             )}
 
-            {source === 'stock' && draft && (
-              <StockChooser onAdd={(food) => addFood(food, usualQty(food))} onSearch={() => setPickerOpen(true)} added={new Set(draft.ingredients.map((i) => i.foodId))} />
+            {/* Compose un plat tire toujours du stock quand l’aliment y est : la liste ne propose donc
+                pas une seconde source, elle montre ce qui est disponible. Un aliment absent du stock
+                s’ajoute quand même, simplement il ne déduit rien. */}
+            {source === 'custom' && draft && (
+              <div className="mc-stock-suggest">
+                <p className="mc-stock-title">Ce que tu as en stock</p>
+                <StockChooser
+                  onAdd={(food) => addFood(food, usualQty(food))}
+                  onSearch={() => setPickerOpen(true)}
+                  added={new Set(draft.ingredients.map((i) => i.foodId))}
+                />
+              </div>
             )}
+
 
             {pendingSource && (
               <div className="mc-confirm">
@@ -590,7 +632,7 @@ function SourceTile({
   onClick,
 }: {
   icon: ReactNode;
-  tone: 'mint' | 'peach' | 'butter';
+  tone: 'mint' | 'peach' | 'butter' | 'lilac';
   name: string;
   sub: string;
   on: boolean;

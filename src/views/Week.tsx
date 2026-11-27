@@ -449,11 +449,11 @@ export function WeekView() {
                       <span className="s-chip is-lilac">
                         <Utensils size={12} aria-hidden /> Dehors
                       </span>
-                      <span className="day-meal-empty">repas pris à l’extérieur</span>
+                      <span className="day-meal-empty">{out.note || 'repas pris à l’extérieur'}</span>
                     </span>
                   ) : entry ? (
                     <span className="day-meal-line">
-                      <span className="day-meal-name">{meal?.name ?? 'Plat maison'}</span>
+                      <span className="day-meal-name">{meal?.name ?? 'Mon plat'}</span>
                       {entry.kind === 'leftover' && <span className="s-chip">reste</span>}
                       {entry.kind === 'cook' && (entry.portions ?? 1) > 1 && (
                         <span className="s-chip is-butter">{entry.portions} portions</span>
@@ -668,10 +668,20 @@ export function WeekView() {
         open={!!composer}
         onClose={() => setComposer(null)}
         title={composer ? `Repas du ${formatShort(composer.date)}` : 'Repas'}
-        subtitle="Une recette du carnet, un plat maison, ou ce que tu as déjà"
+        subtitle="Une recette du carnet, ton plat composé, ou dehors"
         size="lg"
       >
-        {composer && <MealComposer date={composer.date} target={composer.target} onClose={() => setComposer(null)} />}
+        {composer && (
+          <MealComposer
+            date={composer.date}
+            target={composer.target}
+            onClose={() => setComposer(null)}
+            onOut={(note) => {
+              setEntries((e) => markOut(e, composer.date, note || undefined));
+              setComposer(null);
+            }}
+          />
+        )}
       </Sheet>
 
       {drag && (

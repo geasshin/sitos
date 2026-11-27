@@ -170,7 +170,7 @@
 
 .mc-tiles {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 8px;
 }
 
@@ -217,6 +217,10 @@
 .mc-tile-icon.is-butter {
   background: var(--butter-soft);
   color: var(--butter-ink);
+}
+.mc-tile-icon.is-lilac {
+  background: var(--lilac-soft);
+  color: var(--lilac-ink);
 }
 
 .mc-tile-name {
@@ -991,3 +995,12 @@
     justify-content: flex-end;
   }
 }
+
+/* Manger dehors : un formulaire court, au même endroit que le choix du plat. */
+.mc-out { display: flex; flex-direction: column; gap: 10px; }
+.mc-out-note { margin: 0; font-size: 12px; opacity: 0.75; }
+.mc-out .s-btn { align-self: flex-start; }
+
+/* Les suggestions de stock vivent sous le nom du plat : même geste que le catalogue, sans tuile à part. */
+.mc-stock-suggest { display: flex; flex-direction: column; gap: 8px; }
+.mc-stock-title { margin: 0; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; opacity: 0.7; }
